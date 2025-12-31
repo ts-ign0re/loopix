@@ -1,4 +1,4 @@
-import CoreImage
+@preconcurrency import CoreImage
 import CoreGraphics
 import Foundation
 import Accelerate
@@ -418,25 +418,17 @@ actor HALDCLUTLoader {
 @available(iOS 17.0, *)
 extension HALDCLUTLoader {
 
-    /// Load multiple CLUTs concurrently
+    /// Load multiple CLUTs sequentially (CIFilter is not Sendable, so parallel loading is not supported)
     func loadCLUTs(from urls: [URL]) async -> [(url: URL, result: Result<(filter: CIFilter, info: CLUTInfo), Error>)] {
-        await withTaskGroup(of: (URL, Result<(CIFilter, CLUTInfo), Error>).self) { group in
-            for url in urls {
-                group.addTask {
-                    do {
-                        let result = try await self.loadCLUT(from: url)
-                        return (url, .success(result))
-                    } catch {
-                        return (url, .failure(error))
-                    }
-                }
+        var results: [(url: URL, result: Result<(filter: CIFilter, info: CLUTInfo), Error>)] = []
+        for url in urls {
+            do {
+                let result = try await loadCLUT(from: url)
+                results.append((url: url, result: .success((filter: result.filter, info: result.info))))
+            } catch {
+                results.append((url: url, result: .failure(error)))
             }
-
-            var results: [(URL, Result<(CIFilter, CLUTInfo), Error>)] = []
-            for await result in group {
-                results.append(result)
-            }
-            return results
         }
+        return results
     }
 }

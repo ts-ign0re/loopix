@@ -339,9 +339,9 @@ enum PhotoLibraryError: Error, LocalizedError {
     }
 }
 
-// MARK: - PHFetchResult Extension
+// MARK: - PHFetchResult Extensions
 
-extension PHFetchResult where ObjectType == PHAsset {
+extension PHFetchResult<PHAsset> {
 
     /// Converts the fetch result to an array of PHAssets
     func toArray() -> [PHAsset] {
@@ -356,11 +356,15 @@ extension PHFetchResult where ObjectType == PHAsset {
     /// Returns assets in the specified range
     func assets(in range: Range<Int>) -> [PHAsset] {
         let validRange = range.clamped(to: 0..<count)
-        return (validRange.lowerBound..<validRange.upperBound).map { object(at: $0) }
+        var result: [PHAsset] = []
+        for index in validRange {
+            result.append(object(at: index))
+        }
+        return result
     }
 }
 
-extension PHFetchResult where ObjectType == PHAssetCollection {
+extension PHFetchResult<PHAssetCollection> {
 
     /// Converts the fetch result to an array of PHAssetCollections
     func toArray() -> [PHAssetCollection] {

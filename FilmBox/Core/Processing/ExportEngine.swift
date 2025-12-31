@@ -233,9 +233,7 @@ actor ExportEngine {
         }
 
         // Apply orientation
-        if let orientedImage = ciImage.oriented(forExifOrientation: Int32(CGImagePropertyOrientation.up.rawValue)) {
-            ciImage = orientedImage
-        }
+        ciImage = ciImage.oriented(forExifOrientation: Int32(CGImagePropertyOrientation.up.rawValue))
 
         // Apply filter using FilterEngine if available
         let processedImage: CIImage
@@ -480,7 +478,7 @@ actor ExportEngine {
             if let noiseGenerator = CIFilter(name: "CIRandomGenerator"),
                let noiseImage = noiseGenerator.outputImage {
                 let scaledNoise = noiseImage
-                    .transformed(by: CGAffineTransform(scaleX: params.grain.size, y: params.grain.size))
+                    .transformed(by: CGAffineTransform(scaleX: CGFloat(params.grain.size), y: CGFloat(params.grain.size)))
                     .cropped(to: result.extent)
 
                 let grainAmount = params.grain.amount / 100 * 0.1

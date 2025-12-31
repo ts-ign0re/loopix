@@ -3,6 +3,7 @@ import SwiftUI
 /// Dependency injection container for app-wide services
 /// Provides singleton access to core services and managers
 @Observable
+@MainActor
 final class Dependencies {
 
     // MARK: - Singleton
@@ -27,9 +28,9 @@ final class Dependencies {
     // MARK: - Initialization
 
     private init() {
-        self.filterEngine = FilterEngine.shared
-        self.thumbnailCache = ThumbnailCache.shared
-        self.photoLibraryManager = PhotoLibraryManager.shared
+        self.filterEngine = FilterEngine()
+        self.thumbnailCache = ThumbnailCache()
+        self.photoLibraryManager = PhotoLibraryManager()
         self.filterStorage = FilterStorage.shared
     }
 
@@ -44,131 +45,6 @@ final class Dependencies {
         self.thumbnailCache = thumbnailCache
         self.photoLibraryManager = photoLibraryManager
         self.filterStorage = filterStorage
-    }
-}
-
-// MARK: - Filter Engine
-
-/// Core filter processing engine
-/// Handles applying filter parameters to images
-final class FilterEngine: Sendable {
-
-    /// Shared instance
-    static let shared = FilterEngine()
-
-    private init() {}
-
-    /// Apply filter parameters to an image
-    /// - Parameters:
-    ///   - parameters: The filter parameters to apply
-    ///   - image: The source image
-    /// - Returns: The processed image
-    func apply(_ parameters: FilterParameters, to image: CGImage) async throws -> CGImage {
-        // Placeholder implementation
-        // TODO: Implement Metal-based filter processing
-        return image
-    }
-}
-
-// MARK: - Thumbnail Cache
-
-/// Cache for photo thumbnails
-/// Provides fast access to resized images for UI display
-final class ThumbnailCache: Sendable {
-
-    /// Shared instance
-    static let shared = ThumbnailCache()
-
-    private init() {}
-
-    /// Get a cached thumbnail for the given photo ID
-    /// - Parameters:
-    ///   - photoId: The unique identifier of the photo
-    ///   - size: The desired thumbnail size
-    /// - Returns: The cached thumbnail, or nil if not cached
-    func thumbnail(for photoId: String, size: CGSize) async -> CGImage? {
-        // Placeholder implementation
-        // TODO: Implement NSCache-based thumbnail caching
-        return nil
-    }
-
-    /// Cache a thumbnail for the given photo ID
-    /// - Parameters:
-    ///   - thumbnail: The thumbnail image to cache
-    ///   - photoId: The unique identifier of the photo
-    ///   - size: The thumbnail size
-    func cache(_ thumbnail: CGImage, for photoId: String, size: CGSize) async {
-        // Placeholder implementation
-        // TODO: Implement caching logic
-    }
-
-    /// Clear all cached thumbnails
-    func clearCache() {
-        // Placeholder implementation
-    }
-}
-
-// MARK: - Photo Library Manager
-
-/// Manages access to the device photo library
-/// Handles permissions, fetching, and saving photos
-final class PhotoLibraryManager: Sendable {
-
-    /// Shared instance
-    static let shared = PhotoLibraryManager()
-
-    /// Current authorization status
-    enum AuthorizationStatus: Sendable {
-        case notDetermined
-        case restricted
-        case denied
-        case authorized
-        case limited
-    }
-
-    private init() {}
-
-    /// Request access to the photo library
-    /// - Returns: The authorization status after requesting access
-    func requestAccess() async -> AuthorizationStatus {
-        // Placeholder implementation
-        // TODO: Implement PHPhotoLibrary authorization
-        return .authorized
-    }
-
-    /// Fetch all photos from the library
-    /// - Returns: An array of photo identifiers
-    func fetchPhotos() async throws -> [String] {
-        // Placeholder implementation
-        // TODO: Implement PHAsset fetching
-        return []
-    }
-
-    /// Load full-resolution image for a photo
-    /// - Parameter photoId: The unique identifier of the photo
-    /// - Returns: The full-resolution image
-    func loadImage(for photoId: String) async throws -> CGImage {
-        // Placeholder implementation
-        // TODO: Implement PHImageManager image loading
-        throw PhotoLibraryError.notImplemented
-    }
-
-    /// Save an edited image to the photo library
-    /// - Parameters:
-    ///   - image: The image to save
-    ///   - originalPhotoId: The original photo identifier (for metadata)
-    func saveImage(_ image: CGImage, originalPhotoId: String?) async throws {
-        // Placeholder implementation
-        // TODO: Implement PHPhotoLibrary saving
-        throw PhotoLibraryError.notImplemented
-    }
-
-    /// Errors that can occur during photo library operations
-    enum PhotoLibraryError: Error, Sendable {
-        case notImplemented
-        case accessDenied
-        case photoNotFound
-        case saveFailed
     }
 }
 

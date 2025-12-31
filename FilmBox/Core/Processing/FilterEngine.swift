@@ -1,4 +1,4 @@
-import CoreImage
+@preconcurrency import CoreImage
 import CoreGraphics
 import Foundation
 import Metal
@@ -40,7 +40,7 @@ actor FilterEngine {
 
     /// Initialize with a custom Metal device
     init(device: MTLDevice?) {
-        var options: [CIContextOption: Any] = [
+        let options: [CIContextOption: Any] = [
             .workingColorSpace: CGColorSpace(name: CGColorSpace.linearSRGB)!,
             .outputColorSpace: CGColorSpace(name: CGColorSpace.sRGB)!,
             .useSoftwareRenderer: false,
@@ -297,17 +297,13 @@ actor FilterEngine {
     /// Preload CLUT filters for faster access
     /// - Parameter paths: Array of CLUT paths to preload
     func preloadCLUTs(_ paths: [String]) async {
-        await withTaskGroup(of: Void.self) { group in
-            for path in paths {
-                group.addTask {
-                    let url = self.resolveCLUTPath(path)
-                    do {
-                        let (filter, _) = try await self.clutLoader.loadCLUT(from: url)
-                        self.clutFilterCache[path] = filter
-                    } catch {
-                        print("Failed to preload CLUT at \(path): \(error)")
-                    }
-                }
+        for path in paths {
+            let url = resolveCLUTPath(path)
+            do {
+                let (filter, _) = try await clutLoader.loadCLUT(from: url)
+                clutFilterCache[path] = filter
+            } catch {
+                print("Failed to preload CLUT at \(path): \(error)")
             }
         }
     }

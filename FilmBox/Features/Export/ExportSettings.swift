@@ -186,7 +186,7 @@ extension ExportSettings {
     /// Save settings to UserDefaults
     func saveToUserDefaults() {
         if let data = try? JSONEncoder().encode(self) {
-            UserDefaults.standard.set(data, forKey: userDefaultsKey)
+            UserDefaults.standard.set(data, forKey: Self.userDefaultsKey)
         }
     }
 

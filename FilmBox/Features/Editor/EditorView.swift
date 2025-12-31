@@ -259,8 +259,7 @@ struct EditorView: View {
                         set: { viewModel.updateExposure($0) }
                     ),
                     range: -2...2,
-                    defaultValue: 0,
-                    decimalPlaces: 1
+                    defaultValue: 0
                 )
 
                 ToolSlider(

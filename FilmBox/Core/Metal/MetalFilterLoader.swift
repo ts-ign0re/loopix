@@ -34,7 +34,8 @@ enum MetalFilterError: Error, LocalizedError {
 }
 
 /// Manages loading, caching, and applying Metal kernels for image processing
-final class MetalFilterLoader {
+/// Uses DispatchQueue for thread-safe cache access, marked @unchecked Sendable
+final class MetalFilterLoader: @unchecked Sendable {
 
     // MARK: - Singleton
 
@@ -151,7 +152,7 @@ final class MetalFilterLoader {
             return cached
         }
 
-        guard let device = device else {
+        guard device != nil else {
             throw MetalFilterError.metalDeviceNotAvailable
         }
 
@@ -159,19 +160,22 @@ final class MetalFilterLoader {
         let kernel: CIKernel
 
         do {
-            // For Core Image kernels, we need to use CIKernel(functionName:fromMetalLibraryData:)
-            guard let libraryURL = Bundle.main.url(forResource: "default", withExtension: "metallib"),
+            // For Core Image kernels, load from CIKernels.metallib (compiled with -fcikernel)
+            guard let libraryURL = Bundle.main.url(forResource: "CIKernels", withExtension: "metallib"),
                   let data = try? Data(contentsOf: libraryURL) else {
-                // Fallback: try to compile from source
-                kernel = try loadKernelFromSource(named: name)
-                cacheKernel(kernel, forName: name)
-                return kernel
+                // Fallback: try default.metallib
+                if let defaultURL = Bundle.main.url(forResource: "default", withExtension: "metallib"),
+                   let defaultData = try? Data(contentsOf: defaultURL) {
+                    kernel = try CIKernel(functionName: name, fromMetalLibraryData: defaultData)
+                    cacheKernel(kernel, forName: name)
+                    return kernel
+                }
+                throw MetalFilterError.libraryNotFound
             }
 
             kernel = try CIKernel(functionName: name, fromMetalLibraryData: data)
         } catch {
-            // Try loading from source as fallback
-            kernel = try loadKernelFromSource(named: name)
+            throw MetalFilterError.kernelNotFound(name)
         }
 
         // Cache the kernel
@@ -186,8 +190,15 @@ final class MetalFilterLoader {
             return cached
         }
 
-        guard let libraryURL = Bundle.main.url(forResource: "default", withExtension: "metallib"),
-              let data = try? Data(contentsOf: libraryURL) else {
+        // Try CIKernels.metallib first, then fall back to default.metallib
+        let data: Data
+        if let libraryURL = Bundle.main.url(forResource: "CIKernels", withExtension: "metallib"),
+           let libData = try? Data(contentsOf: libraryURL) {
+            data = libData
+        } else if let defaultURL = Bundle.main.url(forResource: "default", withExtension: "metallib"),
+                  let defaultData = try? Data(contentsOf: defaultURL) {
+            data = defaultData
+        } else {
             throw MetalFilterError.libraryNotFound
         }
 
@@ -386,7 +397,7 @@ final class MetalFilterLoader {
 // MARK: - CIFilter Subclasses
 
 /// Film grain filter using Metal kernel
-class GrainFilter: CIFilter {
+final class GrainFilter: CIFilter, @unchecked Sendable {
 
     @objc dynamic var inputImage: CIImage?
     @objc dynamic var inputAmount: CGFloat = 0.3
@@ -456,7 +467,7 @@ class GrainFilter: CIFilter {
 }
 
 /// Vignette filter using Metal kernel
-class AdvancedVignetteFilter: CIFilter {
+final class AdvancedVignetteFilter: CIFilter, @unchecked Sendable {
 
     @objc dynamic var inputImage: CIImage?
     @objc dynamic var inputAmount: CGFloat = 0.5
