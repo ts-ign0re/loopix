@@ -1,0 +1,714 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A1000001229E000100000001 /* FilmBoxApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000001 /* FilmBoxApp.swift */; };
+		A1000001229E000100000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000002 /* ContentView.swift */; };
+		A1000001229E000100000003 /* AppCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000003 /* AppCoordinator.swift */; };
+		A1000001229E000100000004 /* Dependencies.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000004 /* Dependencies.swift */; };
+		A1000001229E000100000010 /* FilterCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000010 /* FilterCategory.swift */; };
+		A1000001229E000100000011 /* FilterParameters.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000011 /* FilterParameters.swift */; };
+		A1000001229E000100000012 /* FilterPreset.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000012 /* FilterPreset.swift */; };
+		A1000001229E000100000020 /* MetalFilterLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000020 /* MetalFilterLoader.swift */; };
+		A1000001229E000100000030 /* GrainKernel.metal in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000030 /* GrainKernel.metal */; };
+		A1000001229E000100000031 /* HalationKernel.metal in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000031 /* HalationKernel.metal */; };
+		A1000001229E000100000032 /* BloomKernel.metal in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000032 /* BloomKernel.metal */; };
+		A1000001229E000100000033 /* VignetteKernel.metal in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000033 /* VignetteKernel.metal */; };
+		A1000001229E000100000040 /* ExportEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000040 /* ExportEngine.swift */; };
+		A1000001229E000100000041 /* FilterEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000041 /* FilterEngine.swift */; };
+		A1000001229E000100000042 /* ThumbnailCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000042 /* ThumbnailCache.swift */; };
+		A1000001229E000100000050 /* EditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000050 /* EditorView.swift */; };
+		A1000001229E000100000051 /* EditorViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000051 /* EditorViewModel.swift */; };
+		A1000001229E000100000060 /* ExportSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000060 /* ExportSettings.swift */; };
+		A1000001229E000100000070 /* AlbumPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000070 /* AlbumPicker.swift */; };
+		A1000001229E000100000071 /* GalleryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000071 /* GalleryViewModel.swift */; };
+		A1000001229E000100000072 /* PhotoGridItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000072 /* PhotoGridItem.swift */; };
+		A1000001229E000100000080 /* CGImage+WebP.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000080 /* CGImage+WebP.swift */; };
+		A1000001229E000100000081 /* CIImage+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000081 /* CIImage+Extensions.swift */; };
+		A1000001229E000100000090 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000090 /* Theme.swift */; };
+		A1000001229E0001000000A0 /* PhotoLibraryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E0000000000A0 /* PhotoLibraryManager.swift */; };
+		A1000001229E0001000000B0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1000001229E0000000000B0 /* Assets.xcassets */; };
+		A1000001229E0001000000C0 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A1000001229E0000000000C0 /* SwiftUI.framework */; };
+		A1000001229E0001000000C1 /* CoreImage.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A1000001229E0000000000C1 /* CoreImage.framework */; };
+		A1000001229E0001000000C2 /* Photos.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A1000001229E0000000000C2 /* Photos.framework */; };
+		A1000001229E0001000000C3 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A1000001229E0000000000C3 /* Metal.framework */; };
+		A1000001229E0001000000C4 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A1000001229E0000000000C4 /* MetalKit.framework */; };
+		A1000001229E0001000000C5 /* UniformTypeIdentifiers.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A1000001229E0000000000C5 /* UniformTypeIdentifiers.framework */; };
+		CE0756E32F05603A00C53D17 /* ImagePreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0756E22F05603900C53D17 /* ImagePreview.swift */; };
+		CE0756E52F05604700C53D17 /* ToolSlider.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0756E42F05604700C53D17 /* ToolSlider.swift */; };
+		CE0756E72F05606000C53D17 /* HistogramView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0756E62F05606000C53D17 /* HistogramView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		A1000001229E000100000F01 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A1000001229E000000000F01 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A1000001229E000000000E00;
+			remoteInfo = FilmBox;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		A1000001229E000000000001 /* FilmBoxApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmBoxApp.swift; sourceTree = "<group>"; };
+		A1000001229E000000000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		A1000001229E000000000003 /* AppCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppCoordinator.swift; sourceTree = "<group>"; };
+		A1000001229E000000000004 /* Dependencies.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Dependencies.swift; sourceTree = "<group>"; };
+		A1000001229E000000000010 /* FilterCategory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterCategory.swift; sourceTree = "<group>"; };
+		A1000001229E000000000011 /* FilterParameters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterParameters.swift; sourceTree = "<group>"; };
+		A1000001229E000000000012 /* FilterPreset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterPreset.swift; sourceTree = "<group>"; };
+		A1000001229E000000000020 /* MetalFilterLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetalFilterLoader.swift; sourceTree = "<group>"; };
+		A1000001229E000000000030 /* GrainKernel.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = GrainKernel.metal; sourceTree = "<group>"; };
+		A1000001229E000000000031 /* HalationKernel.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = HalationKernel.metal; sourceTree = "<group>"; };
+		A1000001229E000000000032 /* BloomKernel.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = BloomKernel.metal; sourceTree = "<group>"; };
+		A1000001229E000000000033 /* VignetteKernel.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = VignetteKernel.metal; sourceTree = "<group>"; };
+		A1000001229E000000000040 /* ExportEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportEngine.swift; sourceTree = "<group>"; };
+		A1000001229E000000000041 /* FilterEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterEngine.swift; sourceTree = "<group>"; };
+		A1000001229E000000000042 /* ThumbnailCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThumbnailCache.swift; sourceTree = "<group>"; };
+		A1000001229E000000000050 /* EditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorView.swift; sourceTree = "<group>"; };
+		A1000001229E000000000051 /* EditorViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorViewModel.swift; sourceTree = "<group>"; };
+		A1000001229E000000000060 /* ExportSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportSettings.swift; sourceTree = "<group>"; };
+		A1000001229E000000000070 /* AlbumPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlbumPicker.swift; sourceTree = "<group>"; };
+		A1000001229E000000000071 /* GalleryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GalleryViewModel.swift; sourceTree = "<group>"; };
+		A1000001229E000000000072 /* PhotoGridItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoGridItem.swift; sourceTree = "<group>"; };
+		A1000001229E000000000080 /* CGImage+WebP.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CGImage+WebP.swift"; sourceTree = "<group>"; };
+		A1000001229E000000000081 /* CIImage+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CIImage+Extensions.swift"; sourceTree = "<group>"; };
+		A1000001229E000000000090 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		A1000001229E0000000000A0 /* PhotoLibraryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoLibraryManager.swift; sourceTree = "<group>"; };
+		A1000001229E0000000000B0 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A1000001229E0000000000B1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A1000001229E0000000000C0 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		A1000001229E0000000000C1 /* CoreImage.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreImage.framework; path = System/Library/Frameworks/CoreImage.framework; sourceTree = SDKROOT; };
+		A1000001229E0000000000C2 /* Photos.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Photos.framework; path = System/Library/Frameworks/Photos.framework; sourceTree = SDKROOT; };
+		A1000001229E0000000000C3 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
+		A1000001229E0000000000C4 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
+		A1000001229E0000000000C5 /* UniformTypeIdentifiers.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UniformTypeIdentifiers.framework; path = System/Library/Frameworks/UniformTypeIdentifiers.framework; sourceTree = SDKROOT; };
+		A1000001229E000000000D00 /* FilmBox.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FilmBox.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1000001229E000000000D01 /* FilmBoxTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FilmBoxTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		CE0756E22F05603900C53D17 /* ImagePreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePreview.swift; sourceTree = "<group>"; };
+		CE0756E42F05604700C53D17 /* ToolSlider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolSlider.swift; sourceTree = "<group>"; };
+		CE0756E62F05606000C53D17 /* HistogramView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistogramView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A1000001229E000000000E01 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1000001229E0001000000C0 /* SwiftUI.framework in Frameworks */,
+				A1000001229E0001000000C1 /* CoreImage.framework in Frameworks */,
+				A1000001229E0001000000C2 /* Photos.framework in Frameworks */,
+				A1000001229E0001000000C3 /* Metal.framework in Frameworks */,
+				A1000001229E0001000000C4 /* MetalKit.framework in Frameworks */,
+				A1000001229E0001000000C5 /* UniformTypeIdentifiers.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1000001229E000000000E11 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A1000001229E000000000F00 = {
+			isa = PBXGroup;
+			children = (
+				A1000001229E000000001000 /* FilmBox */,
+				A1000001229E000000001F00 /* Frameworks */,
+				A1000001229E000000001F10 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A1000001229E000000001000 /* FilmBox */ = {
+			isa = PBXGroup;
+			children = (
+				A1000001229E000000001001 /* App */,
+				A1000001229E000000001010 /* Core */,
+				A1000001229E000000001050 /* Features */,
+				A1000001229E000000001080 /* Shared */,
+				A1000001229E0000000010B0 /* Resources */,
+				A1000001229E0000000010C0 /* Tests */,
+			);
+			path = FilmBox;
+			sourceTree = "<group>";
+		};
+		A1000001229E000000001001 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				A1000001229E000000000001 /* FilmBoxApp.swift */,
+				A1000001229E000000000002 /* ContentView.swift */,
+				A1000001229E000000000003 /* AppCoordinator.swift */,
+				A1000001229E000000000004 /* Dependencies.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		A1000001229E000000001010 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				A1000001229E000000001011 /* Filters */,
+				A1000001229E000000001020 /* Metal */,
+				A1000001229E000000001040 /* Processing */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		A1000001229E000000001011 /* Filters */ = {
+			isa = PBXGroup;
+			children = (
+				A1000001229E000000000010 /* FilterCategory.swift */,
+				A1000001229E000000000011 /* FilterParameters.swift */,
+				A1000001229E000000000012 /* FilterPreset.swift */,
+			);
+			path = Filters;
+			sourceTree = "<group>";
+		};
+		A1000001229E000000001020 /* Metal */ = {
+			isa = PBXGroup;
+			children = (
+				A1000001229E000000000020 /* MetalFilterLoader.swift */,
+				A1000001229E000000001030 /* Kernels */,
+			);
+			path = Metal;
+			sourceTree = "<group>";
+		};
+		A1000001229E000000001030 /* Kernels */ = {
+			isa = PBXGroup;
+			children = (
+				A1000001229E000000000030 /* GrainKernel.metal */,
+				A1000001229E000000000031 /* HalationKernel.metal */,
+				A1000001229E000000000032 /* BloomKernel.metal */,
+				A1000001229E000000000033 /* VignetteKernel.metal */,
+			);
+			path = Kernels;
+			sourceTree = "<group>";
+		};
+		A1000001229E000000001040 /* Processing */ = {
+			isa = PBXGroup;
+			children = (
+				A1000001229E000000000040 /* ExportEngine.swift */,
+				A1000001229E000000000041 /* FilterEngine.swift */,
+				A1000001229E000000000042 /* ThumbnailCache.swift */,
+			);
+			path = Processing;
+			sourceTree = "<group>";
+		};
+		A1000001229E000000001050 /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				A1000001229E000000001051 /* Editor */,
+				A1000001229E000000001060 /* Export */,
+				A1000001229E000000001070 /* Gallery */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+		A1000001229E000000001051 /* Editor */ = {
+			isa = PBXGroup;
+			children = (
+				A1000001229E000000000050 /* EditorView.swift */,
+				A1000001229E000000000051 /* EditorViewModel.swift */,
+				CE0756E22F05603900C53D17 /* ImagePreview.swift */,
+				CE0756E42F05604700C53D17 /* ToolSlider.swift */,
+				CE0756E62F05606000C53D17 /* HistogramView.swift */,
+			);
+			path = Editor;
+			sourceTree = "<group>";
+		};
+		A1000001229E000000001060 /* Export */ = {
+			isa = PBXGroup;
+			children = (
+				A1000001229E000000000060 /* ExportSettings.swift */,
+			);
+			path = Export;
+			sourceTree = "<group>";
+		};
+		A1000001229E000000001070 /* Gallery */ = {
+			isa = PBXGroup;
+			children = (
+				A1000001229E000000000070 /* AlbumPicker.swift */,
+				A1000001229E000000000071 /* GalleryViewModel.swift */,
+				A1000001229E000000000072 /* PhotoGridItem.swift */,
+			);
+			path = Gallery;
+			sourceTree = "<group>";
+		};
+		A1000001229E000000001080 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				A1000001229E000000001081 /* Extensions */,
+				A1000001229E000000001090 /* UI */,
+				A1000001229E0000000010A0 /* Utilities */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		A1000001229E000000001081 /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				A1000001229E000000000080 /* CGImage+WebP.swift */,
+				A1000001229E000000000081 /* CIImage+Extensions.swift */,
+			);
+			path = Extensions;
+			sourceTree = "<group>";
+		};
+		A1000001229E000000001090 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				A1000001229E000000000090 /* Theme.swift */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
+		A1000001229E0000000010A0 /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				A1000001229E0000000000A0 /* PhotoLibraryManager.swift */,
+			);
+			path = Utilities;
+			sourceTree = "<group>";
+		};
+		A1000001229E0000000010B0 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				A1000001229E0000000000B0 /* Assets.xcassets */,
+				A1000001229E0000000000B1 /* Info.plist */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		A1000001229E0000000010C0 /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
+		A1000001229E000000001F00 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				A1000001229E0000000000C0 /* SwiftUI.framework */,
+				A1000001229E0000000000C1 /* CoreImage.framework */,
+				A1000001229E0000000000C2 /* Photos.framework */,
+				A1000001229E0000000000C3 /* Metal.framework */,
+				A1000001229E0000000000C4 /* MetalKit.framework */,
+				A1000001229E0000000000C5 /* UniformTypeIdentifiers.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		A1000001229E000000001F10 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A1000001229E000000000D00 /* FilmBox.app */,
+				A1000001229E000000000D01 /* FilmBoxTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A1000001229E000000000E00 /* FilmBox */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A1000001229E000000000F10 /* Build configuration list for PBXNativeTarget "FilmBox" */;
+			buildPhases = (
+				A1000001229E000000000E02 /* Sources */,
+				A1000001229E000000000E01 /* Frameworks */,
+				A1000001229E000000000E03 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = FilmBox;
+			productName = FilmBox;
+			productReference = A1000001229E000000000D00 /* FilmBox.app */;
+			productType = "com.apple.product-type.application";
+		};
+		A1000001229E000000000E10 /* FilmBoxTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A1000001229E000000000F20 /* Build configuration list for PBXNativeTarget "FilmBoxTests" */;
+			buildPhases = (
+				A1000001229E000000000E12 /* Sources */,
+				A1000001229E000000000E11 /* Frameworks */,
+				A1000001229E000000000E13 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A1000001229E000100000F02 /* PBXTargetDependency */,
+			);
+			name = FilmBoxTests;
+			productName = FilmBoxTests;
+			productReference = A1000001229E000000000D01 /* FilmBoxTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A1000001229E000000000F01 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					A1000001229E000000000E00 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+					A1000001229E000000000E10 = {
+						CreatedOnToolsVersion = 15.0;
+						TestTargetID = A1000001229E000000000E00;
+					};
+				};
+			};
+			buildConfigurationList = A1000001229E000000000F30 /* Build configuration list for PBXProject "FilmBox" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = A1000001229E000000000F00;
+			productRefGroup = A1000001229E000000001F10 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A1000001229E000000000E00 /* FilmBox */,
+				A1000001229E000000000E10 /* FilmBoxTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A1000001229E000000000E03 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1000001229E0001000000B0 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1000001229E000000000E13 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A1000001229E000000000E02 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1000001229E000100000001 /* FilmBoxApp.swift in Sources */,
+				A1000001229E000100000002 /* ContentView.swift in Sources */,
+				A1000001229E000100000003 /* AppCoordinator.swift in Sources */,
+				A1000001229E000100000004 /* Dependencies.swift in Sources */,
+				A1000001229E000100000010 /* FilterCategory.swift in Sources */,
+				A1000001229E000100000011 /* FilterParameters.swift in Sources */,
+				A1000001229E000100000012 /* FilterPreset.swift in Sources */,
+				A1000001229E000100000020 /* MetalFilterLoader.swift in Sources */,
+				A1000001229E000100000030 /* GrainKernel.metal in Sources */,
+				A1000001229E000100000031 /* HalationKernel.metal in Sources */,
+				CE0756E32F05603A00C53D17 /* ImagePreview.swift in Sources */,
+				A1000001229E000100000032 /* BloomKernel.metal in Sources */,
+				CE0756E52F05604700C53D17 /* ToolSlider.swift in Sources */,
+				A1000001229E000100000033 /* VignetteKernel.metal in Sources */,
+				A1000001229E000100000040 /* ExportEngine.swift in Sources */,
+				CE0756E72F05606000C53D17 /* HistogramView.swift in Sources */,
+				A1000001229E000100000041 /* FilterEngine.swift in Sources */,
+				A1000001229E000100000042 /* ThumbnailCache.swift in Sources */,
+				A1000001229E000100000050 /* EditorView.swift in Sources */,
+				A1000001229E000100000051 /* EditorViewModel.swift in Sources */,
+				A1000001229E000100000060 /* ExportSettings.swift in Sources */,
+				A1000001229E000100000070 /* AlbumPicker.swift in Sources */,
+				A1000001229E000100000071 /* GalleryViewModel.swift in Sources */,
+				A1000001229E000100000072 /* PhotoGridItem.swift in Sources */,
+				A1000001229E000100000080 /* CGImage+WebP.swift in Sources */,
+				A1000001229E000100000081 /* CIImage+Extensions.swift in Sources */,
+				A1000001229E000100000090 /* Theme.swift in Sources */,
+				A1000001229E0001000000A0 /* PhotoLibraryManager.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1000001229E000000000E12 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		A1000001229E000100000F02 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A1000001229E000000000E00 /* FilmBox */;
+			targetProxy = A1000001229E000100000F01 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		A1000001229E000000000F11 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FilmBox/Resources/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.filmbox.app;
+				PRODUCT_NAME = FilmBox;
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A1000001229E000000000F12 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FilmBox/Resources/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.filmbox.app;
+				PRODUCT_NAME = FilmBox;
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		A1000001229E000000000F21 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.filmbox.app.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/FilmBox.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/FilmBox";
+			};
+			name = Debug;
+		};
+		A1000001229E000000000F22 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.filmbox.app.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/FilmBox.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/FilmBox";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		A1000001229E000000000F31 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		A1000001229E000000000F32 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A1000001229E000000000F10 /* Build configuration list for PBXNativeTarget "FilmBox" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1000001229E000000000F11 /* Debug */,
+				A1000001229E000000000F12 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A1000001229E000000000F20 /* Build configuration list for PBXNativeTarget "FilmBoxTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1000001229E000000000F21 /* Debug */,
+				A1000001229E000000000F22 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A1000001229E000000000F30 /* Build configuration list for PBXProject "FilmBox" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1000001229E000000000F31 /* Debug */,
+				A1000001229E000000000F32 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A1000001229E000000000F01 /* Project object */;
+}
