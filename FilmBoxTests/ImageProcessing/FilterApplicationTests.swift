@@ -1,5 +1,6 @@
 import XCTest
 import CoreImage
+import CoreImage.CIFilterBuiltins
 @testable import FilmBox
 
 /// Tests for filter application and image adjustments

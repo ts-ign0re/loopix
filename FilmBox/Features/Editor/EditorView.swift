@@ -244,75 +244,218 @@ struct EditorView: View {
     }
 
     private var adjustToolPanel: some View {
-        VStack(spacing: 12) {
-            ToolSlider(
-                label: "Exposure",
-                value: Binding(
-                    get: { viewModel.currentParameters.exposure },
-                    set: { viewModel.updateExposure($0) }
-                ),
-                range: -2...2,
-                defaultValue: 0
-            )
+        ScrollView {
+            VStack(spacing: 10) {
+                // Light section
+                Text("Light")
+                    .font(.caption)
+                    .foregroundStyle(.white.opacity(0.5))
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
-            ToolSlider(
-                label: "Contrast",
-                value: Binding(
-                    get: { viewModel.currentParameters.contrast },
-                    set: { viewModel.updateContrast($0) }
-                ),
-                range: -100...100,
-                defaultValue: 0
-            )
+                ToolSlider(
+                    label: "Exposure",
+                    value: Binding(
+                        get: { viewModel.currentParameters.exposure },
+                        set: { viewModel.updateExposure($0) }
+                    ),
+                    range: -2...2,
+                    defaultValue: 0,
+                    decimalPlaces: 1
+                )
 
-            ToolSlider(
-                label: "Saturation",
-                value: Binding(
-                    get: { viewModel.currentParameters.saturation },
-                    set: { viewModel.updateSaturation($0) }
-                ),
-                range: -100...100,
-                defaultValue: 0
-            )
+                ToolSlider(
+                    label: "Contrast",
+                    value: Binding(
+                        get: { viewModel.currentParameters.contrast },
+                        set: { viewModel.updateContrast($0) }
+                    ),
+                    range: -100...100,
+                    defaultValue: 0
+                )
+
+                ToolSlider(
+                    label: "Highlights",
+                    value: Binding(
+                        get: { viewModel.currentParameters.highlights },
+                        set: { viewModel.updateHighlights($0) }
+                    ),
+                    range: -100...100,
+                    defaultValue: 0
+                )
+
+                ToolSlider(
+                    label: "Shadows",
+                    value: Binding(
+                        get: { viewModel.currentParameters.shadows },
+                        set: { viewModel.updateShadows($0) }
+                    ),
+                    range: -100...100,
+                    defaultValue: 0
+                )
+
+                ToolSlider(
+                    label: "Whites",
+                    value: Binding(
+                        get: { viewModel.currentParameters.whites },
+                        set: { viewModel.updateParameter(\.whites, value: $0) }
+                    ),
+                    range: -100...100,
+                    defaultValue: 0
+                )
+
+                ToolSlider(
+                    label: "Blacks",
+                    value: Binding(
+                        get: { viewModel.currentParameters.blacks },
+                        set: { viewModel.updateParameter(\.blacks, value: $0) }
+                    ),
+                    range: -100...100,
+                    defaultValue: 0
+                )
+
+                Divider().background(Color.white.opacity(0.2))
+
+                // Color section
+                Text("Color")
+                    .font(.caption)
+                    .foregroundStyle(.white.opacity(0.5))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                ToolSlider(
+                    label: "Temperature",
+                    value: Binding(
+                        get: { viewModel.currentParameters.temperature },
+                        set: { viewModel.updateTemperature($0) }
+                    ),
+                    range: -100...100,
+                    defaultValue: 0
+                )
+
+                ToolSlider(
+                    label: "Tint",
+                    value: Binding(
+                        get: { viewModel.currentParameters.tint },
+                        set: { viewModel.updateParameter(\.tint, value: $0) }
+                    ),
+                    range: -100...100,
+                    defaultValue: 0
+                )
+
+                ToolSlider(
+                    label: "Saturation",
+                    value: Binding(
+                        get: { viewModel.currentParameters.saturation },
+                        set: { viewModel.updateSaturation($0) }
+                    ),
+                    range: -100...100,
+                    defaultValue: 0
+                )
+
+                ToolSlider(
+                    label: "Vibrance",
+                    value: Binding(
+                        get: { viewModel.currentParameters.vibrance },
+                        set: { viewModel.updateParameter(\.vibrance, value: $0) }
+                    ),
+                    range: -100...100,
+                    defaultValue: 0
+                )
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
     }
 
     private var effectsToolPanel: some View {
-        VStack(spacing: 12) {
-            ToolSlider(
-                label: "Clarity",
-                value: Binding(
-                    get: { viewModel.currentParameters.clarity },
-                    set: { viewModel.updateParameter(\.clarity, value: $0) }
-                ),
-                range: -100...100,
-                defaultValue: 0
-            )
+        ScrollView {
+            VStack(spacing: 10) {
+                // Detail section
+                Text("Detail")
+                    .font(.caption)
+                    .foregroundStyle(.white.opacity(0.5))
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
-            ToolSlider(
-                label: "Vignette",
-                value: Binding(
-                    get: { viewModel.currentParameters.vignette.amount },
-                    set: { viewModel.updateParameter(\.vignette.amount, value: $0) }
-                ),
-                range: -100...100,
-                defaultValue: 0
-            )
+                ToolSlider(
+                    label: "Clarity",
+                    value: Binding(
+                        get: { viewModel.currentParameters.clarity },
+                        set: { viewModel.updateParameter(\.clarity, value: $0) }
+                    ),
+                    range: -100...100,
+                    defaultValue: 0
+                )
 
-            ToolSlider(
-                label: "Grain",
-                value: Binding(
-                    get: { viewModel.currentParameters.grain.amount },
-                    set: { viewModel.updateParameter(\.grain.amount, value: $0) }
-                ),
-                range: 0...100,
-                defaultValue: 0
-            )
+                ToolSlider(
+                    label: "Sharpness",
+                    value: Binding(
+                        get: { viewModel.currentParameters.sharpness },
+                        set: { viewModel.updateParameter(\.sharpness, value: $0) }
+                    ),
+                    range: 0...100,
+                    defaultValue: 0
+                )
+
+                Divider().background(Color.white.opacity(0.2))
+
+                // Film effects section
+                Text("Film Effects")
+                    .font(.caption)
+                    .foregroundStyle(.white.opacity(0.5))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                ToolSlider(
+                    label: "Grain",
+                    value: Binding(
+                        get: { viewModel.currentParameters.grain.amount },
+                        set: { viewModel.updateParameter(\.grain.amount, value: $0) }
+                    ),
+                    range: 0...100,
+                    defaultValue: 0
+                )
+
+                ToolSlider(
+                    label: "Fade",
+                    value: Binding(
+                        get: { viewModel.currentParameters.fade },
+                        set: { viewModel.updateParameter(\.fade, value: $0) }
+                    ),
+                    range: 0...100,
+                    defaultValue: 0
+                )
+
+                ToolSlider(
+                    label: "Vignette",
+                    value: Binding(
+                        get: { viewModel.currentParameters.vignette.amount },
+                        set: { viewModel.updateParameter(\.vignette.amount, value: $0) }
+                    ),
+                    range: -100...100,
+                    defaultValue: 0
+                )
+
+                ToolSlider(
+                    label: "Bloom",
+                    value: Binding(
+                        get: { viewModel.currentParameters.bloom.intensity },
+                        set: { viewModel.updateParameter(\.bloom.intensity, value: $0) }
+                    ),
+                    range: 0...100,
+                    defaultValue: 0
+                )
+
+                ToolSlider(
+                    label: "Halation",
+                    value: Binding(
+                        get: { viewModel.currentParameters.halation.intensity },
+                        set: { viewModel.updateParameter(\.halation.intensity, value: $0) }
+                    ),
+                    range: 0...100,
+                    defaultValue: 0
+                )
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
     }
 
     private var cropToolPanel: some View {

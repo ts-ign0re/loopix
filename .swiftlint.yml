@@ -1,0 +1,27 @@
+# SwiftLint configuration for FilmBox
+
+disabled_rules:
+  - identifier_name  # Allow short names (x, y, r, g, b) for graphics code
+  - large_tuple      # Allow larger tuples for color data
+  - todo             # Allow TODO comments during development
+  - nesting          # Allow nested types for organization
+  - file_length      # Some files need to be longer
+  - type_body_length # Some types need to be longer
+  - function_body_length  # Some functions need to be longer
+  - function_parameter_count  # Graphics functions may need more params
+  - line_length      # Catalog files have long lines
+
+opt_in_rules:
+  - closure_spacing
+
+excluded:
+  - build
+  - DerivedData
+  - Pods
+  - .build
+
+line_length:
+  warning: 150
+  error: 200
+
+reporter: xcode

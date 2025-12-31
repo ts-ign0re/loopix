@@ -1,0 +1,845 @@
+{
+  "errors" : [
+
+  ],
+  "failed" : 0,
+  "passed" : 49,
+  "results" : [
+    {
+      "filterID" : "agfa_apx_100",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "agfa_apx_25",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "fuji_160c",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "fuji_400h",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "fuji_800z",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "fuji_acros_100",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "fuji_astia_100f",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "fuji_neopan_1600",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "fuji_provia_100f",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "fuji_provia_400f",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "fuji_sensia_100",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "fuji_superia_1600",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "fuji_superia_200_xpro",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "fuji_superia_400",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "fuji_superia_800",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "fuji_superia_xtra_800",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "fuji_velvia_100",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "fuji_velvia_50",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "ilford_delta_100",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "ilford_delta_3200",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "ilford_delta_400",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "ilford_fp4_125",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "ilford_hp5_400",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "ilford_hps_800",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "ilford_panf_50",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "ilford_xp2",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "kodak_bw_400cn",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "kodak_ektachrome_100",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "kodak_ektar_100",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "kodak_elite_chrome_200",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "kodak_elite_chrome_400",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "kodak_kodachrome_200",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "kodak_kodachrome_25",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "kodak_kodachrome_64",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "kodak_portra_160",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "kodak_portra_400",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "kodak_portra_800",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "kodak_tmax_100",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "kodak_tmax_3200",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "kodak_tmax_400",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "kodak_trix_400",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "polaroid_664",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "polaroid_665",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "polaroid_667",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "polaroid_672",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "rollei_ir_400",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "rollei_ortho_25",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "rollei_retro_100_tonal",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    },
+    {
+      "filterID" : "rollei_retro_80s",
+      "mae" : 0,
+      "meanDelta" : {
+        "b" : 0,
+        "g" : 0,
+        "r" : 0
+      },
+      "mse" : 0,
+      "pass" : true,
+      "psnr" : 100,
+      "suggestedCorrections" : {
+        "exposure" : -0,
+        "temperature" : -0,
+        "tint" : -0
+      }
+    }
+  ],
+  "testImage" : "test.jpg",
+  "timestamp" : "2025-12-31T16:42:38Z",
+  "totalFilters" : 49
+}

@@ -38,7 +38,8 @@ extern "C" float4 bloomKernel(coreimage::sampler src,
     float totalWeight = 0.0;
 
     // Gaussian kernel weights (pre-computed for 9 samples)
-    constant float gaussianWeights[9] = {
+    // Note: Cannot use 'constant' address space for local variables in Metal
+    float gaussianWeights[9] = {
         0.0625, 0.125, 0.0625,
         0.125,  0.25,  0.125,
         0.0625, 0.125, 0.0625

@@ -183,6 +183,7 @@ actor HALDCLUTLoader {
     }
 
     /// Extract raw RGBA pixel data from a CGImage
+    /// Uses noneSkipLast for proper handling of images without alpha channel
     private func extractPixelData(from image: CGImage) -> [UInt8]? {
         let width = image.width
         let height = image.height
@@ -192,16 +193,22 @@ actor HALDCLUTLoader {
 
         var pixelData = [UInt8](repeating: 0, count: totalBytes)
 
-        guard let colorSpace = CGColorSpace(name: CGColorSpace.sRGB),
-              let context = CGContext(
-                data: &pixelData,
-                width: width,
-                height: height,
-                bitsPerComponent: 8,
-                bytesPerRow: bytesPerRow,
-                space: colorSpace,
-                bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-              ) else {
+        guard let colorSpace = CGColorSpace(name: CGColorSpace.sRGB) else {
+            return nil
+        }
+
+        // Use noneSkipLast for RGBX format - proper handling of images without alpha
+        let bitmapInfo = CGBitmapInfo(rawValue: CGImageAlphaInfo.noneSkipLast.rawValue)
+
+        guard let context = CGContext(
+            data: &pixelData,
+            width: width,
+            height: height,
+            bitsPerComponent: 8,
+            bytesPerRow: bytesPerRow,
+            space: colorSpace,
+            bitmapInfo: bitmapInfo.rawValue
+        ) else {
             return nil
         }
 
@@ -222,17 +229,18 @@ actor HALDCLUTLoader {
         var floatData = [Float](repeating: 0, count: cubeSize * 4)
 
         // HALD CLUT layout:
-        // The image is arranged as level x level blocks, each block is level x level pixels
-        // Each block row contains level R values
+        // The image is sqrt(level) x sqrt(level) blocks, each block is level x level pixels
+        // Each block row contains level B values spread across sqrt(level) blocks
         // Each pixel row within a block contains level G values
-        // The position within a row encodes B
+        // The position within a row encodes R
+        let sqrtLevel = Int(sqrt(Double(level)))
 
         for r in 0..<level {
             for g in 0..<level {
                 for b in 0..<level {
                     // Calculate position in HALD image
-                    let blockX = b % level
-                    let blockY = b / level
+                    let blockX = b % sqrtLevel
+                    let blockY = b / sqrtLevel
                     let pixelX = blockX * level + r
                     let pixelY = blockY * level + g
 
@@ -355,8 +363,10 @@ actor HALDCLUTLoader {
         width: Int
     ) -> (Float, Float, Float) {
         // Calculate position in HALD image
-        let blockX = b % level
-        let blockY = b / level
+        // HALD uses sqrt(level) x sqrt(level) blocks
+        let sqrtLevel = Int(sqrt(Double(level)))
+        let blockX = b % sqrtLevel
+        let blockY = b / sqrtLevel
         let pixelX = blockX * level + r
         let pixelY = blockY * level + g
 
@@ -376,13 +386,28 @@ actor HALDCLUTLoader {
     // MARK: - Filter Creation
 
     /// Create a CIColorCube filter from cube data
+    /// Uses CIColorCubeWithColorSpace to ensure proper color management with FilterEngine's linearSRGB working space
     private func createColorCubeFilter(from data: Data, size: Int) -> CIFilter? {
-        guard let filter = CIFilter(name: "CIColorCube") else {
+        // Prefer CIColorCubeWithColorSpace for proper color management
+        // This ensures the LUT is applied correctly when FilterEngine works in linearSRGB
+        guard let filter = CIFilter(name: "CIColorCubeWithColorSpace") else {
+            // Fallback to basic CIColorCube if CIColorCubeWithColorSpace unavailable
+            guard let basicFilter = CIFilter(name: "CIColorCube") else {
+                return nil
+            }
+            basicFilter.setValue(size, forKey: "inputCubeDimension")
+            basicFilter.setValue(data, forKey: "inputCubeData")
+            return basicFilter
+        }
+
+        // Use linearSRGB to match FilterEngine's working color space
+        guard let linearColorSpace = CGColorSpace(name: CGColorSpace.linearSRGB) else {
             return nil
         }
 
         filter.setValue(size, forKey: "inputCubeDimension")
         filter.setValue(data, forKey: "inputCubeData")
+        filter.setValue(linearColorSpace, forKey: "inputColorSpace")
 
         return filter
     }
