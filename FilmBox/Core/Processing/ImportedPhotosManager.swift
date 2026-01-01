@@ -147,7 +147,7 @@ final class ImportedPhotosManager {
             PHImageManager.default().requestImageDataAndOrientation(
                 for: asset,
                 options: options
-            ) { [weak self] data, _, _, _ in
+            ) { [weak self] data, _, orientation, _ in
                 guard let self = self, let imageData = data else {
                     print("❌ Failed to get image data for: \(asset.localIdentifier)")
                     continuation.resume()
@@ -157,8 +157,11 @@ final class ImportedPhotosManager {
                 // Save full image
                 let imageURL = self.imagesDirectory.appendingPathComponent(photo.localFileName)
                 do {
-                    // Convert to HEIC for efficient storage
-                    if let ciImage = CIImage(data: imageData) {
+                    // Convert to HEIC for efficient storage, applying EXIF orientation
+                    if var ciImage = CIImage(data: imageData) {
+                        // Apply EXIF orientation to bake it into the image
+                        ciImage = ciImage.oriented(forExifOrientation: Int32(orientation.rawValue))
+
                         let context = CIContext()
                         if let heicData = context.heifRepresentation(
                             of: ciImage,
@@ -167,7 +170,7 @@ final class ImportedPhotosManager {
                             options: [kCGImageDestinationLossyCompressionQuality as CIImageRepresentationOption: 0.9]
                         ) {
                             try heicData.write(to: imageURL)
-                            print("✅ Saved full image: \(photo.localFileName)")
+                            print("✅ Saved full image: \(photo.localFileName) (orientation: \(orientation.rawValue))")
                         } else {
                             // Fallback: save original data
                             try imageData.write(to: imageURL)
@@ -178,8 +181,8 @@ final class ImportedPhotosManager {
                         print("✅ Saved original image: \(photo.localFileName)")
                     }
 
-                    // Generate and save thumbnail
-                    self.generateThumbnail(from: imageData, for: photo)
+                    // Generate and save thumbnail (orientation already applied)
+                    self.generateThumbnail(from: imageURL, for: photo)
 
                     // Add to photos array on main thread
                     Task { @MainActor in
@@ -194,9 +197,9 @@ final class ImportedPhotosManager {
         }
     }
 
-    /// Generate thumbnail for a photo
-    private func generateThumbnail(from imageData: Data, for photo: ImportedPhoto) {
-        guard let ciImage = CIImage(data: imageData) else { return }
+    /// Generate thumbnail for a photo from already-saved image file (with correct orientation)
+    private func generateThumbnail(from imageURL: URL, for photo: ImportedPhoto) {
+        guard let ciImage = CIImage(contentsOf: imageURL) else { return }
 
         // Scale to thumbnail size
         let maxSize: CGFloat = 512
