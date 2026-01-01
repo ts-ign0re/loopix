@@ -15,6 +15,7 @@ struct SettingsView: View {
     @State private var showClearPhotosConfirmation = false
     @State private var showClearCacheConfirmation = false
     @State private var showCopiedToast = false
+    @State private var showSecurityHelp = false
 
     var body: some View {
         NavigationStack {
@@ -34,6 +35,12 @@ struct SettingsView: View {
 
                     // Performance Section
                     performanceSection
+
+                    Divider()
+                        .background(Color.white.opacity(0.1))
+
+                    // Security Section
+                    securitySection
 
                     Divider()
                         .background(Color.white.opacity(0.1))
@@ -98,6 +105,104 @@ struct SettingsView: View {
                 copiedToast
             }
         }
+        .sheet(isPresented: $showSecurityHelp) {
+            securityHelpSheet
+        }
+    }
+
+    // MARK: - Security Help Sheet
+
+    private var securityHelpSheet: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            // Header
+            HStack {
+                Text("// security_mode")
+                    .font(.system(size: 17, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(.white)
+                Spacer()
+                Button {
+                    showSecurityHelp = false
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundStyle(.white.opacity(0.6))
+                }
+            }
+            .padding(.top, 20)
+            .padding(.bottom, 8)
+
+            // Content
+            VStack(alignment: .leading, spacing: 16) {
+                Text("when enabled, all exported photos are stripped of identifying metadata.")
+                    .font(.system(size: 14, design: .monospaced))
+                    .foregroundStyle(.white.opacity(0.9))
+                    .lineSpacing(4)
+
+                VStack(alignment: .leading, spacing: 12) {
+                    helpItem(
+                        title: "location data",
+                        desc: "gps coordinates that reveal where the photo was taken are removed."
+                    )
+
+                    helpItem(
+                        title: "timestamps",
+                        desc: "creation and modification dates are stripped to prevent timeline analysis."
+                    )
+
+                    helpItem(
+                        title: "device info",
+                        desc: "camera model, lens data, and device identifiers are erased."
+                    )
+
+                    helpItem(
+                        title: "software traces",
+                        desc: "editing history and software signatures are cleared."
+                    )
+
+                    helpItem(
+                        title: "thumbnails",
+                        desc: "embedded preview images that may contain original data are removed."
+                    )
+                }
+
+                Divider()
+                    .background(Color.white.opacity(0.1))
+
+                Text("the only metadata preserved is 'RedRoom iOS' as the software tag.")
+                    .font(.system(size: 12, design: .monospaced))
+                    .foregroundStyle(.yellow.opacity(0.8))
+                    .lineSpacing(3)
+
+                Text("// recommended for sharing sensitive images")
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundStyle(.white.opacity(0.4))
+                    .padding(.top, 4)
+            }
+
+            Spacer()
+        }
+        .padding(24)
+        .background(Color.black)
+        .presentationDetents([.medium])
+        .presentationDragIndicator(.visible)
+        .preferredColorScheme(.dark)
+    }
+
+    private func helpItem(title: String, desc: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 6) {
+                Image(systemName: "checkmark.shield.fill")
+                    .font(.system(size: 10))
+                    .foregroundStyle(.green.opacity(0.8))
+                Text(title)
+                    .font(.system(size: 12, weight: .medium, design: .monospaced))
+                    .foregroundStyle(.white)
+            }
+            Text(desc)
+                .font(.system(size: 11, design: .monospaced))
+                .foregroundStyle(.white.opacity(0.5))
+                .lineSpacing(2)
+        }
     }
 
     // MARK: - Storage Section
@@ -134,12 +239,13 @@ struct SettingsView: View {
             }
 
             // Limit slider
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text("limit")
                     .font(.system(size: 12, weight: .medium, design: .monospaced))
                     .foregroundStyle(.white.opacity(0.6))
+                    .padding(.top, 6)
 
-                HStack(spacing: 12) {
+                HStack(spacing: 8) {
                     Text("1gb")
                         .font(.system(size: 11, design: .monospaced))
                         .foregroundStyle(.white.opacity(0.4))
@@ -160,6 +266,7 @@ struct SettingsView: View {
                     .font(.system(size: 13, weight: .medium, design: .monospaced))
                     .foregroundStyle(.yellow)
                     .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.bottom, 6)
             }
 
             // Clear buttons
@@ -278,6 +385,81 @@ struct SettingsView: View {
                     .font(.system(size: 11, design: .monospaced))
                     .foregroundStyle(.white.opacity(0.4))
             }
+        }
+    }
+
+    // MARK: - Security Section
+
+    private var securitySection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                sectionHeader("security")
+                Spacer()
+                Button {
+                    showSecurityHelp = true
+                } label: {
+                    Image(systemName: "questionmark.circle")
+                        .font(.system(size: 16))
+                        .foregroundStyle(.white.opacity(0.4))
+                }
+            }
+
+            VStack(alignment: .leading, spacing: 12) {
+                Toggle(isOn: $settings.securityMode) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("strip_metadata")
+                            .font(.system(size: 13, weight: .medium, design: .monospaced))
+                            .foregroundStyle(.white)
+
+                        Text("// removes identifying info on export")
+                            .font(.system(size: 11, design: .monospaced))
+                            .foregroundStyle(.white.opacity(0.4))
+                    }
+                }
+                .tint(.yellow)
+
+                if settings.securityMode {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("removed on export:")
+                            .font(.system(size: 11, weight: .medium, design: .monospaced))
+                            .foregroundStyle(.white.opacity(0.5))
+
+                        VStack(alignment: .leading, spacing: 3) {
+                            metadataItem("gps / location")
+                            metadataItem("date / time")
+                            metadataItem("device model")
+                            metadataItem("camera settings")
+                            metadataItem("software / author")
+                            metadataItem("thumbnails / previews")
+                        }
+
+                        Text("// only 'RedRoom iOS' tag preserved")
+                            .font(.system(size: 11, design: .monospaced))
+                            .foregroundStyle(.yellow.opacity(0.6))
+                            .padding(.top, 4)
+                    }
+                    .padding(12)
+                    .background(Color.red.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.red.opacity(0.3), lineWidth: 1)
+                    )
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+                }
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: settings.securityMode)
+    }
+
+    private func metadataItem(_ text: String) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: "xmark")
+                .font(.system(size: 8, weight: .bold))
+                .foregroundStyle(.red.opacity(0.8))
+            Text(text)
+                .font(.system(size: 11, design: .monospaced))
+                .foregroundStyle(.white.opacity(0.6))
         }
     }
 

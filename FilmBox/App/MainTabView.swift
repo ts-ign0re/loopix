@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import ImageIO
 
 // MARK: - App Tab
 
@@ -369,6 +370,52 @@ struct LibraryContentView: View {
         }
     }
 
+    /// Add RedRoom iOS source metadata to image data
+    /// When securityMode is true, strips ALL identifying metadata
+    private func addSourceMetadata(to data: Data, securityMode: Bool = false) -> Data? {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil),
+              let utType = CGImageSourceGetType(source) else {
+            return nil
+        }
+
+        let mutableData = NSMutableData()
+        guard let destination = CGImageDestinationCreateWithData(
+            mutableData,
+            utType,
+            1,
+            nil
+        ) else {
+            return nil
+        }
+
+        if securityMode {
+            // Security mode: strip ALL metadata, only keep RedRoom iOS
+            guard let cgImage = CGImageSourceCreateImageAtIndex(source, 0, nil) else {
+                return nil
+            }
+            let cleanMetadata: [String: Any] = [
+                kCGImagePropertyTIFFDictionary as String: [
+                    kCGImagePropertyTIFFSoftware as String: "RedRoom iOS"
+                ]
+            ]
+            CGImageDestinationAddImage(destination, cgImage, cleanMetadata as CFDictionary)
+        } else {
+            // Normal mode: preserve metadata, add RedRoom iOS
+            let metadata: [String: Any] = [
+                kCGImagePropertyTIFFDictionary as String: [
+                    kCGImagePropertyTIFFSoftware as String: "RedRoom iOS"
+                ]
+            ]
+            CGImageDestinationAddImageFromSource(destination, source, 0, metadata as CFDictionary)
+        }
+
+        guard CGImageDestinationFinalize(destination) else {
+            return nil
+        }
+
+        return mutableData as Data
+    }
+
     private func exportAndShare() {
         let photos = manager.getSelectedPhotosForLocalExport()
         guard !photos.isEmpty else { return }
@@ -376,6 +423,9 @@ struct LibraryContentView: View {
         Task {
             isExporting = true
             var urls: [URL] = []
+
+            // Check security mode setting
+            let securityMode = AppSettings.shared.securityMode
 
             for item in photos {
                 if let ciImage = ImportedPhotosManager.shared.loadCIImage(for: item.photo) {
@@ -388,12 +438,14 @@ struct LibraryContentView: View {
                     let tempURL = FileManager.default.temporaryDirectory
                         .appendingPathComponent("\(item.photo.id.uuidString).heic")
 
-                    if let heicData = context.heifRepresentation(
+                    if var heicData = context.heifRepresentation(
                         of: processedImage,
                         format: .RGBA8,
                         colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!,
                         options: [:]
                     ) {
+                        // Add RedRoom iOS source metadata (strip all if security mode)
+                        heicData = addSourceMetadata(to: heicData, securityMode: securityMode) ?? heicData
                         try? heicData.write(to: tempURL)
                         urls.append(tempURL)
                     }

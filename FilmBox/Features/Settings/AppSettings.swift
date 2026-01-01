@@ -72,6 +72,14 @@ final class AppSettings {
         didSet { save() }
     }
 
+    // MARK: - Security Settings
+
+    /// When enabled, strips all identifying metadata from exports (GPS, dates, device info, etc.)
+    /// Only keeps "RedRoom iOS" as software tag
+    var securityMode: Bool = false {
+        didSet { save() }
+    }
+
     // MARK: - Private
 
     private let userDefaultsKey = "com.filmbox.appSettings"
@@ -90,7 +98,8 @@ final class AppSettings {
             exportFormat: exportFormat,
             exportQuality: exportQuality,
             exportSize: exportSize,
-            previewQuality: previewQuality
+            previewQuality: previewQuality,
+            securityMode: securityMode
         )
 
         if let encoded = try? JSONEncoder().encode(data) {
@@ -109,6 +118,7 @@ final class AppSettings {
         exportQuality = decoded.exportQuality
         exportSize = decoded.exportSize
         previewQuality = decoded.previewQuality
+        securityMode = decoded.securityMode ?? false
     }
 
     // MARK: - Debug Info
@@ -142,4 +152,5 @@ private struct SettingsData: Codable {
     var exportQuality: Double
     var exportSize: ExportSize
     var previewQuality: PreviewQuality
+    var securityMode: Bool?
 }

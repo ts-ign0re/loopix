@@ -8,8 +8,14 @@ struct FiltersTabView: View {
 
     // MARK: - Properties
 
-    /// Currently selected category
-    @State private var selectedCategory: FilterCategory = .all
+    /// Currently selected category (restored from last session)
+    @State private var selectedCategory: FilterCategory = {
+        if let savedRaw = UserDefaults.standard.string(forKey: "lastSelectedFilterCategory"),
+           let category = FilterCategory(rawValue: savedRaw) {
+            return category
+        }
+        return .all
+    }()
 
     /// Currently selected filter (nil for Original)
     @State private var selectedFilter: FilterPreset?
@@ -132,6 +138,9 @@ struct FiltersTabView: View {
             onFilterChanged?(selectedFilter, newIntensity)
         }
         .onChange(of: selectedCategory) { _, newCategory in
+            // Save last selected category
+            UserDefaults.standard.set(newCategory.rawValue, forKey: "lastSelectedFilterCategory")
+
             if newCategory == .film {
                 Task {
                     await loadFilmPresets()

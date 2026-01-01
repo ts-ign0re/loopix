@@ -147,41 +147,22 @@ final class ImportedPhotosManager {
             PHImageManager.default().requestImageDataAndOrientation(
                 for: asset,
                 options: options
-            ) { [weak self] data, _, orientation, _ in
+            ) { [weak self] data, _, _, _ in
                 guard let self = self, let imageData = data else {
                     print("❌ Failed to get image data for: \(asset.localIdentifier)")
                     continuation.resume()
                     return
                 }
 
-                // Save full image
+                // Save full image - preserve original data with EXIF orientation
+                // Orientation will be applied when loading via loadCIImage()
                 let imageURL = self.imagesDirectory.appendingPathComponent(photo.localFileName)
                 do {
-                    // Convert to HEIC for efficient storage, applying EXIF orientation
-                    if var ciImage = CIImage(data: imageData) {
-                        // Apply EXIF orientation to bake it into the image
-                        ciImage = ciImage.oriented(forExifOrientation: Int32(orientation.rawValue))
+                    // Save original data to preserve EXIF orientation metadata
+                    try imageData.write(to: imageURL)
+                    print("✅ Saved full image: \(photo.localFileName)")
 
-                        let context = CIContext()
-                        if let heicData = context.heifRepresentation(
-                            of: ciImage,
-                            format: .RGBA8,
-                            colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!,
-                            options: [kCGImageDestinationLossyCompressionQuality as CIImageRepresentationOption: 0.9]
-                        ) {
-                            try heicData.write(to: imageURL)
-                            print("✅ Saved full image: \(photo.localFileName) (orientation: \(orientation.rawValue))")
-                        } else {
-                            // Fallback: save original data
-                            try imageData.write(to: imageURL)
-                            print("✅ Saved original image: \(photo.localFileName)")
-                        }
-                    } else {
-                        try imageData.write(to: imageURL)
-                        print("✅ Saved original image: \(photo.localFileName)")
-                    }
-
-                    // Generate and save thumbnail (orientation already applied)
+                    // Generate and save thumbnail
                     self.generateThumbnail(from: imageURL, for: photo)
 
                     // Add to photos array on main thread
@@ -197,9 +178,14 @@ final class ImportedPhotosManager {
         }
     }
 
-    /// Generate thumbnail for a photo from already-saved image file (with correct orientation)
+    /// Generate thumbnail for a photo from already-saved image file
     private func generateThumbnail(from imageURL: URL, for photo: ImportedPhoto) {
-        guard let ciImage = CIImage(contentsOf: imageURL) else { return }
+        guard var ciImage = CIImage(contentsOf: imageURL) else { return }
+
+        // Apply EXIF orientation if present
+        if let orientation = ciImage.properties[kCGImagePropertyOrientation as String] as? Int32 {
+            ciImage = ciImage.oriented(forExifOrientation: orientation)
+        }
 
         // Scale to thumbnail size
         let maxSize: CGFloat = 512
@@ -256,10 +242,17 @@ final class ImportedPhotosManager {
         thumbnailsDirectory.appendingPathComponent(photo.thumbnailFileName)
     }
 
-    /// Load CIImage from local storage
+    /// Load CIImage from local storage with proper orientation
     func loadCIImage(for photo: ImportedPhoto) -> CIImage? {
         let imageURL = getLocalImageURL(for: photo)
-        return CIImage(contentsOf: imageURL)
+        guard var ciImage = CIImage(contentsOf: imageURL) else { return nil }
+
+        // Apply EXIF orientation if present in the image properties
+        if let orientation = ciImage.properties[kCGImagePropertyOrientation as String] as? Int32 {
+            ciImage = ciImage.oriented(forExifOrientation: orientation)
+        }
+
+        return ciImage
     }
 
     /// Load UIImage from local storage

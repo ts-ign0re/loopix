@@ -287,7 +287,7 @@ actor ExportEngine {
         }
 
         // Render to JPEG data with high quality
-        guard let jpegData = ciContext.jpegRepresentation(
+        guard var jpegData = ciContext.jpegRepresentation(
             of: processedImage,
             colorSpace: processedImage.colorSpace ?? CGColorSpace(name: CGColorSpace.sRGB)!,
             options: [
@@ -297,6 +297,12 @@ actor ExportEngine {
             throw ExportError.encodingFailed(format: .jpeg)
         }
 
+        // Check security mode
+        let securityMode = await MainActor.run { AppSettings.shared.securityMode }
+
+        // Add RedRoom iOS as source in EXIF (strip all metadata if security mode)
+        jpegData = addSourceMetadata(to: jpegData, securityMode: securityMode) ?? jpegData
+
         // Save to Photos Library
         var localIdentifier: String?
 
@@ -304,12 +310,14 @@ actor ExportEngine {
             let creationRequest = PHAssetCreationRequest.forAsset()
             creationRequest.addResource(with: .photo, data: jpegData, options: nil)
 
-            // Copy metadata from original if available
-            if let originalDate = asset.creationDate {
-                creationRequest.creationDate = originalDate
-            }
-            if let location = asset.location {
-                creationRequest.location = location
+            // Copy metadata from original if NOT in security mode
+            if !securityMode {
+                if let originalDate = asset.creationDate {
+                    creationRequest.creationDate = originalDate
+                }
+                if let location = asset.location {
+                    creationRequest.location = location
+                }
             }
 
             localIdentifier = creationRequest.placeholderForCreatedAsset?.localIdentifier
@@ -411,7 +419,7 @@ actor ExportEngine {
             let resizedImage = resizeImage(processedImage, settings: settings)
 
             // Encode to output format
-            let outputData = try encodeImage(
+            let outputData = try await encodeImage(
                 resizedImage,
                 format: settings.format,
                 quality: settings.quality,
@@ -561,12 +569,15 @@ actor ExportEngine {
         preserveMetadata: Bool,
         includeLocation: Bool,
         originalImageData: Data
-    ) throws -> Data {
+    ) async throws -> Data {
         let colorSpace = image.colorSpace ?? CGColorSpace(name: CGColorSpace.sRGB)!
 
-        // Extract metadata from original if needed
+        // Check security mode - if enabled, strip ALL metadata
+        let securityMode = await MainActor.run { AppSettings.shared.securityMode }
+
+        // Extract metadata from original if needed (and not in security mode)
         var metadata: [String: Any]?
-        if preserveMetadata {
+        if preserveMetadata && !securityMode {
             if let source = CGImageSourceCreateWithData(originalImageData as CFData, nil) {
                 metadata = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any]
 
@@ -575,6 +586,23 @@ actor ExportEngine {
                     metadata?.removeValue(forKey: kCGImagePropertyGPSDictionary as String)
                 }
             }
+        }
+
+        // In security mode: only RedRoom iOS tag, nothing else
+        // Normal mode: add RedRoom iOS to existing metadata
+        if securityMode {
+            metadata = [
+                kCGImagePropertyTIFFDictionary as String: [
+                    kCGImagePropertyTIFFSoftware as String: "RedRoom iOS"
+                ]
+            ]
+        } else {
+            if metadata == nil {
+                metadata = [:]
+            }
+            var tiffDict = metadata?[kCGImagePropertyTIFFDictionary as String] as? [String: Any] ?? [:]
+            tiffDict[kCGImagePropertyTIFFSoftware as String] = "RedRoom iOS"
+            metadata?[kCGImagePropertyTIFFDictionary as String] = tiffDict
         }
 
         let outputData: Data
@@ -659,7 +687,7 @@ actor ExportEngine {
             }
         }
 
-        // If we need to embed metadata, we need to reprocess
+        // Always embed metadata (at minimum includes RedRoom iOS source)
         if let metadata = metadata, !metadata.isEmpty {
             return embedMetadata(metadata, in: outputData, format: format) ?? outputData
         }
@@ -685,6 +713,56 @@ actor ExportEngine {
         }
 
         CGImageDestinationAddImageFromSource(destination, source, 0, metadata as CFDictionary)
+
+        guard CGImageDestinationFinalize(destination) else {
+            return nil
+        }
+
+        return mutableData as Data
+    }
+
+    /// Add RedRoom iOS source metadata to image data
+    /// When securityMode is true, strips ALL identifying metadata
+    private nonisolated func addSourceMetadata(to data: Data, securityMode: Bool = false) -> Data? {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil),
+              let utType = CGImageSourceGetType(source) else {
+            return nil
+        }
+
+        let mutableData = NSMutableData()
+        guard let destination = CGImageDestinationCreateWithData(
+            mutableData,
+            utType,
+            1,
+            nil
+        ) else {
+            return nil
+        }
+
+        if securityMode {
+            // Security mode: strip ALL metadata, only keep RedRoom iOS tag
+            // Create clean image with minimal metadata
+            guard let cgImage = CGImageSourceCreateImageAtIndex(source, 0, nil) else {
+                return nil
+            }
+
+            // Only include RedRoom iOS software tag - nothing else
+            let cleanMetadata: [String: Any] = [
+                kCGImagePropertyTIFFDictionary as String: [
+                    kCGImagePropertyTIFFSoftware as String: "RedRoom iOS"
+                ]
+            ]
+
+            CGImageDestinationAddImage(destination, cgImage, cleanMetadata as CFDictionary)
+        } else {
+            // Normal mode: preserve existing metadata, add RedRoom iOS
+            let metadata: [String: Any] = [
+                kCGImagePropertyTIFFDictionary as String: [
+                    kCGImagePropertyTIFFSoftware as String: "RedRoom iOS"
+                ]
+            ]
+            CGImageDestinationAddImageFromSource(destination, source, 0, metadata as CFDictionary)
+        }
 
         guard CGImageDestinationFinalize(destination) else {
             return nil
@@ -814,7 +892,7 @@ extension ExportEngine {
         }
 
         // Render to JPEG data with high quality
-        guard let jpegData = ciContext.jpegRepresentation(
+        guard var jpegData = ciContext.jpegRepresentation(
             of: processedImage,
             colorSpace: processedImage.colorSpace ?? CGColorSpace(name: CGColorSpace.sRGB)!,
             options: [
@@ -824,13 +902,24 @@ extension ExportEngine {
             throw ExportError.encodingFailed(format: .jpeg)
         }
 
+        // Check security mode
+        let securityMode = AppSettings.shared.securityMode
+
+        // Add RedRoom iOS as source in EXIF (strip all metadata if security mode)
+        jpegData = addSourceMetadata(to: jpegData, securityMode: securityMode) ?? jpegData
+
         // Save to Photos Library
         var localIdentifier: String?
 
         try await PHPhotoLibrary.shared().performChanges {
             let creationRequest = PHAssetCreationRequest.forAsset()
             creationRequest.addResource(with: .photo, data: jpegData, options: nil)
-            creationRequest.creationDate = photo.importedAt
+
+            // Only set creation date if NOT in security mode
+            if !securityMode {
+                creationRequest.creationDate = photo.importedAt
+            }
+
             localIdentifier = creationRequest.placeholderForCreatedAsset?.localIdentifier
         }
 
