@@ -99,7 +99,7 @@ final class FujiRecipeImporter {
             category: .film,
             source: .imported(sourceName: "Fuji Recipe"),
             parameters: parameters,
-            metadata: FilterMetadata(
+            metadata: FilterPreset.FilterMetadata(
                 filmStock: recipe.filmSimulation,
                 characteristics: ["fuji", "recipe", recipe.filmSimulation.lowercased()]
             )

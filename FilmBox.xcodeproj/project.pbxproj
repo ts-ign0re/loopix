@@ -188,6 +188,8 @@
 				A1000001229E000000000013 /* HALDCLUTLoader.swift */,
 				A1000001229E000000000014 /* FilmEmulations.swift */,
 				A1000001229E000000000015 /* CreativeFilters.swift */,
+				CE0756FA2F05800100C53D17 /* FilterStorage.swift */,
+				CE0756FB2F05800200C53D17 /* FujiRecipeImporter.swift */,
 			);
 			path = Filters;
 			sourceTree = "<group>";
@@ -513,6 +515,8 @@
 				CE0756F22F05700100C53D17 /* PhotoPickerView.swift in Sources */,
 				CE0756F42F05700200C53D17 /* ImportedPhotosManager.swift in Sources */,
 				CE0756F82F05800000C53D17 /* FiltersManagementView.swift in Sources */,
+				CE0756F92F05800100C53D17 /* FilterStorage.swift in Sources */,
+				CE0756FC2F05800200C53D17 /* FujiRecipeImporter.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
