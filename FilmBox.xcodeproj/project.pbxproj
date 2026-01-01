@@ -50,6 +50,7 @@
 		CE0756F82F05800000C53D17 /* FiltersManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0756F72F05800000C53D17 /* FiltersManagementView.swift */; };
 		CE0756F92F05800100C53D17 /* FilterStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0756FA2F05800100C53D17 /* FilterStorage.swift */; };
 		CE0756FC2F05800200C53D17 /* FujiRecipeImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0756FB2F05800200C53D17 /* FujiRecipeImporter.swift */; };
+		CE0756FD2F05800300C53D17 /* FilterPreviewCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0756FE2F05800300C53D17 /* FilterPreviewCache.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -76,6 +77,7 @@
 		A1000001229E000000000015 /* CreativeFilters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BuiltInFilters/CreativeFilters.swift"; sourceTree = "<group>"; };
 		CE0756FA2F05800100C53D17 /* FilterStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterStorage.swift; sourceTree = "<group>"; };
 		CE0756FB2F05800200C53D17 /* FujiRecipeImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FujiRecipeImporter.swift; sourceTree = "<group>"; };
+		CE0756FE2F05800300C53D17 /* FilterPreviewCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterPreviewCache.swift; sourceTree = "<group>"; };
 		A1000001229E000000000020 /* MetalFilterLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetalFilterLoader.swift; sourceTree = "<group>"; };
 		A1000001229E000000000040 /* ExportEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportEngine.swift; sourceTree = "<group>"; };
 		A1000001229E000000000041 /* FilterEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterEngine.swift; sourceTree = "<group>"; };
@@ -190,6 +192,7 @@
 				A1000001229E000000000015 /* CreativeFilters.swift */,
 				CE0756FA2F05800100C53D17 /* FilterStorage.swift */,
 				CE0756FB2F05800200C53D17 /* FujiRecipeImporter.swift */,
+				CE0756FE2F05800300C53D17 /* FilterPreviewCache.swift */,
 			);
 			path = Filters;
 			sourceTree = "<group>";
@@ -517,6 +520,7 @@
 				CE0756F82F05800000C53D17 /* FiltersManagementView.swift in Sources */,
 				CE0756F92F05800100C53D17 /* FilterStorage.swift in Sources */,
 				CE0756FC2F05800200C53D17 /* FujiRecipeImporter.swift in Sources */,
+				CE0756FD2F05800300C53D17 /* FilterPreviewCache.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

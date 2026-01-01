@@ -2,6 +2,7 @@ import SwiftUI
 
 /// Filters Management screen with FAB menu for filter operations
 /// Accessible from home screen FAB → "filters"
+@available(iOS 17.0, *)
 struct FiltersManagementView: View {
 
     // MARK: - Environment
@@ -39,6 +40,12 @@ struct FiltersManagementView: View {
 
     /// Favorite filter IDs
     @State private var favoriteIDs: Set<UUID> = []
+
+    /// Cached filter preview images
+    @State private var previewImages: [UUID: CGImage] = [:]
+
+    /// Loading state for previews
+    @State private var isLoadingPreviews = false
 
     // MARK: - Computed Properties
 
@@ -120,6 +127,10 @@ struct FiltersManagementView: View {
         .task {
             await loadFilters()
             await loadFavorites()
+
+            // Generate initial previews for all filters on first app start
+            let allFiltersForPreview = builtInFilters + userFilters
+            await FilterPreviewCache.shared.generateInitialPreviews(for: allFiltersForPreview)
         }
         .alert("Delete Filter", isPresented: $showDeleteConfirmation) {
             Button("Cancel", role: .cancel) { }
@@ -211,6 +222,7 @@ struct FiltersManagementView: View {
     private func filterCell(_ filter: FilterPreset) -> some View {
         let isSelected = selectedFilter?.id == filter.id
         let isFavorite = favoriteIDs.contains(filter.id)
+        let previewImage = previewImages[filter.id]
 
         return Button {
             withAnimation(.easeInOut(duration: 0.15)) {
@@ -222,17 +234,30 @@ struct FiltersManagementView: View {
             }
         } label: {
             VStack(spacing: 8) {
-                // Filter preview placeholder
+                // Filter preview image
                 ZStack {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(
-                            LinearGradient(
-                                colors: gradientColors(for: filter),
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
+                    // Background / Preview image
+                    if let cgImage = previewImage {
+                        Image(decorative: cgImage, scale: 1.0)
+                            .resizable()
+                            .aspectRatio(1, contentMode: .fill)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                    } else {
+                        // Loading placeholder with gradient
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(
+                                LinearGradient(
+                                    colors: gradientColors(for: filter),
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
                             )
-                        )
-                        .aspectRatio(1, contentMode: .fit)
+                            .aspectRatio(1, contentMode: .fit)
+                            .overlay(
+                                ProgressView()
+                                    .tint(.white.opacity(0.5))
+                            )
+                    }
 
                     // Selection indicator
                     if isSelected {
@@ -277,7 +302,7 @@ struct FiltersManagementView: View {
 
                 // Filter name
                 Text(filter.name)
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.system(size: 12, weight: .medium, design: .monospaced))
                     .foregroundStyle(.white.opacity(0.9))
                     .lineLimit(1)
             }
@@ -289,6 +314,14 @@ struct FiltersManagementView: View {
                     toggleFavorite(filter)
                 }
         )
+        .task {
+            // Load preview for this filter if not already loaded
+            if previewImages[filter.id] == nil {
+                if let preview = await FilterPreviewCache.shared.getPreview(for: filter) {
+                    previewImages[filter.id] = preview
+                }
+            }
+        }
     }
 
     private func gradientColors(for filter: FilterPreset) -> [Color] {
@@ -459,8 +492,7 @@ struct FiltersManagementView: View {
     private func duplicateSelectedFilter() {
         guard let filter = selectedFilter else { return }
 
-        var newFilter = filter
-        newFilter = FilterPreset(
+        let newFilter = FilterPreset(
             id: UUID(),
             name: "Copy of \(filter.name)",
             category: .custom,
@@ -473,6 +505,12 @@ struct FiltersManagementView: View {
 
         Task {
             try? await FilterStorage.shared.save(newFilter)
+
+            // Generate preview for the new filter
+            if let preview = await FilterPreviewCache.shared.generatePreview(for: newFilter) {
+                previewImages[newFilter.id] = preview
+            }
+
             await loadFilters()
             selectedFilter = newFilter
         }
@@ -487,6 +525,11 @@ struct FiltersManagementView: View {
 
         do {
             try await FilterStorage.shared.delete(id: filter.id)
+
+            // Delete the preview for this filter
+            await FilterPreviewCache.shared.deletePreview(for: filter.id)
+            previewImages.removeValue(forKey: filter.id)
+
             selectedFilter = nil
             await loadFilters()
         } catch {
@@ -495,6 +538,12 @@ struct FiltersManagementView: View {
     }
 
     private func handleFilterSaved(_ filter: FilterPreset) async {
+        // Regenerate preview for the saved filter
+        await FilterPreviewCache.shared.regeneratePreview(for: filter)
+        if let preview = await FilterPreviewCache.shared.getPreview(for: filter) {
+            previewImages[filter.id] = preview
+        }
+
         await loadFilters()
         selectedFilter = filter
     }
@@ -512,6 +561,7 @@ enum FilterEditorSection: String, CaseIterable {
     case vignette = "Vignette"
 }
 
+@available(iOS 17.0, *)
 struct FilterEditorView: View {
     @Environment(\.dismiss) private var dismiss
 
