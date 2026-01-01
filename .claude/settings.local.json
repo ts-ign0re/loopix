@@ -4,7 +4,11 @@
       "mcp__vibe_kanban__list_projects",
       "mcp__vibe_kanban__list_repos",
       "mcp__vibe_kanban__list_tasks",
-      "Bash(xcodebuild:*)"
+      "Bash(xcodebuild:*)",
+      "Bash(cat:*)",
+      "Bash(xcrun simctl boot:*)",
+      "Bash(xcrun simctl uninstall:*)",
+      "Bash(find:*)"
     ]
   }
 }

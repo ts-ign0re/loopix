@@ -8,6 +8,7 @@
 import SwiftUI
 import Photos
 
+@available(iOS 17.0, *)
 struct HomeView: View {
 
     // MARK: - Properties
@@ -17,6 +18,8 @@ struct HomeView: View {
     @State private var photoToEdit: ImportedPhoto?
     @State private var showDeleteConfirmation = false
     @State private var showExportSheet = false
+    @State private var showFilters = false
+    @State private var isFabExpanded = false
 
     // Grid configuration
     private let columns = 3
@@ -39,16 +42,17 @@ struct HomeView: View {
                 // FAB Button
                 fabButton
             }
-            .navigationTitle("FilmBox")
+            .navigationTitle("filmbox")
             .navigationBarTitleDisplayMode(.large)
             .toolbarBackground(.black, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
                 if manager.isSelectionMode {
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button("Done") {
+                        Button("done") {
                             manager.clearSelection()
                         }
+                        .font(.system(.body, design: .monospaced))
                         .foregroundStyle(.white)
                     }
                 }
@@ -73,17 +77,18 @@ struct HomeView: View {
                 } else {
                     NavigationStack {
                         ContentUnavailableView {
-                            Label("Photo Unavailable", systemImage: "exclamationmark.triangle")
+                            Label("photo unavailable", systemImage: "exclamationmark.triangle")
                         } description: {
-                            Text("This photo could not be loaded. The file may have been deleted.")
+                            Text("this photo could not be loaded. the file may have been deleted.")
                         }
-                        .navigationTitle("Error")
+                        .navigationTitle("error")
                         .navigationBarTitleDisplayMode(.inline)
                         .toolbar {
                             ToolbarItem(placement: .cancellationAction) {
-                                Button("Close") {
+                                Button("close") {
                                     photoToEdit = nil
                                 }
+                                .font(.system(.body, design: .monospaced))
                             }
                         }
                     }
@@ -91,19 +96,22 @@ struct HomeView: View {
                 }
             }
             .confirmationDialog(
-                "Delete \(manager.selectedCount) photo\(manager.selectedCount == 1 ? "" : "s")?",
+                "delete \(manager.selectedCount) photo\(manager.selectedCount == 1 ? "" : "s")?",
                 isPresented: $showDeleteConfirmation,
                 titleVisibility: .visible
             ) {
-                Button("Delete", role: .destructive) {
+                Button("delete", role: .destructive) {
                     withAnimation {
                         manager.removeSelectedPhotos()
                     }
                 }
-                Button("Cancel", role: .cancel) {}
+                Button("cancel", role: .cancel) {}
             }
             .sheet(isPresented: $showExportSheet) {
                 ExportView(localPhotos: manager.getSelectedPhotosForLocalExport())
+            }
+            .sheet(isPresented: $showFilters) {
+                FiltersManagementView()
             }
         }
         .preferredColorScheme(.dark)
@@ -118,12 +126,12 @@ struct HomeView: View {
                 .foregroundStyle(.white.opacity(0.3))
 
             VStack(spacing: 8) {
-                Text("No Photos")
-                    .font(.title2.weight(.semibold))
+                Text("no photos")
+                    .font(.system(.title2, design: .monospaced).weight(.semibold))
                     .foregroundStyle(.white)
 
-                Text("Tap + to import photos from your library")
-                    .font(.subheadline)
+                Text("tap + to import photos from your library")
+                    .font(.system(.subheadline, design: .monospaced))
                     .foregroundStyle(.white.opacity(0.6))
                     .multilineTextAlignment(.center)
             }
@@ -170,24 +178,77 @@ struct HomeView: View {
             Spacer()
             HStack {
                 Spacer()
-                Button {
-                    showPhotoPicker = true
-                } label: {
-                    Image(systemName: "plus")
-                        .font(.title2.weight(.semibold))
-                        .foregroundStyle(.black)
-                        .frame(width: 56, height: 56)
-                        .background(Color.white)
-                        .clipShape(Circle())
-                        .shadow(color: .black.opacity(0.3), radius: 8, y: 4)
+                VStack(alignment: .trailing, spacing: 8) {
+                    // Expanded menu items
+                    if isFabExpanded {
+                        VStack(alignment: .trailing, spacing: 8) {
+                            // Import photos
+                            fabMenuItem(title: "import", icon: "photo.on.rectangle.angled") {
+                                showPhotoPicker = true
+                                isFabExpanded = false
+                            }
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
+
+                            // Filters management
+                            fabMenuItem(title: "filters", icon: "slider.horizontal.3") {
+                                showFilters = true
+                                isFabExpanded = false
+                            }
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
+                        }
+                    }
+
+                    // Main FAB button - Yellow
+                    Button {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                            isFabExpanded.toggle()
+                        }
+                    } label: {
+                        Circle()
+                            .fill(Color.yellow)
+                            .frame(width: 56, height: 56)
+                            .shadow(color: .yellow.opacity(0.4), radius: 8, y: 2)
+                            .overlay {
+                                Image(systemName: isFabExpanded ? "xmark" : "plus")
+                                    .font(.system(size: 22, weight: .semibold))
+                                    .foregroundStyle(.black)
+                                    .rotationEffect(.degrees(isFabExpanded ? 90 : 0))
+                            }
+                    }
+                    .buttonStyle(.plain)
+                    .contentShape(Circle())
                 }
                 .padding(.trailing, 20)
-                .padding(.bottom, manager.isSelectionMode ? 90 : 20)
+                .padding(.bottom, manager.isSelectionMode ? 90 : 28)
             }
         }
     }
 
-    // MARK: - Selection Action Bar (iOS Photos style)
+    private func fabMenuItem(title: String, icon: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 10) {
+                Text(title)
+                    .font(.system(size: 14, weight: .medium, design: .monospaced))
+
+                Image(systemName: icon)
+                    .font(.system(size: 14, weight: .medium))
+            }
+            .foregroundStyle(.white)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .background(
+                Capsule()
+                    .fill(.ultraThinMaterial)
+                    .overlay(
+                        Capsule()
+                            .stroke(Color.white.opacity(0.2), lineWidth: 0.5)
+                    )
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Selection Action Bar
 
     private var selectionActionBar: some View {
         HStack(spacing: 24) {
@@ -201,9 +262,9 @@ struct HomeView: View {
                 } label: {
                     VStack(spacing: 4) {
                         Image(systemName: "slider.horizontal.3")
-                            .font(.system(size: 22))
-                        Text("Edit")
-                            .font(.caption2)
+                            .font(.system(size: 20))
+                        Text("edit")
+                            .font(.system(size: 10, design: .monospaced))
                     }
                     .foregroundStyle(.white)
                 }
@@ -215,9 +276,9 @@ struct HomeView: View {
             } label: {
                 VStack(spacing: 4) {
                     Image(systemName: "square.and.arrow.up")
-                        .font(.system(size: 22))
-                    Text("Export")
-                        .font(.caption2)
+                        .font(.system(size: 20))
+                    Text("export")
+                        .font(.system(size: 10, design: .monospaced))
                 }
                 .foregroundStyle(.white)
             }
@@ -228,9 +289,9 @@ struct HomeView: View {
             } label: {
                 VStack(spacing: 4) {
                     Image(systemName: "trash")
-                        .font(.system(size: 22))
-                    Text("Delete")
-                        .font(.caption2)
+                        .font(.system(size: 20))
+                    Text("delete")
+                        .font(.system(size: 10, design: .monospaced))
                 }
                 .foregroundStyle(.red)
             }

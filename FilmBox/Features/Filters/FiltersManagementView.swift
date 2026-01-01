@@ -402,28 +402,25 @@ struct FiltersManagementView: View {
                         }
                     }
 
-                    // Main FAB button
+                    // Main FAB button - Yellow
                     Button {
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                             isFabExpanded.toggle()
                         }
                     } label: {
-                        ZStack {
-                            Circle()
-                                .fill(.ultraThinMaterial)
-                                .frame(width: 56, height: 56)
-                                .overlay(
-                                    Circle()
-                                        .stroke(Color.yellow.opacity(0.6), lineWidth: 1.5)
-                                )
-
-                            Image(systemName: isFabExpanded ? "xmark" : (selectedFilter != nil ? "ellipsis" : "plus"))
-                                .font(.system(size: 20, weight: .medium))
-                                .foregroundStyle(.yellow)
-                                .rotationEffect(.degrees(isFabExpanded ? 90 : 0))
-                        }
+                        Circle()
+                            .fill(Color.yellow)
+                            .frame(width: 56, height: 56)
+                            .shadow(color: .yellow.opacity(0.4), radius: 8, y: 2)
+                            .overlay {
+                                Image(systemName: isFabExpanded ? "xmark" : (selectedFilter != nil ? "ellipsis" : "plus"))
+                                    .font(.system(size: 22, weight: .semibold))
+                                    .foregroundStyle(.black)
+                                    .rotationEffect(.degrees(isFabExpanded ? 90 : 0))
+                            }
                     }
                     .buttonStyle(.plain)
+                    .contentShape(Circle())
                 }
                 .padding(.trailing, 20)
                 .padding(.bottom, 28)
@@ -435,7 +432,7 @@ struct FiltersManagementView: View {
         Button(action: action) {
             HStack(spacing: 10) {
                 Text(title)
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.system(size: 14, weight: .medium, design: .monospaced))
 
                 Image(systemName: icon)
                     .font(.system(size: 14, weight: .medium))

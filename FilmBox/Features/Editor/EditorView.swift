@@ -1003,29 +1003,83 @@ struct EditorView: View {
     @State private var selectedAspectRatio: CropAspectRatio = .free
     @State private var cropMode: CropMode = .transform
     @State private var interactiveCropRect: CGRect = CGRect(x: 0, y: 0, width: 1, height: 1)
+    @State private var savedCropRect: CGRect = CGRect(x: 0, y: 0, width: 1, height: 1)
+    @State private var hasPendingCrop: Bool = false
+
+    /// Check if current crop differs from saved
+    private var cropHasChanges: Bool {
+        interactiveCropRect != savedCropRect
+    }
 
     private var cropToolPanel: some View {
         VStack(spacing: 0) {
+            // Apply / Revert buttons at top
+            HStack(spacing: 12) {
+                // Revert button
+                Button {
+                    revertCrop()
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "arrow.uturn.backward")
+                            .font(.system(size: 14, weight: .medium))
+                        Text("revert")
+                            .font(.system(size: 14, weight: .medium, design: .monospaced))
+                    }
+                    .foregroundStyle(cropHasChanges ? .white : .white.opacity(0.3))
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(
+                        Capsule()
+                            .stroke(cropHasChanges ? Color.white.opacity(0.3) : Color.white.opacity(0.1), lineWidth: 1)
+                    )
+                }
+                .disabled(!cropHasChanges)
+
+                // Apply button
+                Button {
+                    applyCrop()
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 14, weight: .semibold))
+                        Text("apply")
+                            .font(.system(size: 14, weight: .semibold, design: .monospaced))
+                    }
+                    .foregroundStyle(cropHasChanges ? .black : .black.opacity(0.5))
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(
+                        Capsule()
+                            .fill(cropHasChanges ? Color.yellow : Color.yellow.opacity(0.3))
+                    )
+                }
+                .disabled(!cropHasChanges)
+            }
+            .padding(.vertical, 12)
+
+            Divider()
+                .background(Color.white.opacity(0.1))
+
             // Mode selector
             HStack(spacing: 16) {
-                cropModeButton(mode: .transform, label: "Transform")
-                cropModeButton(mode: .ratio, label: "Aspect Ratio")
+                cropModeButton(mode: .transform, label: "transform")
+                cropModeButton(mode: .ratio, label: "aspect ratio")
             }
             .padding(.vertical, 8)
 
             if cropMode == .transform {
                 // Transform tools
                 HStack(spacing: 0) {
-                    cropToolButton(icon: "rotate.left", label: "Rotate L", isActive: false) {
+                    cropToolButton(icon: "rotate.left", label: "rotate l", isActive: false) {
                         viewModel.rotateLeft()
                     }
-                    cropToolButton(icon: "rotate.right", label: "Rotate R", isActive: false) {
+                    cropToolButton(icon: "rotate.right", label: "rotate r", isActive: false) {
                         viewModel.rotateRight()
                     }
-                    cropToolButton(icon: "arrow.left.and.right.righttriangle.left.righttriangle.right", label: "Flip H", isActive: viewModel.currentParameters.flipHorizontal) {
+                    cropToolButton(icon: "arrow.left.and.right.righttriangle.left.righttriangle.right", label: "flip h", isActive: viewModel.currentParameters.flipHorizontal) {
                         viewModel.flipHorizontal()
                     }
-                    cropToolButton(icon: "arrow.up.and.down.righttriangle.up.righttriangle.down", label: "Flip V", isActive: viewModel.currentParameters.flipVertical) {
+                    cropToolButton(icon: "arrow.up.and.down.righttriangle.up.righttriangle.down", label: "flip v", isActive: viewModel.currentParameters.flipVertical) {
                         viewModel.flipVertical()
                     }
                 }
@@ -1044,6 +1098,41 @@ struct EditorView: View {
         }
     }
 
+    private func applyCrop() {
+        savedCropRect = interactiveCropRect
+        hasPendingCrop = false
+
+        // Update the preview
+        viewModel.schedulePreviewUpdatePublic()
+
+        // Haptic feedback
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.impactOccurred()
+    }
+
+    private func revertCrop() {
+        interactiveCropRect = savedCropRect
+
+        // Reset crop rect in parameters
+        if savedCropRect == CGRect(x: 0, y: 0, width: 1, height: 1) {
+            viewModel.currentParameters.cropRect = nil
+        } else if let imageSize = viewModel.originalImage?.extent.size {
+            viewModel.currentParameters.cropRect = CGRect(
+                x: savedCropRect.origin.x * imageSize.width,
+                y: savedCropRect.origin.y * imageSize.height,
+                width: savedCropRect.width * imageSize.width,
+                height: savedCropRect.height * imageSize.height
+            )
+        }
+
+        selectedAspectRatio = .free
+        viewModel.schedulePreviewUpdatePublic()
+
+        // Haptic feedback
+        let generator = UIImpactFeedbackGenerator(style: .light)
+        generator.impactOccurred()
+    }
+
     private func cropModeButton(mode: CropMode, label: String) -> some View {
         Button {
             withAnimation(.easeInOut(duration: 0.15)) {
@@ -1051,7 +1140,7 @@ struct EditorView: View {
             }
         } label: {
             Text(label)
-                .font(.subheadline.weight(cropMode == mode ? .semibold : .regular))
+                .font(.system(size: 14, weight: cropMode == mode ? .semibold : .regular, design: .monospaced))
                 .foregroundStyle(cropMode == mode ? .yellow : .white.opacity(0.6))
                 .padding(.horizontal, 16)
                 .padding(.vertical, 6)
@@ -1064,12 +1153,12 @@ struct EditorView: View {
         Button(action: action) {
             VStack(spacing: 4) {
                 Image(systemName: icon)
-                    .font(.system(size: 22))
+                    .font(.system(size: 20))
                     .frame(width: 44, height: 44)
                     .background(isActive ? Color.yellow.opacity(0.2) : Color.clear)
                     .clipShape(Circle())
                 Text(label)
-                    .font(.caption2)
+                    .font(.system(size: 10, design: .monospaced))
             }
             .foregroundStyle(isActive ? .yellow : .white.opacity(0.8))
             .frame(maxWidth: .infinity)
@@ -1089,8 +1178,8 @@ struct EditorView: View {
                     .stroke(isSelected ? Color.yellow : Color.white.opacity(0.5), lineWidth: 1.5)
                     .frame(width: 36, height: 36)
                     .background(isSelected ? Color.yellow.opacity(0.1) : Color.clear)
-                Text(ratio.displayName)
-                    .font(.caption2)
+                Text(ratio.displayName.lowercased())
+                    .font(.system(size: 10, design: .monospaced))
                     .foregroundStyle(isSelected ? .yellow : .white.opacity(0.7))
             }
             .padding(.horizontal, 8)
