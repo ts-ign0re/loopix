@@ -40,108 +40,30 @@ enum AppTab: Int, CaseIterable, Identifiable {
 
 struct MainTabView: View {
 
-    @State private var selectedTab: AppTab = .library
     @State private var showPhotoPicker = false
     @State private var manager = ImportedPhotosManager.shared
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            // Content
-            tabContent
-
-            // Custom Tab Bar (Fitness-style, pinned to bottom)
-            VStack(spacing: 0) {
-                Spacer()
-                customTabBar
-            }
-        }
-        .ignoresSafeArea(.keyboard)
-        .sheet(isPresented: $showPhotoPicker) {
-            PhotoPickerView { assets in
-                manager.importPhotos(assets)
-            }
-        }
-    }
-
-    // MARK: - Tab Content
-
-    @ViewBuilder
-    private var tabContent: some View {
-        switch selectedTab {
-        case .library:
-            LibraryContentView()
-        case .filters:
-            FiltersTabPlaceholder()
-        case .importTab:
-            // Import tab just triggers the picker, show library
-            LibraryContentView()
-        case .settings:
-            SettingsTabPlaceholder()
-        }
-    }
-
-    // MARK: - Custom Tab Bar (Code editor style)
-
-    private var customTabBar: some View {
-        HStack(spacing: 2) {
-            tabButton(for: .library)
-            tabButton(for: .filters)
-            tabButton(for: .importTab)
-            tabButton(for: .settings)
-        }
-        .padding(.horizontal, 4)
-        .padding(.vertical, 4)
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color(white: 0.1))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
-                )
-        )
-        .padding(.horizontal, 16)
-        .padding(.bottom, 8)
-    }
-
-    // MARK: - Tab Button
-
-    private func tabButton(for tab: AppTab) -> some View {
-        Button {
-            if tab == .importTab {
-                showPhotoPicker = true
-            } else {
-                withAnimation(.easeInOut(duration: 0.15)) {
-                    selectedTab = tab
+        LibraryContentView(showPhotoPicker: $showPhotoPicker)
+            .sheet(isPresented: $showPhotoPicker) {
+                PhotoPickerView { assets in
+                    manager.importPhotos(assets)
                 }
             }
-        } label: {
-            HStack(spacing: 6) {
-                Image(systemName: tab.icon)
-                    .font(.system(size: 14, weight: .medium))
-
-                Text(tab.title.lowercased())
-                    .font(.system(size: 11, weight: .medium, design: .monospaced))
-            }
-            .foregroundStyle(selectedTab == tab && tab != .importTab ? .yellow : Color(white: 0.6))
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
-            .background(
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(selectedTab == tab && tab != .importTab ? Color.yellow.opacity(0.15) : Color.clear)
-            )
-        }
-        .buttonStyle(.plain)
     }
 }
 
 // MARK: - Library Content View (HomeView without tab bar)
 
 struct LibraryContentView: View {
+    @Binding var showPhotoPicker: Bool
     @State private var manager = ImportedPhotosManager.shared
     @State private var isFabExpanded = false
     @State private var showDeleteConfirmation = false
     @State private var photoToEdit: ImportedPhoto?
     @State private var isExporting = false
+    @State private var showSettings = false
+    @State private var showFilters = false
 
     // Grid configuration
     private let columns = 3
@@ -166,10 +88,8 @@ struct LibraryContentView: View {
                     photoGridView
                 }
 
-                // FAB Menu
-                if hasSelection {
-                    fabMenuOverlay
-                }
+                // FAB Menu - always visible
+                fabMenuOverlay
             }
             .navigationTitle("filmbox")
             .navigationBarTitleDisplayMode(.large)
@@ -212,6 +132,12 @@ struct LibraryContentView: View {
                     initialParameters: manager.getEditedParameters(for: photo.id)
                 )
             }
+        }
+        .sheet(isPresented: $showSettings) {
+            SettingsTabPlaceholder()
+        }
+        .sheet(isPresented: $showFilters) {
+            FiltersTabPlaceholder()
         }
     }
 
@@ -265,7 +191,7 @@ struct LibraryContentView: View {
                         )
                     }
                 }
-                .padding(.bottom, hasSelection ? 120 : 20)
+                .padding(.bottom, 100)
             }
         }
     }
@@ -278,38 +204,57 @@ struct LibraryContentView: View {
             HStack {
                 Spacer()
                 VStack(alignment: .trailing, spacing: 8) {
-                    // Expanded menu items - 10px offset from button's right edge
+                    // Expanded menu items
                     if isFabExpanded {
                         VStack(alignment: .trailing, spacing: 8) {
-                            // Edit button (only for single selection)
-                            if isSingleSelection {
-                                fabMenuItem(title: "edit", icon: "slider.horizontal.3") {
-                                    if let selectedID = manager.selectedPhotoIDs.first,
-                                       let photo = manager.photos.first(where: { $0.id == selectedID }) {
-                                        photoToEdit = photo
-                                        isFabExpanded = false
+                            if hasSelection {
+                                // Selection mode menu
+                                if isSingleSelection {
+                                    fabMenuItem(title: "edit", icon: "slider.horizontal.3") {
+                                        if let selectedID = manager.selectedPhotoIDs.first,
+                                           let photo = manager.photos.first(where: { $0.id == selectedID }) {
+                                            photoToEdit = photo
+                                            isFabExpanded = false
+                                        }
                                     }
+                                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                                }
+
+                                fabMenuItem(title: "export", icon: "square.and.arrow.up") {
+                                    isFabExpanded = false
+                                    exportAndShare()
+                                }
+                                .transition(.move(edge: .bottom).combined(with: .opacity))
+
+                                fabMenuItem(title: "delete", icon: "trash") {
+                                    showDeleteConfirmation = true
+                                    isFabExpanded = false
+                                }
+                                .transition(.move(edge: .bottom).combined(with: .opacity))
+                            } else {
+                                // Default menu (no selection)
+                                fabMenuItem(title: "import", icon: "plus") {
+                                    isFabExpanded = false
+                                    showPhotoPicker = true
+                                }
+                                .transition(.move(edge: .bottom).combined(with: .opacity))
+
+                                fabMenuItem(title: "filters", icon: "camera.filters") {
+                                    isFabExpanded = false
+                                    showFilters = true
+                                }
+                                .transition(.move(edge: .bottom).combined(with: .opacity))
+
+                                fabMenuItem(title: "settings", icon: "gearshape") {
+                                    isFabExpanded = false
+                                    showSettings = true
                                 }
                                 .transition(.move(edge: .bottom).combined(with: .opacity))
                             }
-
-                            // Export button
-                            fabMenuItem(title: "export", icon: "square.and.arrow.up") {
-                                isFabExpanded = false
-                                exportAndShare()
-                            }
-                            .transition(.move(edge: .bottom).combined(with: .opacity))
-
-                            // Delete button
-                            fabMenuItem(title: "delete", icon: "trash") {
-                                showDeleteConfirmation = true
-                                isFabExpanded = false
-                            }
-                            .transition(.move(edge: .bottom).combined(with: .opacity))
                         }
                     }
 
-                    // Main FAB button - aligned to right edge
+                    // Main FAB button
                     Button {
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                             isFabExpanded.toggle()
@@ -317,15 +262,15 @@ struct LibraryContentView: View {
                     } label: {
                         ZStack {
                             Circle()
-                                .fill(Color(white: 0.15))
-                                .frame(width: 50, height: 50)
+                                .fill(.ultraThinMaterial)
+                                .frame(width: 56, height: 56)
                                 .overlay(
                                     Circle()
-                                        .stroke(Color.yellow.opacity(0.8), lineWidth: 2)
+                                        .stroke(Color.yellow.opacity(0.6), lineWidth: 1.5)
                                 )
 
-                            Image(systemName: isFabExpanded ? "xmark" : "ellipsis")
-                                .font(.system(size: 16, weight: .medium, design: .monospaced))
+                            Image(systemName: isFabExpanded ? "xmark" : (hasSelection ? "ellipsis" : "plus"))
+                                .font(.system(size: 20, weight: .medium))
                                 .foregroundStyle(.yellow)
                                 .rotationEffect(.degrees(isFabExpanded ? 90 : 0))
                         }
@@ -333,7 +278,7 @@ struct LibraryContentView: View {
                     .buttonStyle(.plain)
                 }
                 .padding(.trailing, 20)
-                .padding(.bottom, 100)
+                .padding(.bottom, 28)
             }
         }
     }
@@ -343,19 +288,19 @@ struct LibraryContentView: View {
             HStack(spacing: 10) {
                 Text(title)
                     .font(.system(size: 13, weight: .medium, design: .monospaced))
-                    .foregroundStyle(Color(white: 0.85))
+                    .foregroundStyle(.white)
 
                 Image(systemName: icon)
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(.yellow.opacity(0.85))
+                    .foregroundStyle(.yellow)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
-            .background(Color(white: 0.12))
-            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .background(.ultraThinMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 8))
             .overlay(
-                RoundedRectangle(cornerRadius: 6)
-                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color.white.opacity(0.15), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
@@ -422,6 +367,8 @@ struct LibraryContentView: View {
 // MARK: - Placeholder Views
 
 struct FiltersTabPlaceholder: View {
+    @Environment(\.dismiss) private var dismiss
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -445,12 +392,25 @@ struct FiltersTabPlaceholder: View {
             .navigationBarTitleDisplayMode(.large)
             .toolbarBackground(.black, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(.white.opacity(0.5))
+                    }
+                }
+            }
         }
         .preferredColorScheme(.dark)
     }
 }
 
 struct SettingsTabPlaceholder: View {
+    @Environment(\.dismiss) private var dismiss
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -474,6 +434,17 @@ struct SettingsTabPlaceholder: View {
             .navigationBarTitleDisplayMode(.large)
             .toolbarBackground(.black, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(.white.opacity(0.5))
+                    }
+                }
+            }
         }
         .preferredColorScheme(.dark)
     }

@@ -1071,10 +1071,10 @@ struct EditorView: View {
         .padding(.horizontal, 4)
         .padding(.vertical, 4)
         .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color(white: 0.1))
+            RoundedRectangle(cornerRadius: 12)
+                .fill(.ultraThinMaterial)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 8)
+                    RoundedRectangle(cornerRadius: 12)
                         .stroke(Color.white.opacity(0.1), lineWidth: 1)
                 )
         )
@@ -1091,9 +1091,10 @@ struct EditorView: View {
             VStack(spacing: 4) {
                 Image(systemName: tab.iconName)
                     .font(.system(size: 18, weight: .medium))
+                    .frame(width: 24, height: 24)
 
                 Text(tab.rawValue)
-                    .font(.system(size: 9, weight: .medium))
+                    .font(.system(size: 9, weight: .medium, design: .monospaced))
             }
             .foregroundStyle(viewModel.selectedTab == tab ? .yellow : Color(white: 0.6))
             .frame(maxWidth: .infinity)
