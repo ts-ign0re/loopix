@@ -210,13 +210,12 @@ private struct AdjustmentSlider: View {
                 let sign = value >= 0 ? "+" : ""
                 return "\(sign)\(Int(value))"
             case .temperature:
-                if value > 0 { return "Warmer" }
-                if value < 0 { return "Cooler" }
-                return "0"
+                // Convert -100...100 to Kelvin (2500K to 10000K, with 6500K at center)
+                let kelvin = Int(6500 + value * 35)
+                return "\(kelvin)K"
             case .tint:
-                if value > 0 { return "Magenta" }
-                if value < 0 { return "Green" }
-                return "0"
+                let sign = value >= 0 ? "+" : ""
+                return "\(sign)\(Int(value))"
             }
         }
     }
@@ -236,27 +235,133 @@ private struct AdjustmentSlider: View {
                     .foregroundStyle(.secondary)
             }
 
-            Slider(
-                value: Binding(
-                    get: { Double(value) },
-                    set: { value = Float($0) }
-                ),
-                in: Double(range.lowerBound)...Double(range.upperBound)
-            )
-            .tint(sliderTint)
+            if format == .temperature {
+                TemperatureSlider(value: $value, range: range)
+            } else if format == .tint {
+                TintSlider(value: $value, range: range)
+            } else {
+                Slider(
+                    value: Binding(
+                        get: { Double(value) },
+                        set: { value = Float($0) }
+                    ),
+                    in: Double(range.lowerBound)...Double(range.upperBound)
+                )
+                .tint(.yellow)
+            }
         }
         .padding(.vertical, 4)
     }
+}
 
-    private var sliderTint: Color {
-        switch format {
-        case .temperature:
-            return value > 0 ? .orange : (value < 0 ? .blue : .accentColor)
-        case .tint:
-            return value > 0 ? .pink : (value < 0 ? .green : .accentColor)
-        default:
-            return .accentColor
+// MARK: - Temperature Slider (Cool Blue to Warm Orange)
+
+private struct TemperatureSlider: View {
+    @Binding var value: Float
+    let range: ClosedRange<Float>
+
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack(alignment: .leading) {
+                // Gradient track
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.4, green: 0.6, blue: 1.0),  // Cool blue
+                        Color(red: 0.6, green: 0.8, blue: 1.0),  // Light blue
+                        Color.white,                              // Neutral
+                        Color(red: 1.0, green: 0.9, blue: 0.7),  // Light warm
+                        Color(red: 1.0, green: 0.6, blue: 0.2)   // Warm orange
+                    ],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+                .frame(height: 6)
+                .clipShape(Capsule())
+
+                // Thumb
+                Circle()
+                    .fill(Color.white)
+                    .frame(width: 24, height: 24)
+                    .shadow(color: .black.opacity(0.2), radius: 2, y: 1)
+                    .offset(x: thumbOffset(in: geometry.size.width))
+                    .gesture(
+                        DragGesture()
+                            .onChanged { gesture in
+                                updateValue(from: gesture.location.x, in: geometry.size.width)
+                            }
+                    )
+            }
         }
+        .frame(height: 24)
+        .contentShape(Rectangle())
+        .onTapGesture { location in
+            // Handle tap to set value
+        }
+    }
+
+    private func thumbOffset(in width: CGFloat) -> CGFloat {
+        let normalized = CGFloat((value - range.lowerBound) / (range.upperBound - range.lowerBound))
+        return normalized * (width - 24)
+    }
+
+    private func updateValue(from x: CGFloat, in width: CGFloat) {
+        let normalized = max(0, min(1, x / width))
+        let newValue = range.lowerBound + Float(normalized) * (range.upperBound - range.lowerBound)
+        value = newValue
+    }
+}
+
+// MARK: - Tint Slider (Green to Magenta)
+
+private struct TintSlider: View {
+    @Binding var value: Float
+    let range: ClosedRange<Float>
+
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack(alignment: .leading) {
+                // Gradient track
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.4, green: 0.9, blue: 0.4),  // Green
+                        Color(red: 0.7, green: 0.95, blue: 0.7), // Light green
+                        Color.white,                              // Neutral
+                        Color(red: 1.0, green: 0.7, blue: 0.9),  // Light magenta
+                        Color(red: 0.9, green: 0.3, blue: 0.7)   // Magenta
+                    ],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+                .frame(height: 6)
+                .clipShape(Capsule())
+
+                // Thumb
+                Circle()
+                    .fill(Color.white)
+                    .frame(width: 24, height: 24)
+                    .shadow(color: .black.opacity(0.2), radius: 2, y: 1)
+                    .offset(x: thumbOffset(in: geometry.size.width))
+                    .gesture(
+                        DragGesture()
+                            .onChanged { gesture in
+                                updateValue(from: gesture.location.x, in: geometry.size.width)
+                            }
+                    )
+            }
+        }
+        .frame(height: 24)
+        .contentShape(Rectangle())
+    }
+
+    private func thumbOffset(in width: CGFloat) -> CGFloat {
+        let normalized = CGFloat((value - range.lowerBound) / (range.upperBound - range.lowerBound))
+        return normalized * (width - 24)
+    }
+
+    private func updateValue(from x: CGFloat, in width: CGFloat) {
+        let normalized = max(0, min(1, x / width))
+        let newValue = range.lowerBound + Float(normalized) * (range.upperBound - range.lowerBound)
+        value = newValue
     }
 }
 

@@ -231,7 +231,7 @@ private struct GalleryPickerCell: View {
         options.deliveryMode = .opportunistic
         options.isNetworkAccessAllowed = true
 
-        let scale = await UIScreen.main.scale
+        let scale = UIScreen.main.scale
         let scaledSize = CGSize(width: targetSize.width * scale, height: targetSize.height * scale)
 
         await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in

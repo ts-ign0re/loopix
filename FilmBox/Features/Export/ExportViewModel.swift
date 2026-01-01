@@ -28,14 +28,24 @@ enum ExportState: Equatable {
 
 /// View model for managing export operations
 @Observable
-final class ExportViewModel {
+@MainActor
+final class ExportViewModel: @unchecked Sendable {
     // MARK: - Published Properties
 
     /// Current export settings
     var settings: ExportSettings
 
-    /// Assets selected for export
+    /// Assets selected for export (PHAsset mode)
     var selectedAssets: [PHAsset] = []
+
+    /// Per-asset parameters (asset local identifier -> parameters)
+    var assetParameters: [String: FilterParameters] = [:]
+
+    /// Local photos for export (local storage mode)
+    var localPhotos: [(photo: ImportedPhoto, parameters: FilterParameters?)] = []
+
+    /// Whether we're exporting from local storage
+    var isLocalExport: Bool = false
 
     /// Current export progress (0.0 to 1.0)
     var exportProgress: Double = 0
@@ -77,12 +87,38 @@ final class ExportViewModel {
         self.exportEngine = ExportEngine(concurrencyLimit: 4)
     }
 
+    /// Initialize with assets and per-asset parameters
+    init(assetsWithParameters: [(asset: PHAsset, parameters: FilterParameters?)]) {
+        self.settings = ExportSettings.loadFromUserDefaults()
+        self.selectedAssets = assetsWithParameters.map { $0.asset }
+        self.assetParameters = Dictionary(
+            uniqueKeysWithValues: assetsWithParameters.compactMap { item in
+                guard let params = item.parameters else { return nil }
+                return (item.asset.localIdentifier, params)
+            }
+        )
+        self.filterPreset = nil
+        self.exportEngine = ExportEngine(concurrencyLimit: 4)
+    }
+
+    /// Initialize with local photos (from local storage)
+    init(localPhotos: [(photo: ImportedPhoto, parameters: FilterParameters?)]) {
+        self.exportEngine = ExportEngine(concurrencyLimit: 4)
+        self.settings = ExportSettings.loadFromUserDefaults()
+        // Force JPEG for local export
+        self.settings.format = .jpeg
+        self.localPhotos = localPhotos
+        self.isLocalExport = true
+        self.filterPreset = nil
+    }
+
     // MARK: - Public Methods
 
     /// Start the export process
     @MainActor
     func startExport() {
-        guard !selectedAssets.isEmpty else {
+        let hasItems = isLocalExport ? !localPhotos.isEmpty : !selectedAssets.isEmpty
+        guard hasItems else {
             errorMessage = "No photos selected for export"
             return
         }
@@ -95,7 +131,7 @@ final class ExportViewModel {
         // Reset state
         exportProgress = 0
         currentItem = 0
-        totalItems = selectedAssets.count
+        totalItems = isLocalExport ? localPhotos.count : selectedAssets.count
         exportResults = []
         errorMessage = nil
         exportState = .preparing
@@ -153,16 +189,24 @@ final class ExportViewModel {
 
     @MainActor
     private func performExport() async {
+        if isLocalExport {
+            await performLocalExport()
+        } else {
+            await performAssetExport()
+        }
+    }
+
+    @MainActor
+    private func performAssetExport() async {
         exportState = .exporting(current: 0, total: selectedAssets.count)
 
         let results = await exportEngine.export(
             assets: selectedAssets,
             filter: filterPreset,
+            assetParameters: assetParameters,
             settings: settings
-        ) { [weak self] progress in
-            Task { @MainActor in
-                self?.handleProgress(progress)
-            }
+        ) { progress in
+            // Progress is handled via exportState updates
         }
 
         // Check if cancelled
@@ -178,6 +222,33 @@ final class ExportViewModel {
         await saveExportedFiles(results)
 
         // Update final state
+        let successCount = results.filter { $0.isSuccess }.count
+        let failureCount = results.count - successCount
+
+        exportState = .completed(successCount: successCount, failureCount: failureCount)
+    }
+
+    @MainActor
+    private func performLocalExport() async {
+        exportState = .exporting(current: 0, total: localPhotos.count)
+
+        let results = await exportEngine.exportFromLocalStorage(
+            photos: localPhotos
+        ) { [weak self] progress in
+            Task { @MainActor in
+                self?.exportProgress = progress.fraction
+                self?.currentItem = progress.current
+                self?.exportState = .exporting(current: progress.current, total: progress.total)
+            }
+        }
+
+        // Check if cancelled
+        guard !Task.isCancelled else {
+            exportState = .cancelled
+            return
+        }
+
+        // Update final state (photos already saved to library by exportFromLocalStorage)
         let successCount = results.filter { $0.isSuccess }.count
         let failureCount = results.count - successCount
 
@@ -252,13 +323,19 @@ final class ExportViewModel {
 
     /// Whether the export can be started
     var canStartExport: Bool {
-        !selectedAssets.isEmpty && !isExporting
+        let hasItems = isLocalExport ? !localPhotos.isEmpty : !selectedAssets.isEmpty
+        return hasItems && !isExporting
+    }
+
+    /// Number of items to export
+    var itemCount: Int {
+        isLocalExport ? localPhotos.count : selectedAssets.count
     }
 
     /// Summary text for the export configuration
     var configurationSummary: String {
         var parts: [String] = []
-        parts.append("\(selectedAssets.count) photo\(selectedAssets.count == 1 ? "" : "s")")
+        parts.append("\(itemCount) photo\(itemCount == 1 ? "" : "s")")
         parts.append(settings.format.rawValue)
         parts.append(settings.size.displayName)
 

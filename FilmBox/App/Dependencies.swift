@@ -13,14 +13,21 @@ final class Dependencies {
 
     // MARK: - Services
 
-    /// Filter processing engine
-    let filterEngine: FilterEngine
+    /// Filter processing engine (actor singleton)
+    @available(iOS 17.0, *)
+    var filterEngine: FilterEngine {
+        FilterEngine.shared
+    }
 
-    /// Thumbnail caching service
-    let thumbnailCache: ThumbnailCache
+    /// Thumbnail caching service (actor singleton)
+    var thumbnailCache: ThumbnailCache {
+        ThumbnailCache.shared
+    }
 
-    /// Photo library access manager
-    let photoLibraryManager: PhotoLibraryManager
+    /// Photo library access manager (actor singleton)
+    var photoLibraryManager: PhotoLibraryManager {
+        PhotoLibraryManager.shared
+    }
 
     /// Filter preset storage
     let filterStorage: FilterStorage
@@ -28,23 +35,7 @@ final class Dependencies {
     // MARK: - Initialization
 
     private init() {
-        self.filterEngine = FilterEngine()
-        self.thumbnailCache = ThumbnailCache()
-        self.photoLibraryManager = PhotoLibraryManager()
         self.filterStorage = FilterStorage.shared
-    }
-
-    /// Initialize with custom dependencies (for testing)
-    init(
-        filterEngine: FilterEngine,
-        thumbnailCache: ThumbnailCache,
-        photoLibraryManager: PhotoLibraryManager,
-        filterStorage: FilterStorage
-    ) {
-        self.filterEngine = filterEngine
-        self.thumbnailCache = thumbnailCache
-        self.photoLibraryManager = photoLibraryManager
-        self.filterStorage = filterStorage
     }
 }
 

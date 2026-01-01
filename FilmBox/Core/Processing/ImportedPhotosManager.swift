@@ -2,21 +2,32 @@
 //  ImportedPhotosManager.swift
 //  FilmBox
 //
-//  Manages the collection of user-imported photos
+//  Manages the collection of user-imported photos with local storage
 //
 
 import Foundation
 import Photos
 import SwiftUI
+import UniformTypeIdentifiers
 
 // MARK: - Imported Photo Model
 
-/// Represents a photo imported into the app
+/// Represents a photo imported into the app with local storage
 struct ImportedPhoto: Identifiable, Hashable, Codable {
     let id: UUID
     let assetIdentifier: String
     let importedAt: Date
     var editedParametersData: Data?
+
+    /// Local file name for the stored image
+    var localFileName: String {
+        "\(id.uuidString).heic"
+    }
+
+    /// Local file name for the thumbnail
+    var thumbnailFileName: String {
+        "\(id.uuidString)_thumb.heic"
+    }
 
     init(asset: PHAsset) {
         self.id = UUID()
@@ -35,7 +46,7 @@ struct ImportedPhoto: Identifiable, Hashable, Codable {
 
 // MARK: - Imported Photos Manager
 
-/// Manages imported photos with persistence
+/// Manages imported photos with local storage persistence
 @Observable
 @MainActor
 final class ImportedPhotosManager {
@@ -62,6 +73,22 @@ final class ImportedPhotosManager {
 
     private let userDefaultsKey = "importedPhotos"
 
+    /// Directory for storing imported images
+    private var imagesDirectory: URL {
+        let documentsDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let imagesDir = documentsDir.appendingPathComponent("ImportedImages", isDirectory: true)
+        try? FileManager.default.createDirectory(at: imagesDir, withIntermediateDirectories: true)
+        return imagesDir
+    }
+
+    /// Directory for storing thumbnails
+    private var thumbnailsDirectory: URL {
+        let documentsDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let thumbsDir = documentsDir.appendingPathComponent("Thumbnails", isDirectory: true)
+        try? FileManager.default.createDirectory(at: thumbsDir, withIntermediateDirectories: true)
+        return thumbsDir
+    }
+
     // MARK: - Initialization
 
     private init() {
@@ -70,23 +97,129 @@ final class ImportedPhotosManager {
 
     // MARK: - Public API
 
-    /// Import photos from PHAssets
+    /// Import photos from PHAssets - saves full images locally
     func importPhotos(_ assets: [PHAsset]) {
-        let newPhotos = assets.map { ImportedPhoto(asset: $0) }
+        print("📥 Importing \(assets.count) photos")
+        isLoading = true
 
-        // Avoid duplicates
-        let existingIdentifiers = Set(photos.map { $0.assetIdentifier })
-        let uniqueNewPhotos = newPhotos.filter { !existingIdentifiers.contains($0.assetIdentifier) }
+        Task {
+            for asset in assets {
+                await importSingleAsset(asset)
+            }
 
-        photos.insert(contentsOf: uniqueNewPhotos, at: 0)
-        saveToStorage()
+            await MainActor.run {
+                self.isLoading = false
+                self.saveMetadataToStorage()
+            }
+        }
     }
 
-    /// Remove photos by IDs
+    /// Import a single asset - saves to local storage
+    private func importSingleAsset(_ asset: PHAsset) async {
+        // Check for duplicates
+        let existingIdentifiers = Set(photos.map { $0.assetIdentifier })
+        guard !existingIdentifiers.contains(asset.localIdentifier) else {
+            print("⏭️ Skipping duplicate: \(asset.localIdentifier)")
+            return
+        }
+
+        let photo = ImportedPhoto(asset: asset)
+
+        // Request full-size image
+        let options = PHImageRequestOptions()
+        options.deliveryMode = .highQualityFormat
+        options.isNetworkAccessAllowed = true
+        options.isSynchronous = false
+
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            PHImageManager.default().requestImageDataAndOrientation(
+                for: asset,
+                options: options
+            ) { [weak self] data, _, _, _ in
+                guard let self = self, let imageData = data else {
+                    print("❌ Failed to get image data for: \(asset.localIdentifier)")
+                    continuation.resume()
+                    return
+                }
+
+                // Save full image
+                let imageURL = self.imagesDirectory.appendingPathComponent(photo.localFileName)
+                do {
+                    // Convert to HEIC for efficient storage
+                    if let ciImage = CIImage(data: imageData) {
+                        let context = CIContext()
+                        if let heicData = context.heifRepresentation(
+                            of: ciImage,
+                            format: .RGBA8,
+                            colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!,
+                            options: [kCGImageDestinationLossyCompressionQuality as CIImageRepresentationOption: 0.9]
+                        ) {
+                            try heicData.write(to: imageURL)
+                            print("✅ Saved full image: \(photo.localFileName)")
+                        } else {
+                            // Fallback: save original data
+                            try imageData.write(to: imageURL)
+                            print("✅ Saved original image: \(photo.localFileName)")
+                        }
+                    } else {
+                        try imageData.write(to: imageURL)
+                        print("✅ Saved original image: \(photo.localFileName)")
+                    }
+
+                    // Generate and save thumbnail
+                    self.generateThumbnail(from: imageData, for: photo)
+
+                    // Add to photos array on main thread
+                    Task { @MainActor in
+                        self.photos.insert(photo, at: 0)
+                    }
+                } catch {
+                    print("❌ Failed to save image: \(error)")
+                }
+
+                continuation.resume()
+            }
+        }
+    }
+
+    /// Generate thumbnail for a photo
+    private func generateThumbnail(from imageData: Data, for photo: ImportedPhoto) {
+        guard let ciImage = CIImage(data: imageData) else { return }
+
+        // Scale to thumbnail size
+        let maxSize: CGFloat = 512
+        let scale = min(maxSize / ciImage.extent.width, maxSize / ciImage.extent.height, 1.0)
+        let scaledImage = ciImage.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
+
+        let context = CIContext()
+        let thumbnailURL = thumbnailsDirectory.appendingPathComponent(photo.thumbnailFileName)
+
+        if let heicData = context.heifRepresentation(
+            of: scaledImage,
+            format: .RGBA8,
+            colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!,
+            options: [kCGImageDestinationLossyCompressionQuality as CIImageRepresentationOption: 0.7]
+        ) {
+            try? heicData.write(to: thumbnailURL)
+            print("✅ Saved thumbnail: \(photo.thumbnailFileName)")
+        }
+    }
+
+    /// Remove photos by IDs - also deletes local files
     func removePhotos(_ ids: Set<UUID>) {
+        for id in ids {
+            if let photo = photos.first(where: { $0.id == id }) {
+                // Delete local files
+                let imageURL = imagesDirectory.appendingPathComponent(photo.localFileName)
+                let thumbURL = thumbnailsDirectory.appendingPathComponent(photo.thumbnailFileName)
+                try? FileManager.default.removeItem(at: imageURL)
+                try? FileManager.default.removeItem(at: thumbURL)
+            }
+        }
+
         photos.removeAll { ids.contains($0.id) }
         selectedPhotoIDs.subtract(ids)
-        saveToStorage()
+        saveMetadataToStorage()
 
         if selectedPhotoIDs.isEmpty {
             isSelectionMode = false
@@ -98,18 +231,49 @@ final class ImportedPhotosManager {
         removePhotos(selectedPhotoIDs)
     }
 
-    /// Get PHAsset for imported photo
-    func getAsset(for photo: ImportedPhoto) -> PHAsset? {
-        let result = PHAsset.fetchAssets(withLocalIdentifiers: [photo.assetIdentifier], options: nil)
-        return result.firstObject
+    /// Get local image URL for photo
+    func getLocalImageURL(for photo: ImportedPhoto) -> URL {
+        imagesDirectory.appendingPathComponent(photo.localFileName)
     }
 
-    /// Get PHAssets for selected photos
-    func getSelectedAssets() -> [PHAsset] {
-        let selectedPhotos = photos.filter { selectedPhotoIDs.contains($0.id) }
-        let identifiers = selectedPhotos.map { $0.assetIdentifier }
-        let result = PHAsset.fetchAssets(withLocalIdentifiers: identifiers, options: nil)
-        return result.objects(at: IndexSet(integersIn: 0..<result.count))
+    /// Get local thumbnail URL for photo
+    func getThumbnailURL(for photo: ImportedPhoto) -> URL {
+        thumbnailsDirectory.appendingPathComponent(photo.thumbnailFileName)
+    }
+
+    /// Load CIImage from local storage
+    func loadCIImage(for photo: ImportedPhoto) -> CIImage? {
+        let imageURL = getLocalImageURL(for: photo)
+        return CIImage(contentsOf: imageURL)
+    }
+
+    /// Load UIImage from local storage
+    func loadUIImage(for photo: ImportedPhoto) -> UIImage? {
+        let imageURL = getLocalImageURL(for: photo)
+        guard let data = try? Data(contentsOf: imageURL) else { return nil }
+        return UIImage(data: data)
+    }
+
+    /// Load thumbnail UIImage
+    func loadThumbnail(for photo: ImportedPhoto) -> UIImage? {
+        let thumbURL = getThumbnailURL(for: photo)
+        guard let data = try? Data(contentsOf: thumbURL) else { return nil }
+        return UIImage(data: data)
+    }
+
+    /// Check if local image exists
+    func hasLocalImage(for photo: ImportedPhoto) -> Bool {
+        let imageURL = getLocalImageURL(for: photo)
+        return FileManager.default.fileExists(atPath: imageURL.path)
+    }
+
+    // MARK: - Legacy PHAsset support (for compatibility)
+
+    /// Get PHAsset for imported photo (deprecated - use loadCIImage instead)
+    func getAsset(for photo: ImportedPhoto) -> PHAsset? {
+        let identifier = photo.assetIdentifier
+        let result = PHAsset.fetchAssets(withLocalIdentifiers: [identifier], options: nil)
+        return result.firstObject
     }
 
     // MARK: - Selection
@@ -154,7 +318,7 @@ final class ImportedPhotosManager {
 
     // MARK: - Persistence
 
-    private func saveToStorage() {
+    private func saveMetadataToStorage() {
         if let data = try? JSONEncoder().encode(photos) {
             UserDefaults.standard.set(data, forKey: userDefaultsKey)
         }
@@ -166,24 +330,25 @@ final class ImportedPhotosManager {
             return
         }
 
-        // Validate that assets still exist
-        let identifiers = savedPhotos.map { $0.assetIdentifier }
-        let result = PHAsset.fetchAssets(withLocalIdentifiers: identifiers, options: nil)
-        let validIdentifiers = Set((0..<result.count).map { result.object(at: $0).localIdentifier })
-
-        photos = savedPhotos.filter { validIdentifiers.contains($0.assetIdentifier) }
+        // Only keep photos that have local files
+        photos = savedPhotos.filter { hasLocalImage(for: $0) }
 
         // Re-save if some were removed
         if photos.count != savedPhotos.count {
-            saveToStorage()
+            saveMetadataToStorage()
         }
+    }
+
+    /// Reload photos (called after permission granted)
+    func reloadPhotos() {
+        loadFromStorage()
     }
 
     /// Update edited parameters for a photo
     func updateEditedParameters(for photoID: UUID, parameters: FilterParameters) {
         guard let index = photos.firstIndex(where: { $0.id == photoID }) else { return }
         photos[index].editedParametersData = try? JSONEncoder().encode(parameters)
-        saveToStorage()
+        saveMetadataToStorage()
     }
 
     /// Get edited parameters for a photo
@@ -191,5 +356,29 @@ final class ImportedPhotosManager {
         guard let photo = photos.first(where: { $0.id == photoID }),
               let data = photo.editedParametersData else { return nil }
         return try? JSONDecoder().decode(FilterParameters.self, from: data)
+    }
+
+    /// Get selected photos for export with their local images and parameters
+    func getSelectedPhotosForExport() -> [(asset: PHAsset, parameters: FilterParameters?)] {
+        let selectedPhotos = photos.filter { selectedPhotoIDs.contains($0.id) }
+        var result: [(asset: PHAsset, parameters: FilterParameters?)] = []
+
+        for photo in selectedPhotos {
+            let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: [photo.assetIdentifier], options: nil)
+            if let asset = fetchResult.firstObject {
+                let params = getEditedParameters(for: photo.id)
+                result.append((asset: asset, parameters: params))
+            }
+        }
+
+        return result
+    }
+
+    /// Get selected photos for local export
+    func getSelectedPhotosForLocalExport() -> [(photo: ImportedPhoto, parameters: FilterParameters?)] {
+        let selectedPhotos = photos.filter { selectedPhotoIDs.contains($0.id) }
+        return selectedPhotos.map { photo in
+            (photo: photo, parameters: getEditedParameters(for: photo.id))
+        }
     }
 }

@@ -45,7 +45,9 @@ struct FilterParameters: Codable, Hashable, Sendable {
     var sharpenRadius: Float = 1.0  // 0.5...3.0
 
     // === TRANSFORM (not part of color processing) ===
-    var rotation: Float = 0         // degrees
+    var rotation: Float = 0         // degrees (0, 90, 180, 270)
+    var flipHorizontal: Bool = false
+    var flipVertical: Bool = false
     var cropRect: CGRect?
 
     static let identity = FilterParameters()

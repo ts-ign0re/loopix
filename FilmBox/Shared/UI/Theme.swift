@@ -72,8 +72,8 @@ enum Theme {
         /// Error color (red)
         static let error = Color.red
 
-        /// Info color (blue)
-        static let info = Color.blue
+        /// Info color (yellow)
+        static let info = Color.yellow
 
         // MARK: Film-Specific Colors
 

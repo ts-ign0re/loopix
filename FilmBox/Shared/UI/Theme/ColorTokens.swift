@@ -229,8 +229,8 @@ extension ColorToken {
     var fallbackColor: Color {
         switch self {
         // Brand
-        case .accent: return Color.blue
-        case .brand: return Color.orange
+        case .accent: return Color.yellow
+        case .brand: return Color.yellow
 
         // Backgrounds
         case .background: return Color(.systemBackground)
@@ -274,7 +274,7 @@ extension ColorToken {
         // Slider
         case .sliderTrack: return Color(.systemGray4)
         case .sliderThumb: return Color.white
-        case .sliderActive: return Color.blue
+        case .sliderActive: return Color.yellow
         case .sliderTemperatureWarm: return Color.orange
         case .sliderTemperatureCool: return Color.blue
         case .sliderTintMagenta: return Color.pink
@@ -286,7 +286,7 @@ extension ColorToken {
         case .cropOverlay: return Color.black.opacity(0.5)
 
         // Filter
-        case .filterSelected: return Color.blue
+        case .filterSelected: return Color.yellow
         case .filterBorder: return Color(.separator)
         case .filterOverlay: return Color.black.opacity(0.3)
 

@@ -14,7 +14,6 @@ struct HomeView: View {
 
     @State private var manager = ImportedPhotosManager.shared
     @State private var showPhotoPicker = false
-    @State private var showEditor = false
     @State private var photoToEdit: ImportedPhoto?
     @State private var showDeleteConfirmation = false
     @State private var showExportSheet = false
@@ -64,14 +63,31 @@ struct HomeView: View {
                     manager.importPhotos(assets)
                 }
             }
-            .fullScreenCover(isPresented: $showEditor) {
-                if let photo = photoToEdit,
-                   let asset = manager.getAsset(for: photo) {
+            .fullScreenCover(item: $photoToEdit) { photo in
+                if let ciImage = manager.loadCIImage(for: photo) {
                     EditorView(
-                        asset: asset,
+                        ciImage: ciImage,
                         photoID: photo.id,
                         initialParameters: manager.getEditedParameters(for: photo.id)
                     )
+                } else {
+                    NavigationStack {
+                        ContentUnavailableView {
+                            Label("Photo Unavailable", systemImage: "exclamationmark.triangle")
+                        } description: {
+                            Text("This photo could not be loaded. The file may have been deleted.")
+                        }
+                        .navigationTitle("Error")
+                        .navigationBarTitleDisplayMode(.inline)
+                        .toolbar {
+                            ToolbarItem(placement: .cancellationAction) {
+                                Button("Close") {
+                                    photoToEdit = nil
+                                }
+                            }
+                        }
+                    }
+                    .preferredColorScheme(.dark)
                 }
             }
             .confirmationDialog(
@@ -87,7 +103,7 @@ struct HomeView: View {
                 Button("Cancel", role: .cancel) {}
             }
             .sheet(isPresented: $showExportSheet) {
-                ExportView(assets: manager.getSelectedAssets())
+                ExportView(localPhotos: manager.getSelectedPhotosForLocalExport())
             }
         }
         .preferredColorScheme(.dark)
@@ -142,7 +158,7 @@ struct HomeView: View {
                         )
                     }
                 }
-                .padding(.bottom, manager.isSelectionMode ? 100 : 80)
+                .padding(.bottom, manager.isSelectionMode ? 90 : 80)
             }
         }
     }
@@ -166,63 +182,66 @@ struct HomeView: View {
                         .shadow(color: .black.opacity(0.3), radius: 8, y: 4)
                 }
                 .padding(.trailing, 20)
-                .padding(.bottom, manager.isSelectionMode ? 100 : 20)
+                .padding(.bottom, manager.isSelectionMode ? 90 : 20)
             }
         }
     }
 
-    // MARK: - Selection Action Bar
+    // MARK: - Selection Action Bar (iOS Photos style)
 
     private var selectionActionBar: some View {
-        HStack(spacing: 0) {
-            // Edit button
-            ActionBarButton(
-                icon: "slider.horizontal.3",
-                label: "Edit",
-                isEnabled: manager.selectedCount == 1
-            ) {
-                if let selectedID = manager.selectedPhotoIDs.first,
-                   let photo = manager.photos.first(where: { $0.id == selectedID }) {
-                    photoToEdit = photo
-                    showEditor = true
+        HStack(spacing: 24) {
+            // Edit button - only show when exactly 1 image selected
+            if manager.selectedCount == 1 {
+                Button {
+                    if let selectedID = manager.selectedPhotoIDs.first,
+                       let photo = manager.photos.first(where: { $0.id == selectedID }) {
+                        photoToEdit = photo
+                    }
+                } label: {
+                    VStack(spacing: 4) {
+                        Image(systemName: "slider.horizontal.3")
+                            .font(.system(size: 22))
+                        Text("Edit")
+                            .font(.caption2)
+                    }
+                    .foregroundStyle(.white)
                 }
             }
 
-            Divider()
-                .frame(height: 40)
-                .background(Color.white.opacity(0.2))
-
             // Export button
-            ActionBarButton(
-                icon: "square.and.arrow.up",
-                label: "Export"
-            ) {
+            Button {
                 showExportSheet = true
+            } label: {
+                VStack(spacing: 4) {
+                    Image(systemName: "square.and.arrow.up")
+                        .font(.system(size: 22))
+                    Text("Export")
+                        .font(.caption2)
+                }
+                .foregroundStyle(.white)
             }
-
-            Divider()
-                .frame(height: 40)
-                .background(Color.white.opacity(0.2))
 
             // Delete button
-            ActionBarButton(
-                icon: "trash",
-                label: "Delete",
-                isDestructive: true
-            ) {
+            Button {
                 showDeleteConfirmation = true
+            } label: {
+                VStack(spacing: 4) {
+                    Image(systemName: "trash")
+                        .font(.system(size: 22))
+                    Text("Delete")
+                        .font(.caption2)
+                }
+                .foregroundStyle(.red)
             }
+
+            Spacer()
         }
-        .frame(height: 80)
-        .background(.ultraThinMaterial.opacity(0.9))
-        .background(Color.black.opacity(0.7))
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(Color.white.opacity(0.1), lineWidth: 0.5)
-        )
-        .padding(.horizontal, 20)
-        .padding(.bottom, 8)
+        .padding(.horizontal, 24)
+        .padding(.vertical, 12)
+        .frame(height: 70)
+        .background(.ultraThinMaterial)
+        .background(Color.black.opacity(0.85))
         .transition(.move(edge: .bottom).combined(with: .opacity))
         .animation(.spring(response: 0.3), value: manager.isSelectionMode)
     }
@@ -307,10 +326,10 @@ struct HomePhotoCell: View {
                         Spacer()
                         Image(systemName: "checkmark.circle.fill")
                             .font(.title2)
-                            .foregroundStyle(.white)
+                            .foregroundStyle(.black)
                             .background(
                                 Circle()
-                                    .fill(Color.blue)
+                                    .fill(Color.yellow)
                                     .frame(width: 24, height: 24)
                             )
                             .padding(8)
@@ -329,33 +348,10 @@ struct HomePhotoCell: View {
     }
 
     private func loadThumbnail() async {
-        let result = PHAsset.fetchAssets(withLocalIdentifiers: [photo.assetIdentifier], options: nil)
-        guard let asset = result.firstObject else { return }
-
-        let options = PHImageRequestOptions()
-        options.deliveryMode = .opportunistic
-        options.isNetworkAccessAllowed = true
-
-        let manager = PHImageManager.default()
-        let scale = await UIScreen.main.scale
-        let scaledSize = CGSize(width: targetSize.width * scale, height: targetSize.height * scale)
-
-        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-            manager.requestImage(
-                for: asset,
-                targetSize: scaledSize,
-                contentMode: .aspectFill,
-                options: options
-            ) { image, info in
-                let isDegraded = (info?[PHImageResultIsDegradedKey] as? Bool) ?? false
-                if let image {
-                    Task { @MainActor in
-                        self.thumbnail = image
-                    }
-                }
-                if !isDegraded {
-                    continuation.resume()
-                }
+        // Load thumbnail from local storage
+        if let thumb = await MainActor.run(body: { ImportedPhotosManager.shared.loadThumbnail(for: photo) }) {
+            await MainActor.run {
+                self.thumbnail = thumb
             }
         }
     }

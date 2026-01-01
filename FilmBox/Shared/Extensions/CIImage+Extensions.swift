@@ -71,16 +71,17 @@ extension CIImage {
 
     // MARK: - Cropping
 
-    /// Crops the image to the specified rectangle
+    /// Safely crops the image to the specified rectangle with bounds checking
     /// - Parameter rect: The rectangle to crop to, in image coordinates
-    /// - Returns: A new cropped CIImage
-    func cropped(to rect: CGRect) -> CIImage {
+    /// - Returns: A new cropped CIImage with origin at (0,0)
+    func safeCropped(to rect: CGRect) -> CIImage {
         // Ensure the rect is within bounds
         let clampedRect = rect.intersection(self.extent)
         guard !clampedRect.isEmpty else {
             return self
         }
 
+        // Use the original CIImage.cropped(to:) method
         return self.cropped(to: clampedRect)
             .transformed(by: CGAffineTransform(translationX: -clampedRect.origin.x, y: -clampedRect.origin.y))
     }
@@ -105,7 +106,7 @@ extension CIImage {
             cropRect = CGRect(x: extent.origin.x, y: extent.origin.y + yOffset, width: extent.width, height: newHeight)
         }
 
-        return cropped(to: cropRect)
+        return safeCropped(to: cropRect)
     }
 
     // MARK: - Scaling

@@ -2,6 +2,7 @@ import Foundation
 import CoreImage
 import Combine
 import SwiftUI
+import Photos
 
 // MARK: - Editor Tab
 
@@ -90,6 +91,9 @@ final class EditorViewModel {
     /// Whether the editor is currently processing
     private(set) var isProcessing: Bool = false
 
+    /// Whether image is currently loading from asset
+    private(set) var isLoading: Bool = false
+
     /// Whether before/after comparison is active
     var isShowingOriginal: Bool = false
 
@@ -152,6 +156,18 @@ final class EditorViewModel {
         }
     }
 
+    /// Initialize with a PHAsset and optional saved parameters
+    convenience init(asset: PHAsset, initialParameters: FilterParameters? = nil) {
+        self.init()
+        loadAsset(asset, initialParameters: initialParameters)
+    }
+
+    /// Initialize with a CIImage and optional saved parameters (for local storage)
+    convenience init(ciImage: CIImage, initialParameters: FilterParameters? = nil) {
+        self.init()
+        loadCIImage(ciImage, initialParameters: initialParameters)
+    }
+
     // MARK: - Image Loading
 
     /// Load a new image into the editor
@@ -172,6 +188,72 @@ final class EditorViewModel {
             throw EditorError.imageLoadFailed
         }
         loadImage(image)
+    }
+
+    /// Load image from PHAsset with optional initial parameters
+    func loadAsset(_ asset: PHAsset, initialParameters: FilterParameters? = nil) {
+        isLoading = true
+
+        let options = PHImageRequestOptions()
+        options.deliveryMode = .highQualityFormat
+        options.isNetworkAccessAllowed = true
+        options.isSynchronous = false
+
+        PHImageManager.default().requestImageDataAndOrientation(
+            for: asset,
+            options: options
+        ) { [weak self] data, _, orientation, _ in
+            guard let self = self, let data = data else {
+                Task { @MainActor in
+                    self?.isLoading = false
+                }
+                return
+            }
+
+            Task { @MainActor in
+                if var ciImage = CIImage(data: data) {
+                    // Apply orientation
+                    ciImage = ciImage.oriented(forExifOrientation: Int32(orientation.rawValue))
+                    self.originalImage = ciImage
+                    self.currentImage = ciImage
+
+                    // Apply initial parameters if provided
+                    if let params = initialParameters {
+                        self.currentParameters = params
+                        self.schedulePreviewUpdate()
+                    } else {
+                        self.currentParameters = .identity
+                    }
+
+                    self.selectedPreset = nil
+                    self.undoStack.removeAll()
+                    self.redoStack.removeAll()
+                    self.zoomScale = 1.0
+                    self.panOffset = .zero
+                }
+                self.isLoading = false
+            }
+        }
+    }
+
+    /// Load CIImage from local storage with optional initial parameters
+    func loadCIImage(_ ciImage: CIImage, initialParameters: FilterParameters? = nil) {
+        originalImage = ciImage
+        currentImage = ciImage
+
+        // Apply initial parameters if provided
+        if let params = initialParameters {
+            currentParameters = params
+            schedulePreviewUpdate()
+        } else {
+            currentParameters = .identity
+        }
+
+        selectedPreset = nil
+        undoStack.removeAll()
+        redoStack.removeAll()
+        zoomScale = 1.0
+        panOffset = .zero
     }
 
     // MARK: - Preset Application
@@ -226,6 +308,42 @@ final class EditorViewModel {
     /// Update saturation
     func updateSaturation(_ value: Float) {
         updateParameter(\.saturation, value: value)
+    }
+
+    // MARK: - Transform Operations
+
+    /// Rotate image 90 degrees counter-clockwise
+    func rotateLeft() {
+        pushUndoState()
+        currentParameters.rotation -= 90
+        if currentParameters.rotation < 0 {
+            currentParameters.rotation += 360
+        }
+        schedulePreviewUpdate()
+    }
+
+    /// Rotate image 90 degrees clockwise
+    func rotateRight() {
+        pushUndoState()
+        currentParameters.rotation += 90
+        if currentParameters.rotation >= 360 {
+            currentParameters.rotation -= 360
+        }
+        schedulePreviewUpdate()
+    }
+
+    /// Flip image horizontally
+    func flipHorizontal() {
+        pushUndoState()
+        currentParameters.flipHorizontal.toggle()
+        schedulePreviewUpdate()
+    }
+
+    /// Flip image vertically
+    func flipVertical() {
+        pushUndoState()
+        currentParameters.flipVertical.toggle()
+        schedulePreviewUpdate()
     }
 
     // MARK: - Reset
@@ -320,6 +438,52 @@ final class EditorViewModel {
     /// Apply filter parameters to an image
     private func applyFilters(to image: CIImage, parameters: FilterParameters) async -> CIImage {
         var output = image
+
+        // === GEOMETRY TRANSFORMS ===
+
+        // Apply flip horizontal
+        if parameters.flipHorizontal {
+            let flipTransform = CGAffineTransform(scaleX: -1, y: 1)
+            output = output.transformed(by: flipTransform)
+            // Translate back to positive coordinates
+            let extent = output.extent
+            if extent.origin.x < 0 {
+                output = output.transformed(by: CGAffineTransform(translationX: -extent.origin.x, y: 0))
+            }
+        }
+
+        // Apply flip vertical
+        if parameters.flipVertical {
+            let flipTransform = CGAffineTransform(scaleX: 1, y: -1)
+            output = output.transformed(by: flipTransform)
+            // Translate back to positive coordinates
+            let extent = output.extent
+            if extent.origin.y < 0 {
+                output = output.transformed(by: CGAffineTransform(translationX: 0, y: -extent.origin.y))
+            }
+        }
+
+        // Apply rotation (in 90-degree increments)
+        if parameters.rotation != 0 {
+            let radians = CGFloat(parameters.rotation) * .pi / 180.0
+            let transform = CGAffineTransform(rotationAngle: radians)
+            output = output.transformed(by: transform)
+
+            // Translate back to origin since rotation pivots around origin
+            let extent = output.extent
+            if extent.origin.x < 0 || extent.origin.y < 0 {
+                let translateTransform = CGAffineTransform(translationX: -extent.origin.x, y: -extent.origin.y)
+                output = output.transformed(by: translateTransform)
+            }
+        }
+
+        // Apply crop rect if set
+        if let cropRect = parameters.cropRect {
+            output = output.cropped(to: cropRect)
+            // Translate to origin
+            let translateTransform = CGAffineTransform(translationX: -cropRect.origin.x, y: -cropRect.origin.y)
+            output = output.transformed(by: translateTransform)
+        }
 
         // === LIGHT ADJUSTMENTS ===
 
@@ -767,8 +931,6 @@ struct HistogramData: Sendable {
         )
 
         // Build histogram from bitmap
-        let totalPixels = Float(width * height)
-
         for i in stride(from: 0, to: bitmap.count, by: 4) {
             let r = Int(bitmap[i])
             let g = Int(bitmap[i + 1])

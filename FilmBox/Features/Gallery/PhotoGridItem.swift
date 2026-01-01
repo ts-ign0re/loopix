@@ -168,7 +168,7 @@ struct PhotoGridItem: View {
         options.resizeMode = .fast
 
         // Use a larger size for better quality on retina displays
-        let scale = await UIScreen.main.scale
+        let scale = UIScreen.main.scale
         let scaledSize = CGSize(
             width: targetSize.width * scale,
             height: targetSize.height * scale

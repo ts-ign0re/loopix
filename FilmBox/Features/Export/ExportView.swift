@@ -10,6 +10,26 @@ struct ExportView: View {
 
     @State private var showingShareSheet = false
 
+    /// Convenience initializer with assets
+    init(assets: [PHAsset]) {
+        self._viewModel = Bindable(wrappedValue: ExportViewModel(assets: assets))
+    }
+
+    /// Initializer with assets and per-asset parameters (for edited photos)
+    init(assetsWithParameters: [(asset: PHAsset, parameters: FilterParameters?)]) {
+        self._viewModel = Bindable(wrappedValue: ExportViewModel(assetsWithParameters: assetsWithParameters))
+    }
+
+    /// Initializer with local photos for export from local storage
+    init(localPhotos: [(photo: ImportedPhoto, parameters: FilterParameters?)]) {
+        self._viewModel = Bindable(wrappedValue: ExportViewModel(localPhotos: localPhotos))
+    }
+
+    /// Initializer with existing view model
+    init(viewModel: ExportViewModel) {
+        self._viewModel = Bindable(wrappedValue: viewModel)
+    }
+
     var body: some View {
         NavigationStack {
             Form {
@@ -66,7 +86,7 @@ struct ExportView: View {
             HStack {
                 Image(systemName: "photo.on.rectangle.angled")
                     .foregroundStyle(.secondary)
-                Text("\(viewModel.selectedAssets.count) photo\(viewModel.selectedAssets.count == 1 ? "" : "s") selected")
+                Text("\(viewModel.itemCount) photo\(viewModel.itemCount == 1 ? "" : "s") selected")
             }
         }
     }
@@ -95,6 +115,8 @@ struct ExportView: View {
             return "JPEG is widely compatible with all devices and platforms."
         case .png:
             return "PNG provides lossless compression. Best for graphics with transparency."
+        case .webp:
+            return "WebP offers excellent compression with good quality. Widely supported on web."
         }
     }
 

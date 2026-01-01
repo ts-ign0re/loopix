@@ -138,6 +138,31 @@ actor ExportEngine {
         settings: ExportSettings,
         progress: @escaping @Sendable (ExportProgress) -> Void
     ) async -> [ExportResult] {
+        // Call the new method with empty parameters
+        await export(
+            assets: assets,
+            filter: filter,
+            assetParameters: [:],
+            settings: settings,
+            progress: progress
+        )
+    }
+
+    /// Export multiple assets with per-asset parameters and settings
+    /// - Parameters:
+    ///   - assets: The assets to export
+    ///   - filter: Optional filter preset to apply (fallback if no per-asset params)
+    ///   - assetParameters: Per-asset filter parameters (keyed by asset localIdentifier)
+    ///   - settings: Export settings
+    ///   - progress: Progress callback
+    /// - Returns: Array of export results
+    func export(
+        assets: [PHAsset],
+        filter: FilterPreset?,
+        assetParameters: [String: FilterParameters],
+        settings: ExportSettings,
+        progress: @escaping @Sendable (ExportProgress) -> Void
+    ) async -> [ExportResult] {
         isCancelled = false
 
         let total = assets.count
@@ -173,11 +198,15 @@ actor ExportEngine {
                     }
                 }
 
+                // Get per-asset parameters if available
+                let params = assetParameters[asset.localIdentifier]
+
                 // Start new export task
                 group.addTask {
                     let result = await self.exportSingleAsset(
                         asset: asset,
                         filter: filter,
+                        parameters: params,
                         settings: settings,
                         outputDirectory: tempDirectory,
                         index: index
@@ -341,6 +370,7 @@ actor ExportEngine {
     private func exportSingleAsset(
         asset: PHAsset,
         filter: FilterPreset?,
+        parameters: FilterParameters? = nil,
         settings: ExportSettings,
         outputDirectory: URL,
         index: Int
@@ -353,13 +383,25 @@ actor ExportEngine {
             // Load the full-resolution image
             let imageData = try await loadImageData(for: asset, settings: settings)
 
-            guard let ciImage = CIImage(data: imageData) else {
+            guard var ciImage = CIImage(data: imageData) else {
                 return .failure(asset: asset, error: ExportError.imageLoadFailed)
             }
 
-            // Apply filter if specified
+            // Apply orientation
+            ciImage = ciImage.oriented(forExifOrientation: Int32(CGImagePropertyOrientation.up.rawValue))
+
+            // Apply parameters or filter if specified
             let processedImage: CIImage
-            if let filter = filter, filter.parameters.hasAdjustments {
+            if let params = parameters, params.hasAdjustments {
+                // Use per-asset parameters if available
+                if #available(iOS 17.0, *) {
+                    processedImage = await FilterEngine.shared.apply(params, to: ciImage)
+                } else {
+                    let tempPreset = FilterPreset(name: "temp", parameters: params)
+                    processedImage = applyFilter(tempPreset, to: ciImage)
+                }
+            } else if let filter = filter, filter.parameters.hasAdjustments {
+                // Fall back to shared filter preset
                 processedImage = applyFilter(filter, to: ciImage)
             } else {
                 processedImage = ciImage
@@ -690,4 +732,112 @@ private extension Array {
 extension ExportEngine {
     /// Shared singleton instance
     static let shared = ExportEngine()
+}
+
+// MARK: - Local Storage Export
+
+extension ExportEngine {
+    /// Result for local photo export
+    struct LocalExportResult: Sendable {
+        let photoID: UUID
+        let outputURL: URL?
+        let error: Error?
+
+        var isSuccess: Bool {
+            outputURL != nil && error == nil
+        }
+    }
+
+    /// Export photos from local storage to Photos Library as JPG
+    /// - Parameters:
+    ///   - photos: Array of (ImportedPhoto, FilterParameters?) tuples
+    ///   - progress: Progress callback
+    /// - Returns: Array of export results
+    func exportFromLocalStorage(
+        photos: [(photo: ImportedPhoto, parameters: FilterParameters?)],
+        progress: @escaping @Sendable (ExportProgress) -> Void
+    ) async -> [LocalExportResult] {
+        isCancelled = false
+
+        let total = photos.count
+        var results: [LocalExportResult] = []
+        results.reserveCapacity(total)
+
+        let manager = await MainActor.run { ImportedPhotosManager.shared }
+
+        for (index, item) in photos.enumerated() {
+            guard !isCancelled else {
+                results.append(LocalExportResult(photoID: item.photo.id, outputURL: nil, error: ExportError.cancelled))
+                continue
+            }
+
+            do {
+                let localIdentifier = try await exportSingleFromLocal(
+                    photo: item.photo,
+                    parameters: item.parameters,
+                    manager: manager
+                )
+                let resultURL = URL(fileURLWithPath: localIdentifier)
+                results.append(LocalExportResult(photoID: item.photo.id, outputURL: resultURL, error: nil))
+            } catch {
+                results.append(LocalExportResult(photoID: item.photo.id, outputURL: nil, error: error))
+            }
+
+            progress(ExportProgress(
+                current: index + 1,
+                total: total,
+                currentAssetIdentifier: item.photo.id.uuidString
+            ))
+        }
+
+        return results
+    }
+
+    /// Export a single photo from local storage to Photos Library as JPG
+    @MainActor
+    private func exportSingleFromLocal(
+        photo: ImportedPhoto,
+        parameters: FilterParameters?,
+        manager: ImportedPhotosManager
+    ) async throws -> String {
+        // Load CIImage from local storage
+        guard let ciImage = manager.loadCIImage(for: photo) else {
+            throw ExportError.imageLoadFailed
+        }
+
+        // Apply filter parameters if available
+        let processedImage: CIImage
+        if let params = parameters, params.hasAdjustments {
+            processedImage = await FilterEngine.shared.apply(params, to: ciImage)
+        } else {
+            processedImage = ciImage
+        }
+
+        // Render to JPEG data with high quality
+        guard let jpegData = ciContext.jpegRepresentation(
+            of: processedImage,
+            colorSpace: processedImage.colorSpace ?? CGColorSpace(name: CGColorSpace.sRGB)!,
+            options: [
+                CIImageRepresentationOption(rawValue: kCGImageDestinationLossyCompressionQuality as String): 0.95
+            ]
+        ) else {
+            throw ExportError.encodingFailed(format: .jpeg)
+        }
+
+        // Save to Photos Library
+        var localIdentifier: String?
+
+        try await PHPhotoLibrary.shared().performChanges {
+            let creationRequest = PHAssetCreationRequest.forAsset()
+            creationRequest.addResource(with: .photo, data: jpegData, options: nil)
+            creationRequest.creationDate = photo.importedAt
+            localIdentifier = creationRequest.placeholderForCreatedAsset?.localIdentifier
+        }
+
+        guard let identifier = localIdentifier else {
+            throw ExportError.writeFailed(URL(fileURLWithPath: "Photos Library"))
+        }
+
+        return identifier
+    }
 }
