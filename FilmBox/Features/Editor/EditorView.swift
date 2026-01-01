@@ -369,7 +369,7 @@ struct EditorView: View {
                     }
                 }
                 .padding(.horizontal, 16)
-                .padding(.vertical, 4)
+                .padding(.vertical, 2)
             }
 
             // Intensity slider (shown when a filter is selected)
@@ -397,7 +397,7 @@ struct EditorView: View {
                         .frame(width: 40, alignment: .trailing)
                 }
                 .padding(.horizontal, 16)
-                .padding(.vertical, 6)
+                .padding(.vertical, 4)
             }
         }
         .task {
@@ -632,7 +632,11 @@ struct EditorView: View {
                     set: { viewModel.updateTemperature($0) }
                 ),
                 range: -100...100,
-                defaultValue: 0
+                defaultValue: 0,
+                customValueDisplay: { value in
+                    let kelvin = Int(6500 - value * 35)
+                    return "\(kelvin)K"
+                }
             )
             ToolSlider(
                 label: "Tint",

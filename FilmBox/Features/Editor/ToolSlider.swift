@@ -29,6 +29,9 @@ struct ToolSlider: View {
     /// Whether to use stepped values
     var step: Float? = nil
 
+    /// Custom value display formatter (overrides valueFormat if provided)
+    var customValueDisplay: ((Float) -> String)? = nil
+
     /// Callback when sliding begins
     var onEditingChanged: ((Bool) -> Void)? = nil
 
@@ -46,6 +49,11 @@ struct ToolSlider: View {
 
     /// Display string for the current value
     private var displayValue: String {
+        // Use custom formatter if provided
+        if let customDisplay = customValueDisplay {
+            return customDisplay(value)
+        }
+
         if showAsPercentage {
             return "\(Int(value))%"
         }
@@ -119,8 +127,8 @@ struct ToolSlider: View {
     private var sliderTrack: some View {
         GeometryReader { geometry in
             let trackWidth = geometry.size.width
-            let trackHeight: CGFloat = 36
-            let thumbSize: CGFloat = 20
+            let trackHeight: CGFloat = 44
+            let thumbSize: CGFloat = 24
 
             ZStack(alignment: .leading) {
                 // Background track
@@ -139,20 +147,25 @@ struct ToolSlider: View {
                         .offset(x: trackWidth * defaultPosition - 1)
                 }
 
-                // Thumb
+                // Thumb with larger hit area
                 Circle()
                     .fill(isDragging ? .yellow : .white)
                     .frame(width: thumbSize, height: thumbSize)
                     .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
+                    .overlay(
+                        Circle()
+                            .fill(Color.clear)
+                            .frame(width: 44, height: 44)
+                    )
                     .offset(x: thumbPosition(trackWidth: trackWidth, thumbSize: thumbSize))
-                    .scaleEffect(isDragging ? 1.15 : 1.0)
+                    .scaleEffect(isDragging ? 1.1 : 1.0)
                     .animation(.spring(response: 0.2, dampingFraction: 0.7), value: isDragging)
             }
             .frame(height: trackHeight)
             .contentShape(Rectangle())
             .gesture(sliderGesture(trackWidth: trackWidth, thumbSize: thumbSize))
         }
-        .frame(height: 36)
+        .frame(height: 44)
     }
 
     // MARK: - Active Fill
