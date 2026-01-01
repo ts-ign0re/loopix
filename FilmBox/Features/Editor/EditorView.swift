@@ -194,6 +194,17 @@ struct EditorView: View {
             }
             syncCropRectFromParameters()
         }
+        .sheet(isPresented: $showFilterEditor) {
+            FilterEditorView(
+                filter: nil,
+                onSave: { savedFilter in
+                    Task {
+                        await loadFilters()
+                        viewModel.selectedPreset = savedFilter
+                    }
+                }
+            )
+        }
     }
 
     /// Sync interactiveCropRect from loaded FilterParameters
@@ -398,6 +409,9 @@ struct EditorView: View {
     @State private var selectedFilterCategory: FilterCategory = .all
     @State private var availableFilters: [FilterPreset] = []
     @State private var filterIntensity: Float = 100
+    @State private var userPresets: [FilterPreset] = []
+    @State private var favoriteIDs: Set<UUID> = []
+    @State private var showFilterEditor = false
 
     // MARK: - Tool Panels
 
@@ -417,6 +431,11 @@ struct EditorView: View {
             // Filter strip
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack(spacing: 12) {
+                    // Add button (only in MY category)
+                    if selectedFilterCategory == .custom {
+                        addFilterButton
+                    }
+
                     // Original (no filter)
                     filterPresetCell(FilterPreset.original)
 
@@ -468,12 +487,25 @@ struct EditorView: View {
     }
 
     private func loadFilters() async {
+        // Load user presets
+        userPresets = await FilterStorage.shared.getUserPresets()
+
+        // Load favorites from UserDefaults
+        if let savedIDs = UserDefaults.standard.array(forKey: "favoriteFilterIDs") as? [String] {
+            favoriteIDs = Set(savedIDs.compactMap { UUID(uuidString: $0) })
+        }
+
         // Get all built-in presets
-        let allFilters = FilmEmulations.all + CreativeFilters.all
+        let allBuiltIn = FilmEmulations.all + CreativeFilters.all
+        let allFilters = allBuiltIn + userPresets
 
         // Filter by category
         let filtered: [FilterPreset]
         switch selectedFilterCategory {
+        case .favorites:
+            filtered = allFilters.filter { favoriteIDs.contains($0.id) }
+        case .custom:
+            filtered = userPresets
         case .all:
             filtered = allFilters
         case .film:
@@ -492,7 +524,7 @@ struct EditorView: View {
             filtered = CreativeFilters.vintage
         case .bw:
             filtered = FilmEmulations.blackAndWhite
-        case .custom, .creative:
+        case .creative:
             filtered = []
         }
 
@@ -500,31 +532,87 @@ struct EditorView: View {
     }
 
     private func filterCategoryTab(_ category: FilterCategory) -> some View {
-        Button {
+        let isSelected = selectedFilterCategory == category
+        let isFavorites = category == .favorites
+
+        return Button {
             withAnimation(.easeInOut(duration: 0.15)) {
                 selectedFilterCategory = category
             }
         } label: {
-            Text(category.displayName)
-                .font(.caption.weight(selectedFilterCategory == category ? .semibold : .regular))
-                .foregroundStyle(selectedFilterCategory == category ? .yellow : .white.opacity(0.6))
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
-                .background(
-                    selectedFilterCategory == category ?
-                    Color.white.opacity(0.1) : Color.clear
-                )
-                .clipShape(Capsule())
+            HStack(spacing: 4) {
+                if isFavorites {
+                    Image(systemName: "star.fill")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(isSelected ? .yellow : .yellow.opacity(0.8))
+                }
+                Text(category.displayName)
+                    .font(.caption.weight(isSelected ? .semibold : .regular))
+            }
+            .foregroundStyle(isSelected ? .yellow : .white.opacity(0.6))
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(
+                isSelected ? Color.white.opacity(0.1) : Color.clear
+            )
+            .clipShape(Capsule())
         }
+    }
+
+    /// Add filter button for MY category
+    private var addFilterButton: some View {
+        Button {
+            showFilterEditor = true
+        } label: {
+            VStack(spacing: 4) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color.white.opacity(0.1))
+                        .frame(width: 72, height: 72)
+
+                    Image(systemName: "plus")
+                        .font(.title2)
+                        .foregroundStyle(.yellow)
+                }
+
+                Text("New")
+                    .font(.system(size: 11, weight: .regular, design: .monospaced))
+                    .foregroundStyle(.white.opacity(0.7))
+                    .lineLimit(1)
+                    .frame(width: 72)
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// Toggle favorite status for a filter
+    private func toggleFavorite(_ preset: FilterPreset) {
+        withAnimation(.easeInOut(duration: 0.2)) {
+            if favoriteIDs.contains(preset.id) {
+                favoriteIDs.remove(preset.id)
+            } else {
+                favoriteIDs.insert(preset.id)
+            }
+        }
+
+        // Persist to UserDefaults
+        let idStrings = favoriteIDs.map { $0.uuidString }
+        UserDefaults.standard.set(idStrings, forKey: "favoriteFilterIDs")
+
+        // Haptic feedback
+        let generator = UIImpactFeedbackGenerator(style: .light)
+        generator.impactOccurred()
     }
 
     private func filterPresetCell(_ preset: FilterPreset) -> some View {
         let isSelected = viewModel.selectedPreset?.id == preset.id ||
             (preset.id == FilterPreset.original.id && viewModel.selectedPreset == nil)
+        let isFavorite = favoriteIDs.contains(preset.id)
+        let isOriginal = preset.id == FilterPreset.original.id
 
         return Button {
             withAnimation(.easeInOut(duration: 0.15)) {
-                if preset.id == FilterPreset.original.id {
+                if isOriginal {
                     viewModel.selectedPreset = nil
                     viewModel.resetToOriginal()
                 } else {
@@ -544,7 +632,7 @@ struct EditorView: View {
                         // Show a preview of the filter applied to thumbnail
                         FilterThumbnailView(
                             baseImage: viewModel.originalImage,
-                            preset: preset.id == FilterPreset.original.id ? nil : preset
+                            preset: isOriginal ? nil : preset
                         )
                         .frame(width: 72, height: 72)
                         .clipShape(RoundedRectangle(cornerRadius: 8))
@@ -552,6 +640,21 @@ struct EditorView: View {
                         Image(systemName: preset.category.iconName)
                             .font(.title3)
                             .foregroundStyle(.white.opacity(0.6))
+                    }
+
+                    // Favorite indicator
+                    if isFavorite && !isOriginal {
+                        VStack {
+                            HStack {
+                                Spacer()
+                                Image(systemName: "star.fill")
+                                    .font(.system(size: 10, weight: .bold))
+                                    .foregroundStyle(.yellow)
+                                    .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 1)
+                                    .padding(4)
+                            }
+                            Spacer()
+                        }
                     }
                 }
                 .overlay {
@@ -570,6 +673,14 @@ struct EditorView: View {
             }
         }
         .buttonStyle(.plain)
+        .simultaneousGesture(
+            LongPressGesture(minimumDuration: 0.5)
+                .onEnded { _ in
+                    if !isOriginal {
+                        toggleFavorite(preset)
+                    }
+                }
+        )
     }
 
     // Adjust sub-categories

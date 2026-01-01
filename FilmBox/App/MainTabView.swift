@@ -137,7 +137,7 @@ struct LibraryContentView: View {
             SettingsTabPlaceholder()
         }
         .sheet(isPresented: $showFilters) {
-            FiltersTabPlaceholder()
+            FiltersManagementView()
         }
     }
 

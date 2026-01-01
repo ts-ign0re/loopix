@@ -16,6 +16,18 @@ struct FilterPreviewStrip: View {
     /// Source asset for generating thumbnails
     let asset: PHAsset?
 
+    /// Set of favorite filter IDs
+    var favoriteIDs: Set<UUID> = []
+
+    /// Callback for long press to toggle favorite
+    var onToggleFavorite: ((FilterPreset) -> Void)? = nil
+
+    /// Whether to show the add button (for MY category)
+    var showAddButton: Bool = false
+
+    /// Callback for add button tap
+    var onAddTap: (() -> Void)? = nil
+
     /// Cell size
     private let cellSize: CGFloat = 72
 
@@ -25,6 +37,12 @@ struct FilterPreviewStrip: View {
         ScrollViewReader { proxy in
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack(spacing: 12) {
+                    // Add button (only for MY category)
+                    if showAddButton {
+                        addButton
+                            .id("add-button")
+                    }
+
                     // Original (no filter) cell
                     FilterPreviewCell(
                         filter: nil,
@@ -45,11 +63,15 @@ struct FilterPreviewStrip: View {
                             filter: filter,
                             asset: asset,
                             isSelected: selectedFilter?.id == filter.id,
+                            isFavorite: favoriteIDs.contains(filter.id),
                             size: cellSize,
                             onTap: {
                                 withAnimation(.easeInOut(duration: 0.2)) {
                                     selectedFilter = filter
                                 }
+                            },
+                            onLongPress: {
+                                onToggleFavorite?(filter)
                             }
                         )
                         .id(filter.id)
@@ -68,6 +90,31 @@ struct FilterPreviewStrip: View {
                 }
             }
         }
+    }
+
+    // MARK: - Add Button
+
+    private var addButton: some View {
+        Button(action: { onAddTap?() }) {
+            VStack(spacing: 6) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color(.systemGray5))
+                        .frame(width: cellSize, height: cellSize)
+
+                    Image(systemName: "plus")
+                        .font(.system(size: 24, weight: .medium))
+                        .foregroundStyle(.yellow)
+                }
+
+                Text("new")
+                    .font(.system(size: 11, weight: .regular, design: .monospaced))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .frame(width: cellSize)
+            }
+        }
+        .buttonStyle(.plain)
     }
 }
 

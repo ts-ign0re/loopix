@@ -232,6 +232,14 @@ actor FilterStorage {
         return try await save(duplicate)
     }
 
+    // MARK: - User Presets Access
+
+    /// Get all user-created presets
+    func getUserPresets() async -> [FilterPreset] {
+        await ensureLoaded()
+        return userPresets
+    }
+
     // MARK: - Favorites
 
     /// Get all favorite presets

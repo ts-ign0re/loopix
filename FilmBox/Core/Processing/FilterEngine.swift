@@ -162,6 +162,26 @@ actor FilterEngine {
             )
         }
 
+        // 4.5. Fuji White Balance Shift (R/B fine tuning)
+        if parameters.whiteBalanceShift.isActive {
+            result = applyWhiteBalanceShift(to: result, shift: parameters.whiteBalanceShift)
+        }
+
+        // 4.6. Dynamic Range (highlight compression)
+        if parameters.dynamicRange != .dr100 {
+            result = applyDynamicRange(to: result, mode: parameters.dynamicRange)
+        }
+
+        // 4.7. Film Simulation (Fuji-style tone/color adjustments)
+        if parameters.filmSimulation != .none {
+            result = applyFilmSimulation(to: result, simulation: parameters.filmSimulation)
+        }
+
+        // 4.8. Color Chrome (deep color enhancement)
+        if parameters.colorChrome.isActive {
+            result = applyColorChrome(to: result, data: parameters.colorChrome)
+        }
+
         // 5. HSL Adjustments (placeholder - requires custom Metal kernel)
         if !parameters.hsl.isIdentity {
             result = applyHSLAdjustments(to: result, hsl: parameters.hsl)
@@ -1107,6 +1127,222 @@ actor FilterEngine {
             Self.logger.error("Failed to apply halation effect: \(error.localizedDescription)")
             return image
         }
+    }
+
+    // MARK: - Fuji Simulation Effects
+
+    /// Apply Fuji-style film simulation using tone curves and color adjustments
+    /// Each simulation has unique characteristics that define its look
+    private func applyFilmSimulation(to image: CIImage, simulation: FilmSimulationType) -> CIImage {
+        guard simulation != .none else { return image }
+
+        var result = image
+
+        // Get simulation-specific adjustments
+        let (curve, satAdjust, contrastAdjust, tintAdjust) = getFilmSimulationParams(simulation)
+
+        // Apply tone curve
+        if !curve.isIdentity {
+            result = applyToneCurve(to: result, curve: curve)
+        }
+
+        // Apply saturation adjustment
+        if abs(satAdjust) > kFilterEpsilon {
+            result = applySaturation(to: result, amount: satAdjust)
+        }
+
+        // Apply contrast adjustment
+        if abs(contrastAdjust) > kFilterEpsilon {
+            result = applyContrast(to: result, amount: contrastAdjust)
+        }
+
+        // Apply tint adjustment (green-magenta shift)
+        if abs(tintAdjust) > kFilterEpsilon {
+            result = applyWhiteBalance(to: result, temperature: 0, tint: tintAdjust)
+        }
+
+        return result
+    }
+
+    /// Get parameters for each film simulation type
+    private func getFilmSimulationParams(_ sim: FilmSimulationType) -> (curve: ToneCurveData, saturation: Float, contrast: Float, tint: Float) {
+        switch sim {
+        case .none:
+            return (.identity, 0, 0, 0)
+
+        case .classicNegative:
+            // High contrast, muted colors, distinctive blue shadows
+            let curve = ToneCurveData(
+                composite: [
+                    .init(x: 0, y: 0.05),      // Lifted blacks
+                    .init(x: 0.25, y: 0.20),   // Deep shadows
+                    .init(x: 0.5, y: 0.50),
+                    .init(x: 0.75, y: 0.80),
+                    .init(x: 1, y: 0.98)       // Slightly rolled highlights
+                ],
+                red: [], green: [], blue: []
+            )
+            return (curve, -15, 20, -5)
+
+        case .classicChrome:
+            // Muted, documentary-style, cyan shadows
+            let curve = ToneCurveData(
+                composite: [
+                    .init(x: 0, y: 0.03),
+                    .init(x: 0.25, y: 0.22),
+                    .init(x: 0.5, y: 0.48),
+                    .init(x: 0.75, y: 0.75),
+                    .init(x: 1, y: 0.97)
+                ],
+                red: [], green: [], blue: []
+            )
+            return (curve, -20, 15, 5)
+
+        case .provia:
+            // Natural, balanced, slightly vivid
+            return (.identity, 10, 5, 0)
+
+        case .velvia:
+            // High saturation, vivid, punchy
+            return (.identity, 40, 15, 0)
+
+        case .astia:
+            // Soft, flattering skin tones
+            return (.identity, -5, -10, 3)
+
+        case .acros:
+            // High-quality B&W with rich tones
+            let curve = ToneCurveData(
+                composite: [
+                    .init(x: 0, y: 0.02),
+                    .init(x: 0.25, y: 0.20),
+                    .init(x: 0.5, y: 0.52),
+                    .init(x: 0.75, y: 0.82),
+                    .init(x: 1, y: 0.98)
+                ],
+                red: [], green: [], blue: []
+            )
+            return (curve, -100, 10, 0)  // Full desaturation for B&W
+
+        case .eterna:
+            // Cinema-style, low saturation, soft
+            let curve = ToneCurveData(
+                composite: [
+                    .init(x: 0, y: 0.08),      // Very lifted blacks
+                    .init(x: 0.25, y: 0.25),
+                    .init(x: 0.5, y: 0.50),
+                    .init(x: 0.75, y: 0.72),   // Compressed highlights
+                    .init(x: 1, y: 0.92)
+                ],
+                red: [], green: [], blue: []
+            )
+            return (curve, -30, -15, 0)
+
+        case .eternaBleachBypass:
+            // High contrast, desaturated, gritty
+            let curve = ToneCurveData(
+                composite: [
+                    .init(x: 0, y: 0),
+                    .init(x: 0.25, y: 0.15),   // Crushed shadows
+                    .init(x: 0.5, y: 0.50),
+                    .init(x: 0.75, y: 0.85),
+                    .init(x: 1, y: 1)
+                ],
+                red: [], green: [], blue: []
+            )
+            return (curve, -50, 35, 0)
+
+        case .nostalgicNeg:
+            // Warm, amber-tinted, vintage feel
+            let curve = ToneCurveData(
+                composite: [
+                    .init(x: 0, y: 0.04),
+                    .init(x: 0.25, y: 0.22),
+                    .init(x: 0.5, y: 0.50),
+                    .init(x: 0.75, y: 0.78),
+                    .init(x: 1, y: 0.96)
+                ],
+                red: [], green: [], blue: []
+            )
+            return (curve, -10, 10, -10)  // Warm tint
+
+        case .reala:
+            // Natural colors, accurate reproduction
+            return (.identity, 5, 0, 0)
+        }
+    }
+
+    /// Apply Color Chrome effect - enhances deep colors (reds, oranges)
+    private func applyColorChrome(to image: CIImage, data: ColorChromeData) -> CIImage {
+        guard data.isActive else { return image }
+
+        var result = image
+
+        // Color Chrome Effect - boosts saturation of already saturated colors
+        if data.effect != .off {
+            let intensity = data.effect.intensity
+            // Increase vibrance for deep color enhancement
+            result = applyVibrance(to: result, amount: intensity * 30)
+            // Slight saturation boost to reds/oranges via HSL
+            if intensity > 0.3 {
+                var hslAdjust = HSLAdjustments()
+                hslAdjust.red.saturation = intensity * 20
+                hslAdjust.orange.saturation = intensity * 25
+                result = applyHSLAdjustments(to: result, hsl: hslAdjust)
+            }
+        }
+
+        // Color Chrome FX Blue - enhances deep blues
+        if data.fxBlue != .off {
+            let intensity = data.fxBlue.intensity
+            var hslAdjust = HSLAdjustments()
+            hslAdjust.blue.saturation = intensity * 30
+            hslAdjust.aqua.saturation = intensity * 20
+            result = applyHSLAdjustments(to: result, hsl: hslAdjust)
+        }
+
+        return result
+    }
+
+    /// Apply Fuji-style white balance R/B shift
+    private func applyWhiteBalanceShift(to image: CIImage, shift: WhiteBalanceShift) -> CIImage {
+        guard shift.isActive else { return image }
+
+        // Convert -9...+9 shifts to color matrix adjustments
+        // Positive red shift = warmer, positive blue shift = cooler
+        let rFactor = 1.0 + Float(shift.redShift) * 0.015   // ±13.5% per unit
+        let bFactor = 1.0 + Float(shift.blueShift) * 0.015
+
+        guard let filter = CIFilter(name: "CIColorMatrix") else {
+            return image
+        }
+
+        // Color matrix to adjust R and B channels
+        filter.setValue(image, forKey: kCIInputImageKey)
+        filter.setValue(CIVector(x: CGFloat(rFactor), y: 0, z: 0, w: 0), forKey: "inputRVector")
+        filter.setValue(CIVector(x: 0, y: 1, z: 0, w: 0), forKey: "inputGVector")
+        filter.setValue(CIVector(x: 0, y: 0, z: CGFloat(bFactor), w: 0), forKey: "inputBVector")
+        filter.setValue(CIVector(x: 0, y: 0, z: 0, w: 1), forKey: "inputAVector")
+        filter.setValue(CIVector(x: 0, y: 0, z: 0, w: 0), forKey: "inputBiasVector")
+
+        return filter.outputImage ?? image
+    }
+
+    /// Apply Dynamic Range mode - compresses highlights for better recovery
+    private func applyDynamicRange(to image: CIImage, mode: DynamicRangeMode) -> CIImage {
+        guard mode != .dr100 else { return image }
+
+        let compression = mode.highlightCompression
+
+        // Use highlight/shadow adjustment to compress highlights
+        // DR200 = moderate compression, DR400 = strong compression
+        let highlightReduction = compression * 50  // 0-33% reduction
+
+        return applyHighlightsShadows(
+            to: image,
+            highlights: -highlightReduction,
+            shadows: compression * 15  // Slight shadow lift to compensate
+        )
     }
 
     // MARK: - Helper Methods

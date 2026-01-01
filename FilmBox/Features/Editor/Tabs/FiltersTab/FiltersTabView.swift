@@ -26,54 +26,54 @@ struct FiltersTabView: View {
     /// Is loading film presets
     @State private var isLoadingFilmPresets = false
 
+    /// Set of favorite filter IDs
+    @State private var favoriteIDs: Set<UUID> = []
+
+    /// User-created presets
+    @State private var userPresets: [FilterPreset] = []
+
     /// Source asset for thumbnails
     let asset: PHAsset?
 
     /// Callback when filter changes
     var onFilterChanged: ((FilterPreset?, Float) -> Void)?
 
+    /// Callback to open filter editor (closes this editor first)
+    var onCreateNewFilter: (() -> Void)?
+
     // MARK: - Services
 
     private let filmCatalogLoader = FilmSimulationCatalogLoader()
 
-    // MARK: - Sample Data (Replace with actual data source)
+    // MARK: - Built-in Filters
 
-    /// All available filters - replace with actual data source
+    /// All built-in filters from FilmEmulations + CreativeFilters
+    private var builtInFilters: [FilterPreset] {
+        FilmEmulations.all + CreativeFilters.all
+    }
+
+    /// All available filters (built-in + user-created)
     private var allFilters: [FilterPreset] {
-        // Sample filters for each category
-        // In production, this would come from a FilterManager or similar
-        [
-            FilterPreset(name: "Warm Glow", category: .warm),
-            FilterPreset(name: "Golden Hour", category: .warm),
-            FilterPreset(name: "Sunset", category: .warm),
-            FilterPreset(name: "Cool Breeze", category: .cool),
-            FilterPreset(name: "Arctic", category: .cool),
-            FilterPreset(name: "Nordic", category: .cool),
-            FilterPreset(name: "Cinematic", category: .pro),
-            FilterPreset(name: "Teal & Orange", category: .pro),
-            FilterPreset(name: "Moody", category: .pro),
-            FilterPreset(name: "Soft Skin", category: .portrait),
-            FilterPreset(name: "Studio", category: .portrait),
-            FilterPreset(name: "Street", category: .urban),
-            FilterPreset(name: "Neon Nights", category: .urban),
-            FilterPreset(name: "Portra 400", category: .film),
-            FilterPreset(name: "Ektar 100", category: .film),
-            FilterPreset(name: "Tri-X 400", category: .film),
-            FilterPreset(name: "Classic B&W", category: .bw),
-            FilterPreset(name: "High Contrast B&W", category: .bw),
-            FilterPreset(name: "Film Noir", category: .bw),
-            FilterPreset(name: "70s Fade", category: .vintage),
-            FilterPreset(name: "Retro", category: .vintage),
-            FilterPreset(name: "Polaroid", category: .vintage)
-        ]
+        builtInFilters + userPresets
     }
 
     /// Filters filtered by selected category
     private var filteredPresets: [FilterPreset] {
-        if selectedCategory == .all {
+        switch selectedCategory {
+        case .favorites:
+            return allFilters.filter { favoriteIDs.contains($0.id) }
+        case .custom:
+            return userPresets
+        case .all:
             return allFilters
+        default:
+            return allFilters.filter { $0.category == selectedCategory }
         }
-        return allFilters.filter { $0.category == selectedCategory }
+    }
+
+    /// Whether to show the add button in the current category
+    private var showAddButton: Bool {
+        selectedCategory == .custom
     }
 
     // MARK: - Body
@@ -100,7 +100,15 @@ struct FiltersTabView: View {
                 FilterPreviewStrip(
                     filters: filteredPresets,
                     selectedFilter: $selectedFilter,
-                    asset: asset
+                    asset: asset,
+                    favoriteIDs: favoriteIDs,
+                    onToggleFavorite: { filter in
+                        toggleFavorite(filter)
+                    },
+                    showAddButton: showAddButton,
+                    onAddTap: {
+                        onCreateNewFilter?()
+                    }
                 )
             }
             .background(Color(.systemBackground))
@@ -141,8 +149,10 @@ struct FiltersTabView: View {
             )
         }
         .task {
-            // Preload film presets in background
+            // Preload film presets and favorites in background
             await loadFilmPresets()
+            await loadFavorites()
+            await loadUserPresets()
         }
     }
 
@@ -240,6 +250,46 @@ struct FiltersTabView: View {
         isLoadingFilmPresets = true
         filmSimulationPresets = await filmCatalogLoader.loadPresets()
         isLoadingFilmPresets = false
+    }
+
+    private func loadFavorites() async {
+        // Load favorites from FilterStorage (user presets)
+        let userFavorites = await FilterStorage.shared.favoritePresets
+        favoriteIDs = Set(userFavorites.map { $0.id })
+
+        // Also add built-in favorites from UserDefaults
+        if let savedIDs = UserDefaults.standard.array(forKey: "favoriteFilterIDs") as? [String] {
+            for idString in savedIDs {
+                if let uuid = UUID(uuidString: idString) {
+                    favoriteIDs.insert(uuid)
+                }
+            }
+        }
+    }
+
+    private func loadUserPresets() async {
+        userPresets = await FilterStorage.shared.getUserPresets()
+    }
+
+    // MARK: - Actions
+
+    private func toggleFavorite(_ filter: FilterPreset) {
+        withAnimation(.easeInOut(duration: 0.2)) {
+            if favoriteIDs.contains(filter.id) {
+                favoriteIDs.remove(filter.id)
+            } else {
+                favoriteIDs.insert(filter.id)
+            }
+        }
+
+        // Save to UserDefaults for built-in filters
+        let idStrings = favoriteIDs.map { $0.uuidString }
+        UserDefaults.standard.set(idStrings, forKey: "favoriteFilterIDs")
+
+        // Also update FilterStorage for user presets
+        Task {
+            try? await FilterStorage.shared.toggleFavorite(id: filter.id)
+        }
     }
 
     // MARK: - Intensity Slider

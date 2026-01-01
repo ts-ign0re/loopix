@@ -46,6 +46,12 @@ struct FilterParameters: Codable, Hashable, Sendable {
     var bloom: BloomData = .none
     var halation: HalationData = .none
 
+    // === FUJI SIMULATION ===
+    var filmSimulation: FilmSimulationType = .none
+    var colorChrome: ColorChromeData = .none
+    var whiteBalanceShift: WhiteBalanceShift = .identity
+    var dynamicRange: DynamicRangeMode = .dr100
+
     // === SHARPENING ===
     var sharpness: Float = 0        // 0...100
     var sharpenRadius: Float = 1.0  // 0.5...3.0
@@ -291,6 +297,87 @@ struct HalationData: Codable, Hashable, Sendable {
 
     var isActive: Bool {
         intensity > 0
+    }
+}
+
+// MARK: - Film Simulation (Fuji-style)
+
+/// Fuji film simulation types
+enum FilmSimulationType: String, Codable, CaseIterable, Sendable {
+    case none = "None"
+    case classicNegative = "Classic Negative"
+    case classicChrome = "Classic Chrome"
+    case provia = "Provia"
+    case velvia = "Velvia"
+    case astia = "Astia"
+    case acros = "Acros"
+    case eterna = "Eterna"
+    case eternaBleachBypass = "Eterna Bleach Bypass"
+    case nostalgicNeg = "Nostalgic Neg"
+    case reala = "Reala Ace"
+
+    var displayName: String { rawValue }
+}
+
+// MARK: - Color Chrome
+
+/// Color Chrome effect data (Fuji-style deep color enhancement)
+struct ColorChromeData: Codable, Hashable, Sendable {
+    var effect: ColorChromeLevel = .off
+    var fxBlue: ColorChromeLevel = .off
+
+    enum ColorChromeLevel: String, Codable, CaseIterable, Sendable {
+        case off = "Off"
+        case weak = "Weak"
+        case strong = "Strong"
+
+        var intensity: Float {
+            switch self {
+            case .off: return 0
+            case .weak: return 0.5
+            case .strong: return 1.0
+            }
+        }
+    }
+
+    static let none = ColorChromeData()
+
+    var isActive: Bool {
+        effect != .off || fxBlue != .off
+    }
+}
+
+// MARK: - White Balance Shift
+
+/// White balance R/B shift (Fuji-style fine tuning)
+struct WhiteBalanceShift: Codable, Hashable, Sendable {
+    var redShift: Int = 0     // -9...+9
+    var blueShift: Int = 0    // -9...+9
+
+    static let identity = WhiteBalanceShift()
+
+    var isActive: Bool {
+        redShift != 0 || blueShift != 0
+    }
+}
+
+// MARK: - Dynamic Range
+
+/// Dynamic range mode (Fuji-style highlight recovery)
+enum DynamicRangeMode: String, Codable, CaseIterable, Sendable {
+    case dr100 = "DR100"
+    case dr200 = "DR200"
+    case dr400 = "DR400"
+    case auto = "DR Auto"
+
+    /// How much to compress highlights (0 = none, 1 = maximum)
+    var highlightCompression: Float {
+        switch self {
+        case .dr100: return 0
+        case .dr200: return 0.33
+        case .dr400: return 0.66
+        case .auto: return 0.5
+        }
     }
 }
 

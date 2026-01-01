@@ -53,24 +53,36 @@ private struct CategoryPill: View {
     let isSelected: Bool
     let namespace: Namespace.ID
 
+    private var isFavorites: Bool {
+        category == .favorites
+    }
+
     var body: some View {
-        Text(category.displayName)
-            .font(.caption)
-            .fontWeight(isSelected ? .semibold : .medium)
-            .foregroundStyle(isSelected ? .white : .primary)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 8)
-            .background {
-                if isSelected {
-                    Capsule()
-                        .fill(Color.accentColor)
-                        .matchedGeometryEffect(id: "categoryBackground", in: namespace)
-                } else {
-                    Capsule()
-                        .fill(Color(.systemGray5))
-                }
+        Group {
+            if isFavorites {
+                // Star icon for favorites
+                Image(systemName: category.iconName)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(isSelected ? .white : .yellow)
+            } else {
+                Text(category.displayName)
+                    .font(.system(size: 12, weight: isSelected ? .semibold : .medium, design: .monospaced))
+                    .foregroundStyle(isSelected ? .white : .primary)
             }
-            .contentShape(Capsule())
+        }
+        .padding(.horizontal, isFavorites ? 10 : 14)
+        .padding(.vertical, 8)
+        .background {
+            if isSelected {
+                Capsule()
+                    .fill(isFavorites ? Color.yellow : Color.accentColor)
+                    .matchedGeometryEffect(id: "categoryBackground", in: namespace)
+            } else {
+                Capsule()
+                    .fill(Color(.systemGray5))
+            }
+        }
+        .contentShape(Capsule())
     }
 }
 

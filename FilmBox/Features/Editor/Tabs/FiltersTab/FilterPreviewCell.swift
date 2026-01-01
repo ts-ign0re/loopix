@@ -16,11 +16,17 @@ struct FilterPreviewCell: View {
     /// Whether this cell is currently selected
     let isSelected: Bool
 
+    /// Whether this filter is in favorites
+    var isFavorite: Bool = false
+
     /// Cell size (square)
     let size: CGFloat
 
     /// Action when tapped
     let onTap: () -> Void
+
+    /// Action when long pressed (toggle favorite)
+    var onLongPress: (() -> Void)? = nil
 
     // MARK: - State
 
@@ -46,21 +52,36 @@ struct FilterPreviewCell: View {
 
     var body: some View {
         VStack(spacing: 6) {
-            thumbnailView
-                .frame(width: size, height: size)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 8)
-                        .strokeBorder(
-                            isSelected ? Color.accentColor : Color.clear,
-                            lineWidth: 3
+            ZStack(alignment: .topTrailing) {
+                thumbnailView
+                    .frame(width: size, height: size)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 8)
+                            .strokeBorder(
+                                isSelected ? Color.accentColor : Color.clear,
+                                lineWidth: 3
+                            )
+                    }
+                    .shadow(
+                        color: isSelected ? Color.accentColor.opacity(0.3) : .clear,
+                        radius: 4,
+                        y: 2
+                    )
+
+                // Favorite indicator
+                if isFavorite {
+                    Image(systemName: "star.fill")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(.yellow)
+                        .padding(4)
+                        .background(
+                            Circle()
+                                .fill(.black.opacity(0.5))
                         )
+                        .offset(x: -2, y: 2)
                 }
-                .shadow(
-                    color: isSelected ? Color.accentColor.opacity(0.3) : .clear,
-                    radius: 4,
-                    y: 2
-                )
+            }
 
             Text(displayName)
                 .font(.system(size: 11, weight: isSelected ? .semibold : .regular, design: .monospaced))
@@ -71,6 +92,9 @@ struct FilterPreviewCell: View {
         .contentShape(Rectangle())
         .onTapGesture {
             onTap()
+        }
+        .onLongPressGesture {
+            onLongPress?()
         }
         .task(id: filter?.id) {
             await loadThumbnail()
