@@ -1,6 +1,12 @@
 import Foundation
 import CoreGraphics
 
+// MARK: - Constants
+
+/// Epsilon for float comparisons throughout filter processing
+/// Used for determining if values are effectively zero or equal
+let kFilterEpsilon: Float = 0.0001
+
 // MARK: - Main Filter Parameters
 
 /// All adjustable parameters for a filter preset
@@ -71,7 +77,7 @@ struct ToneCurveData: Codable, Hashable, Sendable {
         var y: Float  // 0...1 output
 
         static func == (lhs: CurvePoint, rhs: CurvePoint) -> Bool {
-            abs(lhs.x - rhs.x) < 0.0001 && abs(lhs.y - rhs.y) < 0.0001
+            abs(lhs.x - rhs.x) < kFilterEpsilon && abs(lhs.y - rhs.y) < kFilterEpsilon
         }
     }
 

@@ -3,12 +3,26 @@
 //  FilmBox
 //
 //  Metal shader for realistic film grain effect
+//  Simulates silver halide crystal response in photographic film
 //
 
 #include <metal_stdlib>
 #include <CoreImage/CoreImage.h>
 
 using namespace metal;
+
+// Box-Muller transform for Gaussian-distributed random numbers
+// More realistic for film grain than uniform distribution
+float2 gaussianRandom(float2 p, float seed) {
+    float3 p3 = fract(float3(p.xyx) * float3(0.1031, 0.1030, 0.0973));
+    p3 += dot(p3, p3.yzx + 33.33 + seed);
+    float2 uniform = fract((p3.xx + p3.yz) * p3.zy);
+
+    // Box-Muller transform
+    float r = sqrt(-2.0 * log(max(uniform.x, 0.0001)));
+    float theta = 6.28318530718 * uniform.y;
+    return float2(r * cos(theta), r * sin(theta));
+}
 
 // Hash function for pseudo-random number generation
 float hash(float2 p) {
@@ -17,49 +31,61 @@ float hash(float2 p) {
     return fract((p3.x + p3.y) * p3.z);
 }
 
-// 2D noise function
-float noise2D(float2 p) {
+// Voronoi-based grain clustering (simulates silver halide crystal clumping)
+float voronoiGrain(float2 p, float roughness) {
     float2 i = floor(p);
     float2 f = fract(p);
 
-    // Cubic Hermite interpolation for smoother results
-    float2 u = f * f * (3.0 - 2.0 * f);
+    float minDist = 1.0;
+    float secondDist = 1.0;
 
-    // Four corners
-    float a = hash(i);
-    float b = hash(i + float2(1.0, 0.0));
-    float c = hash(i + float2(0.0, 1.0));
-    float d = hash(i + float2(1.0, 1.0));
+    // Search neighboring cells
+    for (int y = -1; y <= 1; y++) {
+        for (int x = -1; x <= 1; x++) {
+            float2 neighbor = float2(x, y);
+            float2 point = hash(i + neighbor) * roughness + neighbor;
+            float dist = length(f - point);
 
-    // Bilinear interpolation
-    return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
-}
-
-// Fractal Brownian Motion for more realistic grain texture
-float fbm(float2 p, float roughness) {
-    float value = 0.0;
-    float amplitude = 0.5;
-    float frequency = 1.0;
-    float lacunarity = 2.0;
-
-    // Number of octaves based on roughness (1-4)
-    int octaves = int(mix(1.0, 4.0, roughness));
-
-    for (int i = 0; i < octaves; i++) {
-        value += amplitude * noise2D(p * frequency);
-        amplitude *= 0.5;
-        frequency *= lacunarity;
+            if (dist < minDist) {
+                secondDist = minDist;
+                minDist = dist;
+            } else if (dist < secondDist) {
+                secondDist = dist;
+            }
+        }
     }
 
-    return value;
+    // Edge detection creates grain texture
+    return secondDist - minDist;
 }
 
-// Film grain kernel
+// Multi-octave noise with proper falloff
+float filmNoise(float2 p, float roughness, float seed) {
+    float value = 0.0;
+    float amplitude = 1.0;
+    float totalAmp = 0.0;
+    float frequency = 1.0;
+
+    // More octaves for rougher grain
+    int octaves = int(mix(2.0, 5.0, roughness));
+
+    for (int i = 0; i < octaves; i++) {
+        float2 gaussian = gaussianRandom(p * frequency, seed + float(i) * 7.3);
+        value += amplitude * gaussian.x;
+        totalAmp += amplitude;
+        amplitude *= 0.5;
+        frequency *= 2.1;
+    }
+
+    return value / totalAmp;
+}
+
+// Film grain kernel - simulates photographic film grain
 // Parameters:
 //   amount: Grain intensity (0.0 - 1.0)
-//   size: Grain size multiplier (0.5 - 4.0)
+//   size: Grain size multiplier (0.5 - 4.0, larger = finer grain)
 //   roughness: Grain texture roughness (0.0 - 1.0)
-//   monochromatic: 1.0 for B&W grain, 0.0 for color grain
+//   monochromatic: 1.0 for B&W grain, 0.0 for chromatic grain
 //   time: Animation time for temporal variation
 extern "C" float4 grainKernel(coreimage::sampler src,
                                float amount,
@@ -71,47 +97,71 @@ extern "C" float4 grainKernel(coreimage::sampler src,
     // Sample source image
     float4 color = src.sample(src.coord());
 
-    // Get destination coordinates for grain calculation
+    // Get destination coordinates
     float2 coord = dest.coord();
 
-    // Calculate grain size factor (smaller size value = larger grain)
+    // Calculate grain size factor
     float sizeScale = 1.0 / max(size, 0.5);
 
-    // Add time variation for animated grain
-    float2 grainCoord = coord * sizeScale + float2(time * 100.0, time * 73.0);
+    // Grain coordinates with optional temporal variation
+    float2 grainCoord = coord * sizeScale;
+    float seed = time * 17.3;
 
-    // Generate grain using FBM
-    float grain = fbm(grainCoord, roughness);
-
-    // Normalize grain to [-1, 1] range
-    grain = (grain - 0.5) * 2.0;
-
-    // Calculate luminance for exposure-dependent grain intensity
+    // Calculate luminance for exposure-dependent response
     float luminance = dot(color.rgb, float3(0.2126, 0.7152, 0.0722));
 
-    // Grain is more visible in midtones, less in shadows and highlights
-    float midtoneMask = 4.0 * luminance * (1.0 - luminance);
-    midtoneMask = mix(0.5, midtoneMask, 0.5); // Reduce the effect
+    // === FILM-LIKE GRAIN RESPONSE ===
+    // Real film grain is caused by silver halide crystals
+    // More exposed areas (highlights) have more developed crystals = more grain
+    // Shadows have fewer developed crystals = less visible grain
+    // But the relationship is not linear - it follows a characteristic curve
 
-    // Apply amount with midtone consideration
-    float grainAmount = amount * 0.3 * midtoneMask;
+    // Negative film characteristic: grain peaks in upper midtones
+    // This simulates the density response curve of silver halide emulsion
+    float exposureResponse = pow(luminance, 0.7) * (1.0 - pow(luminance, 2.5));
+    exposureResponse = max(exposureResponse, 0.15); // Minimum grain in deep shadows
+
+    // Add grain clustering using Voronoi for more organic look
+    float clusterNoise = voronoiGrain(grainCoord * 0.3, 0.8);
+    float clusterFactor = mix(0.7, 1.3, clusterNoise);
+
+    // Generate main grain noise with Gaussian distribution
+    float grain = filmNoise(grainCoord, roughness, seed);
+
+    // Add fine detail layer for high-ISO look
+    float fineGrain = filmNoise(grainCoord * 2.5, roughness * 0.7, seed + 11.7) * 0.3;
+    grain = grain + fineGrain;
+
+    // Apply clustering
+    grain *= clusterFactor;
+
+    // Scale grain by exposure response and amount
+    float grainIntensity = amount * 0.35 * exposureResponse;
 
     float3 grainColor;
     if (monochromatic > 0.5) {
-        // Monochromatic grain (same value for all channels)
+        // Monochromatic grain (traditional B&W film look)
         grainColor = float3(grain);
     } else {
-        // Color grain (different noise per channel)
-        float grainR = fbm(grainCoord + float2(127.1, 311.7), roughness);
-        float grainG = fbm(grainCoord + float2(269.5, 183.3), roughness);
-        float grainB = fbm(grainCoord + float2(419.2, 371.9), roughness);
-        grainColor = (float3(grainR, grainG, grainB) - 0.5) * 2.0;
+        // Chromatic grain - color film has different grain per layer
+        // Red-sensitive layer is usually coarsest, blue is finest
+        float grainR = filmNoise(grainCoord * 0.9, roughness, seed);
+        float grainG = filmNoise(grainCoord * 1.0, roughness * 0.9, seed + 5.7);
+        float grainB = filmNoise(grainCoord * 1.1, roughness * 0.8, seed + 11.3);
+
+        // Subtle color shifts in chromatic grain
+        grainColor = float3(grainR, grainG, grainB);
+
+        // Reduce chromatic intensity relative to luminance grain
+        grainColor *= 0.85;
     }
 
-    // Blend grain with source image
-    float3 result = color.rgb + grainColor * grainAmount;
+    // Apply grain with proper blending
+    // Use overlay-style blending for more natural look in midtones
+    float3 grainEffect = grainColor * grainIntensity;
+    float3 result = color.rgb + grainEffect;
 
-    // Clamp result
+    // Soft clamp to avoid harsh clipping
     result = clamp(result, 0.0, 1.0);
 
     return float4(result, color.a);

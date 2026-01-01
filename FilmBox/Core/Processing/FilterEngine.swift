@@ -2,6 +2,33 @@
 import CoreGraphics
 import Foundation
 import Metal
+import os.log
+
+// MARK: - FilterEngineError
+
+/// Errors that can occur during filter processing
+enum FilterEngineError: Error, LocalizedError {
+    case clutLoadFailed(path: String, underlying: Error)
+    case clutApplicationFailed
+    case metalKernelFailed(effect: String, underlying: Error)
+    case filterCreationFailed(name: String)
+    case renderFailed
+
+    var errorDescription: String? {
+        switch self {
+        case .clutLoadFailed(let path, let error):
+            return "Failed to load CLUT at '\(path)': \(error.localizedDescription)"
+        case .clutApplicationFailed:
+            return "Failed to apply CLUT filter"
+        case .metalKernelFailed(let effect, let error):
+            return "Metal kernel failed for \(effect): \(error.localizedDescription)"
+        case .filterCreationFailed(let name):
+            return "Failed to create CIFilter: \(name)"
+        case .renderFailed:
+            return "Failed to render image"
+        }
+    }
+}
 
 // MARK: - FilterEngine
 
@@ -11,6 +38,9 @@ import Metal
 actor FilterEngine {
 
     // MARK: - Properties
+
+    /// Logger for filter engine operations
+    private static let logger = Logger(subsystem: "com.filmbox", category: "FilterEngine")
 
     /// Shared Core Image context configured for GPU rendering
     private let context: CIContext
@@ -89,6 +119,17 @@ actor FilterEngine {
     /// - Returns: Processed CIImage
     func apply(_ parameters: FilterParameters, to image: CIImage) -> CIImage {
         var result = image
+
+        // 0. Crop (apply first, before any other filters)
+        if let cropRect = parameters.cropRect {
+            // cropRect is in image coordinates (already absolute)
+            result = result.cropped(to: cropRect)
+            // Translate to origin for consistent processing
+            result = result.transformed(by: CGAffineTransform(
+                translationX: -cropRect.origin.x,
+                y: -cropRect.origin.y
+            ))
+        }
 
         // 1. Exposure & Contrast
         if parameters.exposure != 0 {
@@ -208,6 +249,8 @@ actor FilterEngine {
     ///   - intensity: CLUT intensity (0-100)
     /// - Returns: Processed image
     func applyCLUT(at path: String, to image: CIImage, intensity: Float = 100) async -> CIImage {
+        let originalExtent = image.extent
+
         // Get the CLUT filter (from cache or load new)
         let filter: CIFilter
         if let cached = clutFilterCache[path] {
@@ -222,7 +265,7 @@ actor FilterEngine {
                 filter = loadedFilter
             } catch {
                 // Log error and return original image
-                print("Failed to load CLUT at \(path): \(error)")
+                Self.logger.error("Failed to load CLUT at \(path): \(error.localizedDescription)")
                 return image
             }
         }
@@ -234,12 +277,15 @@ actor FilterEngine {
             return image
         }
 
+        // Ensure output extent matches original
+        let croppedOutput = output.cropped(to: originalExtent)
+
         // Apply intensity blending if not 100%
         if intensity < 100 {
-            return blendImages(base: image, overlay: output, amount: intensity / 100.0)
+            return blendImages(base: image, overlay: croppedOutput, amount: intensity / 100.0)
         }
 
-        return output
+        return croppedOutput
     }
 
     /// Apply a pre-loaded CLUT filter directly
@@ -249,17 +295,22 @@ actor FilterEngine {
     ///   - intensity: CLUT intensity (0-100)
     /// - Returns: Processed image
     func applyCLUT(filter: CIFilter, to image: CIImage, intensity: Float = 100) -> CIImage {
+        let originalExtent = image.extent
+
         filter.setValue(image, forKey: kCIInputImageKey)
 
         guard let output = filter.outputImage else {
             return image
         }
 
+        // Ensure output extent matches original
+        let croppedOutput = output.cropped(to: originalExtent)
+
         if intensity < 100 {
-            return blendImages(base: image, overlay: output, amount: intensity / 100.0)
+            return blendImages(base: image, overlay: croppedOutput, amount: intensity / 100.0)
         }
 
-        return output
+        return croppedOutput
     }
 
     /// Resolve a CLUT path to an absolute URL
@@ -303,7 +354,7 @@ actor FilterEngine {
                 let (filter, _) = try await clutLoader.loadCLUT(from: url)
                 clutFilterCache[path] = filter
             } catch {
-                print("Failed to preload CLUT at \(path): \(error)")
+                Self.logger.warning("Failed to preload CLUT at \(path): \(error.localizedDescription)")
             }
         }
     }
@@ -508,15 +559,15 @@ actor FilterEngine {
         }
 
         // CITemperatureAndTint uses neutral as (6500, 0)
-        // Temperature: -100 maps to ~4000K (warm), +100 maps to ~9000K (cool)
         // We adjust the target to shift the white balance
         let neutralTemp: Float = 6500.0
         let neutralTint: Float = 0.0
 
         // Convert -100...+100 to Kelvin shift
         // Negative = warmer (lower target K), Positive = cooler (higher target K)
-        let tempShift = temperature * 25.0  // -2500 to +2500
-        let tintShift = tint * 1.0          // -100 to +100
+        // -100 → 4000K (warm), 0 → 6500K (neutral), +100 → 9000K (cool)
+        let tempShift = temperature * 25.0  // ±2500K range
+        let tintShift = tint * 1.0          // ±100 green-magenta shift
 
         let targetNeutral = CIVector(x: CGFloat(neutralTemp + tempShift), y: CGFloat(neutralTint + tintShift))
 
@@ -677,20 +728,17 @@ actor FilterEngine {
     }
 
     /// Apply vignette effect using Metal kernel
-    /// - Parameters:
-    ///   - image: Source image
-    ///   - data: Vignette parameters
-    /// - Returns: Adjusted image
+    ///
+    /// Parameter conversion from UI to Metal kernel:
+    /// - `amount`: -100...+100 (UI) → -1...1 (Metal) - negative brightens edges
+    /// - `midpoint`: 0...1 (UI) → 0...1 (Metal) - where vignette starts
+    /// - `roundness`: -100...+100 (UI) → 0...1 (Metal) - rectangular to circular
+    /// - `feather`: 0...1 (UI) → 0...1 (Metal) - transition softness
     func applyVignette(to image: CIImage, data: VignetteData) -> CIImage {
-        // Convert parameters from UI range to Metal kernel range
-        // amount: -100...+100 → -1.0...1.0
-        // midpoint: 0...1 → direct mapping
-        // roundness: -100...+100 → 0...1 (negative = rectangular, positive = circular)
-        // feather: 0...1 → direct mapping
-        let amount = data.amount / 100.0
-        let midpoint = data.midpoint
-        let roundness = (data.roundness + 100.0) / 200.0  // Map -100...100 to 0...1
-        let feather = data.feather
+        let amount = data.amount / 100.0                  // -100...100 → -1...1
+        let midpoint = data.midpoint                       // 0...1 → 0...1 (direct)
+        let roundness = (data.roundness + 100.0) / 200.0   // -100...100 → 0...1
+        let feather = data.feather                         // 0...1 → 0...1 (direct)
 
         do {
             return try MetalFilterLoader.shared.applyVignette(
@@ -702,7 +750,7 @@ actor FilterEngine {
             )
         } catch {
             // Fallback to CIVignette if Metal fails
-            print("FilterEngine: Metal vignette failed, using fallback: \(error)")
+            Self.logger.warning("Metal vignette failed, using CIVignette fallback: \(error.localizedDescription)")
             guard let filter = getCachedFilter(name: "CIVignette") else {
                 return image
             }
@@ -833,7 +881,7 @@ actor FilterEngine {
         var s: Float = 0
         let l = (maxC + minC) / 2.0
 
-        if delta > 0.0001 {
+        if delta > kFilterEpsilon {
             s = delta / (1.0 - abs(2.0 * l - 1.0))
 
             if maxC == r {
@@ -852,7 +900,7 @@ actor FilterEngine {
 
     /// Convert HSL to RGB
     private func hslToRGB(h: Float, s: Float, l: Float) -> (r: Float, g: Float, b: Float) {
-        if s < 0.0001 {
+        if s < kFilterEpsilon {
             return (l, l, l)
         }
 
@@ -986,13 +1034,15 @@ actor FilterEngine {
     }
 
     /// Apply film grain effect using Metal kernel
+    ///
+    /// Parameter conversion from UI to Metal kernel:
+    /// - `amount`: 0...100 (UI) → 0...1 (Metal) - grain visibility
+    /// - `size`: 0...1 (UI, fine→coarse) → 4.0...0.5 (Metal, inverted scale factor)
+    /// - `roughness`: 0...1 (UI) → 0...1 (Metal) - grain texture variation
+    /// - `monochromatic`: direct pass-through
     private func applyGrain(to image: CIImage, data: GrainData) -> CIImage {
-        // Convert parameters from UI range to Metal kernel range
-        // amount: 0...100 → 0...1
-        // size: 0...1 → 0.5...4.0 (inverted - larger value = smaller grain)
-        // roughness: 0...1 → 0...1 (direct mapping)
         let amount = data.amount / 100.0
-        let size = 0.5 + (1.0 - data.size) * 3.5  // Invert: 0 → 4.0 (large grain), 1 → 0.5 (fine grain)
+        let size = 0.5 + (1.0 - data.size) * 3.5  // Invert: UI 0 → Metal 4.0, UI 1 → Metal 0.5
         let roughness = data.roughness
         let monochromatic = data.monochromatic
 
@@ -1006,20 +1056,21 @@ actor FilterEngine {
                 time: 0.0  // Static grain for photos
             )
         } catch {
-            print("FilterEngine: Failed to apply grain: \(error)")
+            Self.logger.error("Failed to apply grain effect: \(error.localizedDescription)")
             return image
         }
     }
 
     /// Apply bloom/glow effect using Metal kernel
+    ///
+    /// Parameter conversion from UI to Metal kernel:
+    /// - `intensity`: 0...100 (UI) → 0...2.0 (Metal) - bloom strength
+    /// - `radius`: 0...1 (UI) → 1...50 (Metal) - blur radius in pixels
+    /// - `threshold`: 0...1 (UI) → 0...1 (Metal) - brightness cutoff
     private func applyBloom(to image: CIImage, data: BloomData) -> CIImage {
-        // Convert parameters from UI range to Metal kernel range
-        // intensity: 0...100 → 0...2.0
-        // radius: 0...1 → 1.0...50.0
-        // threshold: 0...1 → direct mapping
-        let intensity = data.intensity / 100.0 * 2.0
-        let radius = 1.0 + data.radius * 49.0  // Map 0...1 to 1...50
-        let threshold = data.threshold
+        let intensity = data.intensity / 100.0 * 2.0  // 0...100 → 0...2.0
+        let radius = 1.0 + data.radius * 49.0         // 0...1 → 1...50
+        let threshold = data.threshold                 // 0...1 → 0...1 (direct)
 
         do {
             return try MetalFilterLoader.shared.applyBloom(
@@ -1029,20 +1080,21 @@ actor FilterEngine {
                 threshold: threshold
             )
         } catch {
-            print("FilterEngine: Failed to apply bloom: \(error)")
+            Self.logger.error("Failed to apply bloom effect: \(error.localizedDescription)")
             return image
         }
     }
 
     /// Apply halation effect (film red glow) using Metal kernel
+    ///
+    /// Parameter conversion from UI to Metal kernel:
+    /// - `intensity`: 0...100 (UI) → 0...1.0 (Metal) - halation visibility
+    /// - `hue`: 0...360 (UI, degrees) → 0...1 (Metal, normalized) - glow color
+    /// - `spread`: 0...1 (UI) → 1...50 (Metal) - blur radius in pixels
     private func applyHalation(to image: CIImage, data: HalationData) -> CIImage {
-        // Convert parameters from UI range to Metal kernel range
-        // intensity: 0...100 → 0...1.0
-        // hue: 0...360 → 0...1.0 (normalized hue)
-        // spread: 0...1 → 1.0...50.0
-        let intensity = data.intensity / 100.0
-        let hue = data.hue / 360.0  // Normalize 0...360 to 0...1
-        let spread = 1.0 + data.spread * 49.0  // Map 0...1 to 1...50
+        let intensity = data.intensity / 100.0        // 0...100 → 0...1
+        let hue = data.hue / 360.0                    // 0...360 → 0...1
+        let spread = 1.0 + data.spread * 49.0         // 0...1 → 1...50
 
         do {
             return try MetalFilterLoader.shared.applyHalation(
@@ -1052,7 +1104,7 @@ actor FilterEngine {
                 spread: spread
             )
         } catch {
-            print("FilterEngine: Failed to apply halation: \(error)")
+            Self.logger.error("Failed to apply halation effect: \(error.localizedDescription)")
             return image
         }
     }
@@ -1124,7 +1176,12 @@ actor FilterEngine {
         return result
     }
 
-    /// Blend two images together
+    /// Blend two images together using CIBlendWithMask
+    /// - Parameters:
+    ///   - base: The background image (shown when amount = 0)
+    ///   - overlay: The foreground image (shown when amount = 1)
+    ///   - amount: Blend factor (0.0 = all base, 1.0 = all overlay)
+    /// - Returns: Blended image
     private func blendImages(base: CIImage, overlay: CIImage, amount: Float) -> CIImage {
         guard let blendFilter = CIFilter(name: "CIBlendWithMask") else {
             return base
@@ -1142,8 +1199,10 @@ actor FilterEngine {
             return base
         }
 
-        blendFilter.setValue(base, forKey: kCIInputImageKey)
-        blendFilter.setValue(overlay, forKey: kCIInputBackgroundImageKey)
+        // CIBlendWithMask: result = inputImage where mask is white, backgroundImage where mask is black
+        // So overlay goes to inputImage (foreground), base goes to backgroundImage
+        blendFilter.setValue(overlay, forKey: kCIInputImageKey)
+        blendFilter.setValue(base, forKey: kCIInputBackgroundImageKey)
         blendFilter.setValue(mask, forKey: kCIInputMaskImageKey)
 
         return blendFilter.outputImage ?? base

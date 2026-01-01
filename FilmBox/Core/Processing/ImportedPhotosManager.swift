@@ -19,6 +19,10 @@ struct ImportedPhoto: Identifiable, Hashable, Codable {
     let importedAt: Date
     var editedParametersData: Data?
 
+    /// Version counter for thumbnail - incremented when thumbnail is regenerated
+    /// Used to trigger UI refresh in HomePhotoCell
+    var thumbnailVersion: Int = 0
+
     /// Local file name for the stored image
     var localFileName: String {
         "\(id.uuidString).heic"
@@ -34,13 +38,15 @@ struct ImportedPhoto: Identifiable, Hashable, Codable {
         self.assetIdentifier = asset.localIdentifier
         self.importedAt = Date()
         self.editedParametersData = nil
+        self.thumbnailVersion = 0
     }
 
-    init(id: UUID = UUID(), assetIdentifier: String, importedAt: Date = Date(), editedParametersData: Data? = nil) {
+    init(id: UUID = UUID(), assetIdentifier: String, importedAt: Date = Date(), editedParametersData: Data? = nil, thumbnailVersion: Int = 0) {
         self.id = id
         self.assetIdentifier = assetIdentifier
         self.importedAt = importedAt
         self.editedParametersData = editedParametersData
+        self.thumbnailVersion = thumbnailVersion
     }
 }
 
@@ -73,6 +79,9 @@ final class ImportedPhotosManager {
 
     private let userDefaultsKey = "importedPhotos"
 
+    /// In-memory thumbnail cache for fast scrolling
+    private let thumbnailCache = NSCache<NSString, UIImage>()
+
     /// Directory for storing imported images
     private var imagesDirectory: URL {
         let documentsDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
@@ -92,6 +101,9 @@ final class ImportedPhotosManager {
     // MARK: - Initialization
 
     private init() {
+        // Configure thumbnail cache - limit to ~100MB assuming ~1MB per thumbnail
+        thumbnailCache.countLimit = 100
+        thumbnailCache.totalCostLimit = 100 * 1024 * 1024
         loadFromStorage()
     }
 
@@ -254,11 +266,36 @@ final class ImportedPhotosManager {
         return UIImage(data: data)
     }
 
-    /// Load thumbnail UIImage
+    /// Load thumbnail UIImage with in-memory caching
     func loadThumbnail(for photo: ImportedPhoto) -> UIImage? {
+        let cacheKey = "\(photo.id.uuidString)_v\(photo.thumbnailVersion)" as NSString
+
+        // Check cache first
+        if let cached = thumbnailCache.object(forKey: cacheKey) {
+            return cached
+        }
+
+        // Load from disk
         let thumbURL = getThumbnailURL(for: photo)
-        guard let data = try? Data(contentsOf: thumbURL) else { return nil }
-        return UIImage(data: data)
+        guard let data = try? Data(contentsOf: thumbURL),
+              let image = UIImage(data: data) else {
+            return nil
+        }
+
+        // Store in cache
+        thumbnailCache.setObject(image, forKey: cacheKey)
+        return image
+    }
+
+    /// Clear thumbnail cache
+    func clearThumbnailCache() {
+        thumbnailCache.removeAllObjects()
+    }
+
+    /// Remove specific thumbnail from cache
+    func invalidateThumbnailCache(for photoID: UUID, version: Int) {
+        let cacheKey = "\(photoID.uuidString)_v\(version)" as NSString
+        thumbnailCache.removeObject(forKey: cacheKey)
     }
 
     /// Check if local image exists
@@ -330,8 +367,10 @@ final class ImportedPhotosManager {
             return
         }
 
-        // Only keep photos that have local files
-        photos = savedPhotos.filter { hasLocalImage(for: $0) }
+        // Only keep photos that have local files, sorted by import date (newest first)
+        photos = savedPhotos
+            .filter { hasLocalImage(for: $0) }
+            .sorted { $0.importedAt > $1.importedAt }
 
         // Re-save if some were removed
         if photos.count != savedPhotos.count {
@@ -379,6 +418,56 @@ final class ImportedPhotosManager {
         let selectedPhotos = photos.filter { selectedPhotoIDs.contains($0.id) }
         return selectedPhotos.map { photo in
             (photo: photo, parameters: getEditedParameters(for: photo.id))
+        }
+    }
+
+    // MARK: - Thumbnail Regeneration
+
+    /// Regenerate thumbnail for a photo after editing
+    @MainActor
+    func regenerateThumbnail(for photoID: UUID) async {
+        guard let index = photos.firstIndex(where: { $0.id == photoID }),
+              let ciImage = loadCIImage(for: photos[index]) else {
+            print("❌ Failed to load image for thumbnail regeneration")
+            return
+        }
+
+        let photo = photos[index]
+
+        // Get edited parameters if any
+        let parameters = getEditedParameters(for: photoID)
+
+        var processedImage = ciImage
+
+        // Apply filter parameters FIRST (including crop) on full resolution
+        if let params = parameters {
+            if #available(iOS 17.0, *) {
+                processedImage = await FilterEngine.shared.apply(params, to: processedImage)
+            }
+        }
+
+        // Then scale to thumbnail size
+        let maxSize: CGFloat = 512
+        let scale = min(maxSize / processedImage.extent.width, maxSize / processedImage.extent.height, 1.0)
+        let scaledImage = processedImage.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
+
+        // Save the new thumbnail
+        let context = CIContext()
+        let thumbnailURL = thumbnailsDirectory.appendingPathComponent(photo.thumbnailFileName)
+
+        if let heicData = context.heifRepresentation(
+            of: scaledImage,
+            format: .RGBA8,
+            colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!,
+            options: [kCGImageDestinationLossyCompressionQuality as CIImageRepresentationOption: 0.7]
+        ) {
+            try? heicData.write(to: thumbnailURL)
+
+            // Increment thumbnail version to trigger UI refresh
+            photos[index].thumbnailVersion += 1
+            saveMetadataToStorage()
+
+            print("✅ Regenerated thumbnail for: \(photo.thumbnailFileName) (v\(photos[index].thumbnailVersion))")
         }
     }
 }

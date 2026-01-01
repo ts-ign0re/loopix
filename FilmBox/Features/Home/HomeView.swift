@@ -312,27 +312,31 @@ struct HomePhotoCell: View {
                     .clipped()
             } else {
                 Rectangle()
-                    .fill(Color.white.opacity(0.1))
+                    .fill(Color(white: 0.9).opacity(0.08))
                     .frame(width: targetSize.width, height: targetSize.height)
             }
 
             // Selection overlay
             if isSelected {
-                Color.black.opacity(0.3)
+                Color.black.opacity(0.4)
 
-                // Checkmark
+                // Selection border
+                Rectangle()
+                    .stroke(Color.yellow, lineWidth: 3)
+
+                // Square checkmark badge
                 VStack {
                     HStack {
                         Spacer()
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.title2)
-                            .foregroundStyle(.black)
-                            .background(
-                                Circle()
-                                    .fill(Color.yellow)
-                                    .frame(width: 24, height: 24)
-                            )
-                            .padding(8)
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(Color.yellow)
+                                .frame(width: 22, height: 22)
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 12, weight: .bold, design: .monospaced))
+                                .foregroundStyle(.black)
+                        }
+                        .padding(6)
                     }
                     Spacer()
                 }
@@ -342,17 +346,18 @@ struct HomePhotoCell: View {
         .onTapGesture {
             onTap()
         }
-        .task {
+        .task(id: photo.thumbnailVersion) {
             await loadThumbnail()
         }
     }
 
     private func loadThumbnail() async {
-        // Load thumbnail from local storage
-        if let thumb = await MainActor.run(body: { ImportedPhotosManager.shared.loadThumbnail(for: photo) }) {
-            await MainActor.run {
-                self.thumbnail = thumb
-            }
+        // Load thumbnail - manager handles caching
+        let thumb = await MainActor.run {
+            ImportedPhotosManager.shared.loadThumbnail(for: photo)
+        }
+        if let thumb {
+            self.thumbnail = thumb
         }
     }
 }

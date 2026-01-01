@@ -1,7 +1,7 @@
 import SwiftUI
 import Photos
 
-/// Root content view - displays HomeView as the main screen
+/// Root content view - displays MainTabView as the main screen
 struct ContentView: View {
 
     @State private var authorizationStatus: PHAuthorizationStatus = .notDetermined
@@ -10,7 +10,7 @@ struct ContentView: View {
     var body: some View {
         Group {
             if authorizationStatus == .authorized {
-                HomeView()
+                MainTabView()
             } else if authorizationStatus == .notDetermined {
                 // Show loading while checking permission
                 ZStack {

@@ -187,15 +187,43 @@ struct EditorView: View {
             .toolbarBackground(.visible, for: .navigationBar)
         }
         .preferredColorScheme(.dark)
+        .task {
+            // Wait for image to load, then sync crop rect
+            while viewModel.isLoading {
+                try? await Task.sleep(for: .milliseconds(50))
+            }
+            syncCropRectFromParameters()
+        }
+    }
+
+    /// Sync interactiveCropRect from loaded FilterParameters
+    private func syncCropRectFromParameters() {
+        guard let imageSize = viewModel.originalImage?.extent.size,
+              let cropRect = viewModel.currentParameters.cropRect else {
+            // No crop set - use full image
+            interactiveCropRect = CGRect(x: 0, y: 0, width: 1, height: 1)
+            return
+        }
+
+        // Convert from image coordinates to normalized (0-1)
+        interactiveCropRect = CGRect(
+            x: cropRect.origin.x / imageSize.width,
+            y: cropRect.origin.y / imageSize.height,
+            width: cropRect.width / imageSize.width,
+            height: cropRect.height / imageSize.height
+        )
     }
 
     // MARK: - Navigation Bar Items
 
     private var cancelButton: some View {
-        Button("Cancel") {
+        Button {
             handleCancel()
+        } label: {
+            Image(systemName: "xmark")
+                .font(.system(size: 16, weight: .medium))
+                .foregroundStyle(.white)
         }
-        .foregroundStyle(.white)
     }
 
     private var titleView: some View {
@@ -229,11 +257,13 @@ struct EditorView: View {
     }
 
     private var doneButton: some View {
-        Button("Done") {
+        Button {
             handleDone()
+        } label: {
+            Image(systemName: "checkmark")
+                .font(.system(size: 16, weight: .medium))
+                .foregroundStyle(viewModel.hasChanges ? .yellow : Color(white: 0.4))
         }
-        .fontWeight(.semibold)
-        .foregroundStyle(viewModel.hasChanges ? .yellow : .white.opacity(0.5))
         .disabled(!viewModel.hasChanges)
     }
 
@@ -256,13 +286,40 @@ struct EditorView: View {
                         .foregroundStyle(.white.opacity(0.6))
                 }
             } else if let image = viewModel.isShowingOriginal ? viewModel.originalImage : viewModel.currentImage {
-                ImagePreview(
-                    image: image,
-                    zoomScale: $viewModel.zoomScale,
-                    panOffset: $viewModel.panOffset
-                )
-                .frame(maxWidth: .infinity, maxHeight: previewHeight)
-                .clipped()
+                ZStack {
+                    ImagePreview(
+                        image: image,
+                        zoomScale: $viewModel.zoomScale,
+                        panOffset: $viewModel.panOffset
+                    )
+                    .frame(maxWidth: .infinity, maxHeight: previewHeight)
+                    .clipped()
+
+                    // Show crop overlay when crop tab is selected
+                    if viewModel.selectedTab == .crop, let imageSize = viewModel.originalImage?.extent.size {
+                        GeometryReader { geo in
+                            SimpleCropOverlay(
+                                cropRect: $interactiveCropRect,
+                                aspectRatio: selectedAspectRatio.ratio,
+                                imageSize: imageSize,
+                                viewSize: geo.size
+                            )
+                        }
+                        .onChange(of: interactiveCropRect) { _, newRect in
+                            // Convert normalized rect to image coordinates
+                            if let imageSize = viewModel.originalImage?.extent.size {
+                                let imageRect = CGRect(
+                                    x: newRect.origin.x * imageSize.width,
+                                    y: newRect.origin.y * imageSize.height,
+                                    width: newRect.width * imageSize.width,
+                                    height: newRect.height * imageSize.height
+                                )
+                                viewModel.currentParameters.cropRect = imageRect
+                                viewModel.schedulePreviewUpdatePublic()
+                            }
+                        }
+                    }
+                }
             } else {
                 ContentUnavailableView {
                     Label("No Image", systemImage: "photo")
@@ -834,6 +891,7 @@ struct EditorView: View {
     // Crop state
     @State private var selectedAspectRatio: CropAspectRatio = .free
     @State private var cropMode: CropMode = .transform
+    @State private var interactiveCropRect: CGRect = CGRect(x: 0, y: 0, width: 1, height: 1)
 
     private var cropToolPanel: some View {
         VStack(spacing: 0) {
@@ -933,6 +991,8 @@ struct EditorView: View {
         guard let imageSize = viewModel.originalImage?.extent.size else { return }
 
         if ratio == .free {
+            // Reset to full image for free crop
+            interactiveCropRect = CGRect(x: 0, y: 0, width: 1, height: 1)
             viewModel.currentParameters.cropRect = nil
             viewModel.schedulePreviewUpdatePublic()
             return
@@ -941,21 +1001,31 @@ struct EditorView: View {
         guard let aspectRatio = ratio.ratio else { return }
 
         let imageAspect = imageSize.width / imageSize.height
-        var newRect: CGRect
+        var normalizedRect: CGRect
 
         if aspectRatio > imageAspect {
             // Crop height
-            let newHeight = imageSize.width / aspectRatio
-            let yOffset = (imageSize.height - newHeight) / 2
-            newRect = CGRect(x: 0, y: yOffset, width: imageSize.width, height: newHeight)
+            let normalizedHeight = imageAspect / aspectRatio
+            let yOffset = (1.0 - normalizedHeight) / 2
+            normalizedRect = CGRect(x: 0, y: yOffset, width: 1, height: normalizedHeight)
         } else {
             // Crop width
-            let newWidth = imageSize.height * aspectRatio
-            let xOffset = (imageSize.width - newWidth) / 2
-            newRect = CGRect(x: xOffset, y: 0, width: newWidth, height: imageSize.height)
+            let normalizedWidth = aspectRatio / imageAspect
+            let xOffset = (1.0 - normalizedWidth) / 2
+            normalizedRect = CGRect(x: xOffset, y: 0, width: normalizedWidth, height: 1)
         }
 
-        viewModel.currentParameters.cropRect = newRect
+        // Update interactive crop rect (normalized 0-1)
+        interactiveCropRect = normalizedRect
+
+        // Convert to image coordinates for FilterParameters
+        let imageRect = CGRect(
+            x: normalizedRect.origin.x * imageSize.width,
+            y: normalizedRect.origin.y * imageSize.height,
+            width: normalizedRect.width * imageSize.width,
+            height: normalizedRect.height * imageSize.height
+        )
+        viewModel.currentParameters.cropRect = imageRect
         viewModel.schedulePreviewUpdatePublic()
     }
 
@@ -993,31 +1063,45 @@ struct EditorView: View {
     // MARK: - Tab Bar Section
 
     private var tabBarSection: some View {
-        HStack(spacing: 0) {
+        HStack(spacing: 2) {
             ForEach(EditorTab.allCases) { tab in
                 tabButton(for: tab)
             }
         }
-        .padding(.top, 8)
+        .padding(.horizontal, 4)
+        .padding(.vertical, 4)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color(white: 0.1))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                )
+        )
+        .padding(.horizontal, 16)
         .padding(.bottom, 8)
-        .background(Color.black)
     }
 
     private func tabButton(for tab: EditorTab) -> some View {
         Button {
-            withAnimation(.easeInOut(duration: 0.2)) {
+            withAnimation(.easeInOut(duration: 0.15)) {
                 viewModel.selectedTab = tab
             }
         } label: {
-            VStack(spacing: 4) {
+            HStack(spacing: 6) {
                 Image(systemName: tab.iconName)
-                    .font(.system(size: 20))
+                    .font(.system(size: 14, weight: .medium))
 
-                Text(tab.rawValue)
-                    .font(.caption2)
+                Text(tab.rawValue.lowercased())
+                    .font(.system(size: 11, weight: .medium, design: .monospaced))
             }
-            .foregroundStyle(viewModel.selectedTab == tab ? .yellow : .white.opacity(0.6))
-            .frame(maxWidth: .infinity)
+            .foregroundStyle(viewModel.selectedTab == tab ? .yellow : Color(white: 0.6))
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .background(
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(viewModel.selectedTab == tab ? Color.yellow.opacity(0.15) : Color.clear)
+            )
         }
         .buttonStyle(.plain)
     }
@@ -1036,6 +1120,17 @@ struct EditorView: View {
         Task {
             do {
                 let result = try await viewModel.saveChanges()
+
+                // Save to ImportedPhotosManager if we have a photoID
+                if let photoID = photoID {
+                    ImportedPhotosManager.shared.updateEditedParameters(
+                        for: photoID,
+                        parameters: viewModel.currentParameters
+                    )
+                    // Regenerate thumbnail with new parameters
+                    await ImportedPhotosManager.shared.regenerateThumbnail(for: photoID)
+                }
+
                 onDone?(result)
                 dismiss()
             } catch {
@@ -1133,6 +1228,289 @@ struct FilterThumbnailView: View {
         }
 
         return output
+    }
+}
+
+// MARK: - Simple Crop Overlay
+
+/// A simple crop overlay that shows the crop region with handles
+private struct SimpleCropOverlay: View {
+    @Binding var cropRect: CGRect
+    let aspectRatio: CGFloat?
+    let imageSize: CGSize
+    let viewSize: CGSize
+
+    @State private var dragStart: CGPoint = .zero
+    @State private var initialRect: CGRect = .zero
+    @State private var activeEdge: Edge?
+
+    enum Edge {
+        case top, bottom, left, right
+        case topLeft, topRight, bottomLeft, bottomRight
+        case center
+    }
+
+    var body: some View {
+        let scale = calculateScale()
+        let offset = calculateOffset(scale: scale)
+        let displayRect = cropRectInViewCoordinates(scale: scale, offset: offset)
+
+        ZStack {
+            // Darkened overlay outside crop area
+            darkenedOverlay(displayRect: displayRect)
+
+            // Crop frame with rule of thirds grid
+            cropFrame(displayRect: displayRect)
+
+            // Corner handles
+            cornerHandles(displayRect: displayRect, scale: scale)
+        }
+    }
+
+    // MARK: - Darkened Overlay
+
+    private func darkenedOverlay(displayRect: CGRect) -> some View {
+        Path { path in
+            path.addRect(CGRect(origin: .zero, size: viewSize))
+            path.addRect(displayRect)
+        }
+        .fill(Color.black.opacity(0.5), style: FillStyle(eoFill: true))
+        .allowsHitTesting(false)
+    }
+
+    // MARK: - Crop Frame
+
+    private func cropFrame(displayRect: CGRect) -> some View {
+        ZStack {
+            // Main border
+            Rectangle()
+                .strokeBorder(Color.white, lineWidth: 1.5)
+                .frame(width: displayRect.width, height: displayRect.height)
+                .position(x: displayRect.midX, y: displayRect.midY)
+
+            // Rule of thirds grid
+            ForEach([1, 2], id: \.self) { i in
+                // Vertical lines
+                Rectangle()
+                    .fill(Color.white.opacity(0.3))
+                    .frame(width: 0.5, height: displayRect.height)
+                    .position(
+                        x: displayRect.minX + displayRect.width * CGFloat(i) / 3,
+                        y: displayRect.midY
+                    )
+
+                // Horizontal lines
+                Rectangle()
+                    .fill(Color.white.opacity(0.3))
+                    .frame(width: displayRect.width, height: 0.5)
+                    .position(
+                        x: displayRect.midX,
+                        y: displayRect.minY + displayRect.height * CGFloat(i) / 3
+                    )
+            }
+
+            // Center drag area
+            Rectangle()
+                .fill(Color.clear)
+                .frame(width: max(displayRect.width - 80, 40), height: max(displayRect.height - 80, 40))
+                .contentShape(Rectangle())
+                .position(x: displayRect.midX, y: displayRect.midY)
+                .gesture(centerDragGesture(scale: calculateScale()))
+        }
+        .allowsHitTesting(true)
+    }
+
+    // MARK: - Corner Handles
+
+    private func cornerHandles(displayRect: CGRect, scale: CGFloat) -> some View {
+        let handleLength: CGFloat = 20
+        let handleWidth: CGFloat = 3
+
+        return ZStack {
+            // Top-Left
+            cornerHandle(at: CGPoint(x: displayRect.minX, y: displayRect.minY),
+                        edge: .topLeft, length: handleLength, width: handleWidth, scale: scale)
+
+            // Top-Right
+            cornerHandle(at: CGPoint(x: displayRect.maxX, y: displayRect.minY),
+                        edge: .topRight, length: handleLength, width: handleWidth, scale: scale)
+
+            // Bottom-Left
+            cornerHandle(at: CGPoint(x: displayRect.minX, y: displayRect.maxY),
+                        edge: .bottomLeft, length: handleLength, width: handleWidth, scale: scale)
+
+            // Bottom-Right
+            cornerHandle(at: CGPoint(x: displayRect.maxX, y: displayRect.maxY),
+                        edge: .bottomRight, length: handleLength, width: handleWidth, scale: scale)
+        }
+    }
+
+    private func cornerHandle(at position: CGPoint, edge: Edge, length: CGFloat, width: CGFloat, scale: CGFloat) -> some View {
+        ZStack {
+            // L-shaped corner
+            Path { path in
+                switch edge {
+                case .topLeft:
+                    path.move(to: CGPoint(x: 0, y: length))
+                    path.addLine(to: CGPoint(x: 0, y: 0))
+                    path.addLine(to: CGPoint(x: length, y: 0))
+                case .topRight:
+                    path.move(to: CGPoint(x: -length, y: 0))
+                    path.addLine(to: CGPoint(x: 0, y: 0))
+                    path.addLine(to: CGPoint(x: 0, y: length))
+                case .bottomLeft:
+                    path.move(to: CGPoint(x: 0, y: -length))
+                    path.addLine(to: CGPoint(x: 0, y: 0))
+                    path.addLine(to: CGPoint(x: length, y: 0))
+                case .bottomRight:
+                    path.move(to: CGPoint(x: -length, y: 0))
+                    path.addLine(to: CGPoint(x: 0, y: 0))
+                    path.addLine(to: CGPoint(x: 0, y: -length))
+                default:
+                    break
+                }
+            }
+            .stroke(Color.white, lineWidth: width)
+            .position(position)
+
+            // Hit area
+            Circle()
+                .fill(Color.clear)
+                .frame(width: 44, height: 44)
+                .contentShape(Circle())
+                .position(position)
+                .gesture(cornerDragGesture(edge: edge, scale: scale))
+        }
+    }
+
+    // MARK: - Gestures
+
+    private func cornerDragGesture(edge: Edge, scale: CGFloat) -> some Gesture {
+        DragGesture()
+            .onChanged { value in
+                if activeEdge == nil {
+                    activeEdge = edge
+                    initialRect = cropRect
+                    dragStart = value.startLocation
+                }
+                handleCornerDrag(value: value, edge: edge, scale: scale)
+            }
+            .onEnded { _ in
+                activeEdge = nil
+            }
+    }
+
+    private func centerDragGesture(scale: CGFloat) -> some Gesture {
+        DragGesture()
+            .onChanged { value in
+                if activeEdge == nil {
+                    activeEdge = .center
+                    initialRect = cropRect
+                    dragStart = value.startLocation
+                }
+                handleCenterDrag(value: value, scale: scale)
+            }
+            .onEnded { _ in
+                activeEdge = nil
+            }
+    }
+
+    private func handleCornerDrag(value: DragGesture.Value, edge: Edge, scale: CGFloat) {
+        let delta = CGPoint(
+            x: (value.location.x - dragStart.x) / scale / imageSize.width,
+            y: (value.location.y - dragStart.y) / scale / imageSize.height
+        )
+
+        var newRect = initialRect
+        let minSize: CGFloat = 0.1
+
+        switch edge {
+        case .topLeft:
+            newRect.origin.x = min(initialRect.origin.x + delta.x, initialRect.maxX - minSize)
+            newRect.origin.y = min(initialRect.origin.y + delta.y, initialRect.maxY - minSize)
+            newRect.size.width = initialRect.maxX - newRect.origin.x
+            newRect.size.height = initialRect.maxY - newRect.origin.y
+
+        case .topRight:
+            newRect.origin.y = min(initialRect.origin.y + delta.y, initialRect.maxY - minSize)
+            newRect.size.width = max(initialRect.width + delta.x, minSize)
+            newRect.size.height = initialRect.maxY - newRect.origin.y
+
+        case .bottomLeft:
+            newRect.origin.x = min(initialRect.origin.x + delta.x, initialRect.maxX - minSize)
+            newRect.size.width = initialRect.maxX - newRect.origin.x
+            newRect.size.height = max(initialRect.height + delta.y, minSize)
+
+        case .bottomRight:
+            newRect.size.width = max(initialRect.width + delta.x, minSize)
+            newRect.size.height = max(initialRect.height + delta.y, minSize)
+
+        default:
+            break
+        }
+
+        // Maintain aspect ratio if set
+        if let aspect = aspectRatio {
+            let imageAspect = imageSize.width / imageSize.height
+            let targetAspect = aspect / imageAspect
+
+            if newRect.width / newRect.height > targetAspect {
+                newRect.size.height = newRect.width / targetAspect
+            } else {
+                newRect.size.width = newRect.height * targetAspect
+            }
+        }
+
+        // Clamp to bounds
+        newRect.origin.x = max(0, min(newRect.origin.x, 1 - newRect.width))
+        newRect.origin.y = max(0, min(newRect.origin.y, 1 - newRect.height))
+        newRect.size.width = min(newRect.width, 1 - newRect.origin.x)
+        newRect.size.height = min(newRect.height, 1 - newRect.origin.y)
+
+        cropRect = newRect
+    }
+
+    private func handleCenterDrag(value: DragGesture.Value, scale: CGFloat) {
+        let delta = CGPoint(
+            x: (value.location.x - dragStart.x) / scale / imageSize.width,
+            y: (value.location.y - dragStart.y) / scale / imageSize.height
+        )
+
+        var newRect = initialRect
+        newRect.origin.x = initialRect.origin.x + delta.x
+        newRect.origin.y = initialRect.origin.y + delta.y
+
+        // Clamp to bounds
+        newRect.origin.x = max(0, min(newRect.origin.x, 1 - newRect.width))
+        newRect.origin.y = max(0, min(newRect.origin.y, 1 - newRect.height))
+
+        cropRect = newRect
+    }
+
+    // MARK: - Coordinate Conversion
+
+    private func calculateScale() -> CGFloat {
+        let scaleX = viewSize.width / imageSize.width
+        let scaleY = viewSize.height / imageSize.height
+        return min(scaleX, scaleY)
+    }
+
+    private func calculateOffset(scale: CGFloat) -> CGPoint {
+        let scaledWidth = imageSize.width * scale
+        let scaledHeight = imageSize.height * scale
+        return CGPoint(
+            x: (viewSize.width - scaledWidth) / 2,
+            y: (viewSize.height - scaledHeight) / 2
+        )
+    }
+
+    private func cropRectInViewCoordinates(scale: CGFloat, offset: CGPoint) -> CGRect {
+        CGRect(
+            x: offset.x + cropRect.origin.x * imageSize.width * scale,
+            y: offset.y + cropRect.origin.y * imageSize.height * scale,
+            width: cropRect.width * imageSize.width * scale,
+            height: cropRect.height * imageSize.height * scale
+        )
     }
 }
 
