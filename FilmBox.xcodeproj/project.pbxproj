@@ -47,6 +47,9 @@
 		CE0756F02F05700000C53D17 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0756EF2F05700000C53D17 /* HomeView.swift */; };
 		CE0756F22F05700100C53D17 /* PhotoPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0756F12F05700100C53D17 /* PhotoPickerView.swift */; };
 		CE0756F42F05700200C53D17 /* ImportedPhotosManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0756F32F05700200C53D17 /* ImportedPhotosManager.swift */; };
+		CE0756F82F05800000C53D17 /* FiltersManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0756F72F05800000C53D17 /* FiltersManagementView.swift */; };
+		CE0756F92F05800100C53D17 /* FilterStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0756FA2F05800100C53D17 /* FilterStorage.swift */; };
+		CE0756FC2F05800200C53D17 /* FujiRecipeImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0756FB2F05800200C53D17 /* FujiRecipeImporter.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -71,6 +74,8 @@
 		A1000001229E000000000013 /* HALDCLUTLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HALDCLUTLoader.swift; sourceTree = "<group>"; };
 		A1000001229E000000000014 /* FilmEmulations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BuiltInFilters/FilmEmulations.swift"; sourceTree = "<group>"; };
 		A1000001229E000000000015 /* CreativeFilters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BuiltInFilters/CreativeFilters.swift"; sourceTree = "<group>"; };
+		CE0756FA2F05800100C53D17 /* FilterStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterStorage.swift; sourceTree = "<group>"; };
+		CE0756FB2F05800200C53D17 /* FujiRecipeImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FujiRecipeImporter.swift; sourceTree = "<group>"; };
 		A1000001229E000000000020 /* MetalFilterLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetalFilterLoader.swift; sourceTree = "<group>"; };
 		A1000001229E000000000040 /* ExportEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportEngine.swift; sourceTree = "<group>"; };
 		A1000001229E000000000041 /* FilterEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterEngine.swift; sourceTree = "<group>"; };
@@ -103,6 +108,7 @@
 		CE0756EF2F05700000C53D17 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		CE0756F12F05700100C53D17 /* PhotoPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoPickerView.swift; sourceTree = "<group>"; };
 		CE0756F32F05700200C53D17 /* ImportedPhotosManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportedPhotosManager.swift; sourceTree = "<group>"; };
+		CE0756F72F05800000C53D17 /* FiltersManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FiltersManagementView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -218,10 +224,19 @@
 			children = (
 				A1000001229E000000001051 /* Editor */,
 				A1000001229E000000001060 /* Export */,
+				CE0756F62F05800000C53D17 /* Filters */,
 				A1000001229E000000001070 /* Gallery */,
 				CE0756EE2F05700000C53D17 /* Home */,
 			);
 			path = Features;
+			sourceTree = "<group>";
+		};
+		CE0756F62F05800000C53D17 /* Filters */ = {
+			isa = PBXGroup;
+			children = (
+				CE0756F72F05800000C53D17 /* FiltersManagementView.swift */,
+			);
+			path = Filters;
 			sourceTree = "<group>";
 		};
 		CE0756EE2F05700000C53D17 /* Home */ = {
@@ -497,6 +512,7 @@
 				CE0756F02F05700000C53D17 /* HomeView.swift in Sources */,
 				CE0756F22F05700100C53D17 /* PhotoPickerView.swift in Sources */,
 				CE0756F42F05700200C53D17 /* ImportedPhotosManager.swift in Sources */,
+				CE0756F82F05800000C53D17 /* FiltersManagementView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

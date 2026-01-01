@@ -2,7 +2,6 @@ import SwiftUI
 
 /// Filters Management screen with FAB menu for filter operations
 /// Accessible from home screen FAB → "filters"
-@available(iOS 17.0, *)
 struct FiltersManagementView: View {
 
     // MARK: - Environment
@@ -503,7 +502,6 @@ struct FiltersManagementView: View {
 
 // MARK: - Filter Editor View (Placeholder)
 
-@available(iOS 17.0, *)
 struct FilterEditorView: View {
     @Environment(\.dismiss) private var dismiss
 
@@ -629,7 +627,7 @@ struct FilterEditorView: View {
             category: .custom,
             source: .userCreated,
             parameters: parameters,
-            metadata: filter?.metadata ?? FilterMetadata()
+            metadata: filter?.metadata ?? FilterPreset.FilterMetadata()
         )
 
         Task {
@@ -642,7 +640,6 @@ struct FilterEditorView: View {
 
 // MARK: - Preview
 
-@available(iOS 17.0, *)
 #Preview {
     FiltersManagementView()
 }
