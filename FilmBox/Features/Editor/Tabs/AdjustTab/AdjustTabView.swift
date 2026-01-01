@@ -427,13 +427,21 @@ private struct HSLEditorSheet: View {
                 .padding()
             }
             .background(Color(.systemGroupedBackground))
-            .navigationTitle("HSL / Color")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(.black, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("/ hsl_color")
+                        .font(.system(size: 17, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(.white)
+                }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") {
+                    Button("done") {
                         dismiss()
                     }
+                    .font(.system(.body, design: .monospaced))
+                    .foregroundStyle(.yellow)
                 }
             }
         }
@@ -640,13 +648,21 @@ private struct SplitToneEditorSheet: View {
                 .padding()
             }
             .background(Color(.systemGroupedBackground))
-            .navigationTitle("Split Tone")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(.black, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("/ split_tone")
+                        .font(.system(size: 17, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(.white)
+                }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") {
+                    Button("done") {
                         dismiss()
                     }
+                    .font(.system(.body, design: .monospaced))
+                    .foregroundStyle(.yellow)
                 }
             }
         }

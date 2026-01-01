@@ -92,22 +92,14 @@ struct LibraryContentView: View {
                 // FAB Menu - always visible
                 fabMenuOverlay
             }
-            .navigationTitle("filmbox")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(.black, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
-                if manager.isSelectionMode {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button {
-                            manager.clearSelection()
-                            isFabExpanded = false
-                        } label: {
-                            Text("done")
-                                .font(.system(size: 14, weight: .medium, design: .monospaced))
-                                .foregroundStyle(.yellow)
-                        }
-                    }
+                ToolbarItem(placement: .principal) {
+                    Text("/ home")
+                        .font(.system(size: 17, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(.white)
                 }
             }
         }
@@ -212,65 +204,46 @@ struct LibraryContentView: View {
     private var fabMenuOverlay: some View {
         VStack {
             Spacer()
-            HStack {
+            HStack(alignment: .bottom) {
+                // Left side - Action tabs (when photos selected)
+                if hasSelection {
+                    actionTabsView
+                        .transition(.move(edge: .leading).combined(with: .opacity))
+                }
+
                 Spacer()
+
+                // Right side - Navigation FAB
                 VStack(alignment: .trailing, spacing: 8) {
-                    // Expanded menu items
+                    // Expanded menu items - navigation only
                     if isFabExpanded {
                         VStack(alignment: .trailing, spacing: 8) {
-                            if hasSelection {
-                                // Selection mode menu
-                                if isSingleSelection {
-                                    fabMenuItem(title: "edit", icon: "slider.horizontal.3") {
-                                        if let selectedID = manager.selectedPhotoIDs.first,
-                                           let photo = manager.photos.first(where: { $0.id == selectedID }) {
-                                            photoToEdit = photo
-                                            isFabExpanded = false
-                                        }
-                                    }
-                                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                            fabMenuItem(title: "import", icon: "plus") {
+                                isFabExpanded = false
+                                // Check storage limit before importing
+                                if manager.isStorageLimitExceeded() {
+                                    showStorageLimitAlert = true
+                                } else {
+                                    showPhotoPicker = true
                                 }
-
-                                fabMenuItem(title: "export", icon: "square.and.arrow.up") {
-                                    isFabExpanded = false
-                                    exportAndShare()
-                                }
-                                .transition(.move(edge: .bottom).combined(with: .opacity))
-
-                                fabMenuItem(title: "delete", icon: "trash") {
-                                    showDeleteConfirmation = true
-                                    isFabExpanded = false
-                                }
-                                .transition(.move(edge: .bottom).combined(with: .opacity))
-                            } else {
-                                // Default menu (no selection)
-                                fabMenuItem(title: "import", icon: "plus") {
-                                    isFabExpanded = false
-                                    // Check storage limit before importing
-                                    if manager.isStorageLimitExceeded() {
-                                        showStorageLimitAlert = true
-                                    } else {
-                                        showPhotoPicker = true
-                                    }
-                                }
-                                .transition(.move(edge: .bottom).combined(with: .opacity))
-
-                                fabMenuItem(title: "filters", icon: "camera.filters") {
-                                    isFabExpanded = false
-                                    showFilters = true
-                                }
-                                .transition(.move(edge: .bottom).combined(with: .opacity))
-
-                                fabMenuItem(title: "settings", icon: "gearshape") {
-                                    isFabExpanded = false
-                                    showSettings = true
-                                }
-                                .transition(.move(edge: .bottom).combined(with: .opacity))
                             }
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
+
+                            fabMenuItem(title: "filters", icon: "camera.filters") {
+                                isFabExpanded = false
+                                showFilters = true
+                            }
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
+
+                            fabMenuItem(title: "settings", icon: "gearshape") {
+                                isFabExpanded = false
+                                showSettings = true
+                            }
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
                         }
                     }
 
-                    // Main FAB button - Yellow
+                    // Main FAB button - Yellow with navigation icon
                     Button {
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                             isFabExpanded.toggle()
@@ -281,8 +254,8 @@ struct LibraryContentView: View {
                             .frame(width: 56, height: 56)
                             .shadow(color: .yellow.opacity(0.4), radius: 8, y: 2)
                             .overlay {
-                                Image(systemName: isFabExpanded ? "xmark" : (hasSelection ? "ellipsis" : "plus"))
-                                    .font(.system(size: 22, weight: .semibold))
+                                Image(systemName: isFabExpanded ? "xmark" : "line.3.horizontal")
+                                    .font(.system(size: 20, weight: .semibold))
                                     .foregroundStyle(.black)
                                     .rotationEffect(.degrees(isFabExpanded ? 90 : 0))
                             }
@@ -294,6 +267,74 @@ struct LibraryContentView: View {
                 .padding(.bottom, 28)
             }
         }
+        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: hasSelection)
+    }
+
+    // MARK: - Action Tabs (left side when photos selected)
+
+    private var actionTabsView: some View {
+        HStack(spacing: 0) {
+            if isSingleSelection {
+                // Single selection: edit | export | delete
+                actionTab(title: "edit") {
+                    if let selectedID = manager.selectedPhotoIDs.first,
+                       let photo = manager.photos.first(where: { $0.id == selectedID }) {
+                        photoToEdit = photo
+                    }
+                }
+
+                actionTabDivider
+
+                actionTab(title: "export") {
+                    exportAndShare()
+                }
+
+                actionTabDivider
+
+                actionTab(title: "delete") {
+                    showDeleteConfirmation = true
+                }
+            } else {
+                // Multiple selection: export | delete
+                actionTab(title: "export") {
+                    exportAndShare()
+                }
+
+                actionTabDivider
+
+                actionTab(title: "delete") {
+                    showDeleteConfirmation = true
+                }
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(
+            Capsule()
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    Capsule()
+                        .stroke(Color.white.opacity(0.2), lineWidth: 0.5)
+                )
+        )
+        .padding(.leading, 20)
+        .padding(.bottom, 28)
+    }
+
+    private func actionTab(title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 14, weight: .medium, design: .monospaced))
+                .foregroundStyle(.white)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var actionTabDivider: some View {
+        Text("|")
+            .font(.system(size: 14, weight: .light, design: .monospaced))
+            .foregroundStyle(.white.opacity(0.3))
+            .padding(.horizontal, 12)
     }
 
     private func fabMenuItem(title: String, icon: String, action: @escaping () -> Void) -> some View {

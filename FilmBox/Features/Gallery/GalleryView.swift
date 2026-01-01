@@ -42,9 +42,15 @@ struct GalleryView: View {
                         .background(Color.black.opacity(0.1))
                 }
             }
-            .navigationTitle(viewModel.albumTitle)
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(.black, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("/ \(viewModel.albumTitle.lowercased().replacingOccurrences(of: " ", with: "_"))")
+                        .font(.system(size: 17, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(.white)
+                }
                 toolbarContent
             }
             .sheet(isPresented: $viewModel.showAlbumPicker) {
@@ -59,7 +65,6 @@ struct GalleryView: View {
                 if let asset = selectedAssetForEditor {
                     // Placeholder for editor navigation
                     Text("Editor for \(asset.localIdentifier)")
-                        .navigationTitle("Edit")
                 }
             }
         }

@@ -42,11 +42,15 @@ struct HomeView: View {
                 // FAB Button
                 fabButton
             }
-            .navigationTitle("filmbox")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(.black, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("/ home")
+                        .font(.system(size: 17, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(.white)
+                }
                 if manager.isSelectionMode {
                     ToolbarItem(placement: .topBarTrailing) {
                         Button("done") {
@@ -81,14 +85,21 @@ struct HomeView: View {
                         } description: {
                             Text("this photo could not be loaded. the file may have been deleted.")
                         }
-                        .navigationTitle("error")
                         .navigationBarTitleDisplayMode(.inline)
+                        .toolbarBackground(.black, for: .navigationBar)
+                        .toolbarColorScheme(.dark, for: .navigationBar)
                         .toolbar {
+                            ToolbarItem(placement: .principal) {
+                                Text("/ error")
+                                    .font(.system(size: 17, weight: .semibold, design: .monospaced))
+                                    .foregroundStyle(.white)
+                            }
                             ToolbarItem(placement: .cancellationAction) {
                                 Button("close") {
                                     photoToEdit = nil
                                 }
                                 .font(.system(.body, design: .monospaced))
+                                .foregroundStyle(.white.opacity(0.7))
                             }
                         }
                     }

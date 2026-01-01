@@ -18,7 +18,7 @@ struct SettingsView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
+            ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 24) {
                     // Storage Section
                     storageSection

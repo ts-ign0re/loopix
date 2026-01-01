@@ -34,13 +34,21 @@ struct AlbumPicker: View {
                     albumList
                 }
             }
-            .navigationTitle("Albums")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(.black, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("/ albums")
+                        .font(.system(size: 17, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(.white)
+                }
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
+                    Button("cancel") {
                         dismiss()
                     }
+                    .font(.system(.body, design: .monospaced))
+                    .foregroundStyle(.white.opacity(0.7))
                 }
             }
         }

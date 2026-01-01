@@ -271,14 +271,40 @@ final class EditorViewModel {
     /// Apply a filter preset to the current image
     func applyPreset(_ preset: FilterPreset) {
         pushUndoState()
+        // Preserve geometry transforms when applying filter
+        let savedCropRect = currentParameters.cropRect
+        let savedRotation = currentParameters.rotation
+        let savedFlipH = currentParameters.flipHorizontal
+        let savedFlipV = currentParameters.flipVertical
+
         currentParameters = preset.parameters
+
+        // Restore geometry
+        currentParameters.cropRect = savedCropRect
+        currentParameters.rotation = savedRotation
+        currentParameters.flipHorizontal = savedFlipH
+        currentParameters.flipVertical = savedFlipV
+
         schedulePreviewUpdate()
     }
 
     /// Apply preset at a specific intensity (0-100)
     func applyPreset(_ preset: FilterPreset, intensity: Float) {
         pushUndoState()
+        // Preserve geometry transforms when applying filter
+        let savedCropRect = currentParameters.cropRect
+        let savedRotation = currentParameters.rotation
+        let savedFlipH = currentParameters.flipHorizontal
+        let savedFlipV = currentParameters.flipVertical
+
         currentParameters = preset.parameters(at: intensity)
+
+        // Restore geometry
+        currentParameters.cropRect = savedCropRect
+        currentParameters.rotation = savedRotation
+        currentParameters.flipHorizontal = savedFlipH
+        currentParameters.flipVertical = savedFlipV
+
         schedulePreviewUpdate()
     }
 

@@ -618,11 +618,15 @@ struct FilterEditorView: View {
                 .padding(.vertical, 16)
             }
             .background(Color.black)
-            .navigationTitle(isNewFilter ? "new filter" : (isReadOnly ? "view filter" : "edit filter"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(.black, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text(isNewFilter ? "/ new_filter" : (isReadOnly ? "/ view_filter" : "/ edit_filter"))
+                        .font(.system(size: 17, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(.white)
+                }
                 ToolbarItem(placement: .topBarLeading) {
                     Button("cancel") {
                         dismiss()

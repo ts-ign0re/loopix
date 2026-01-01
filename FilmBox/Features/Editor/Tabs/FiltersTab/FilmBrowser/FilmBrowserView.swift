@@ -58,25 +58,35 @@ struct FilmBrowserView: View {
                     presetListView
                 }
             }
-            .navigationTitle("Film Simulations")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(.black, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("/ film_simulations")
+                        .font(.system(size: 17, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(.white)
+                }
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
+                    Button("cancel") {
                         dismiss()
                     }
+                    .font(.system(.body, design: .monospaced))
+                    .foregroundStyle(.white.opacity(0.7))
                 }
 
                 ToolbarItem(placement: .confirmationAction) {
                     if selectedPreset != nil {
-                        Button("Apply") {
+                        Button("apply") {
                             if let preset = selectedPreset {
                                 recordPresetUsage(preset)
                                 onPresetConfirmed?(preset)
                             }
                             dismiss()
                         }
+                        .font(.system(.body, design: .monospaced))
                         .fontWeight(.semibold)
+                        .foregroundStyle(.yellow)
                     }
                 }
             }

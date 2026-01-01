@@ -336,19 +336,29 @@ private struct SavePresetSheet: View {
                     Text("Settings Preview")
                 }
             }
-            .navigationTitle("Save Preset")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(.black, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("/ save_preset")
+                        .font(.system(size: 17, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(.white)
+                }
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
+                    Button("cancel") {
                         dismiss()
                     }
+                    .font(.system(.body, design: .monospaced))
+                    .foregroundStyle(.white.opacity(0.7))
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
+                    Button("save") {
                         onSave(presetName, selectedCategory)
                         dismiss()
                     }
+                    .font(.system(.body, design: .monospaced))
+                    .foregroundStyle(.yellow)
                     .disabled(presetName.isEmpty)
                 }
             }
@@ -445,16 +455,24 @@ private struct EditPresetSheet: View {
                     Text("Info")
                 }
             }
-            .navigationTitle("Edit Preset")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(.black, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("/ edit_preset")
+                        .font(.system(size: 17, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(.white)
+                }
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
+                    Button("cancel") {
                         dismiss()
                     }
+                    .font(.system(.body, design: .monospaced))
+                    .foregroundStyle(.white.opacity(0.7))
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
+                    Button("save") {
                         var updatedPreset = preset
                         updatedPreset.name = editedName
                         updatedPreset.category = editedCategory
@@ -462,6 +480,8 @@ private struct EditPresetSheet: View {
                         onSave(updatedPreset)
                         dismiss()
                     }
+                    .font(.system(.body, design: .monospaced))
+                    .foregroundStyle(.yellow)
                     .disabled(editedName.isEmpty)
                 }
             }
