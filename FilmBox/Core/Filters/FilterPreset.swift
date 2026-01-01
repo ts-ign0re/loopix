@@ -16,7 +16,7 @@ struct FilterPreset: Codable, Identifiable, Hashable, Sendable {
     var clutPath: String?
 
     /// Intensity of the CLUT effect (0-100)
-    var clutIntensity: Float = 100
+    var clutIntensity: Float = 75
 
     /// Where the preset came from
     enum FilterSource: Codable, Hashable, Sendable {
@@ -174,7 +174,7 @@ struct FilterPreset: Codable, Identifiable, Hashable, Sendable {
         parameters: FilterParameters = .identity,
         metadata: FilterMetadata = FilterMetadata(),
         clutPath: String? = nil,
-        clutIntensity: Float = 100
+        clutIntensity: Float = 75
     ) {
         self.id = id
         self.name = name

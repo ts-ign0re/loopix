@@ -15,7 +15,7 @@ struct FiltersTabView: View {
     @State private var selectedFilter: FilterPreset?
 
     /// Filter intensity (0-100%)
-    @State private var intensity: Float = 100
+    @State private var intensity: Float = 75
 
     /// Show film browser sheet
     @State private var showFilmBrowser = false

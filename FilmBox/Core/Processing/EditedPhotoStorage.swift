@@ -34,7 +34,7 @@ struct EditedPhotoMetadata: Codable, Sendable {
         filterName: String? = nil,
         filterID: UUID? = nil,
         clutPath: String? = nil,
-        clutIntensity: Float = 100
+        clutIntensity: Float = 75
     ) {
         self.assetIdentifier = assetIdentifier
         self.filterName = filterName

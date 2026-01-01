@@ -408,7 +408,7 @@ struct EditorView: View {
 
     @State private var selectedFilterCategory: FilterCategory = .all
     @State private var availableFilters: [FilterPreset] = []
-    @State private var filterIntensity: Float = 100
+    @State private var filterIntensity: Float = 75
     @State private var userPresets: [FilterPreset] = []
     @State private var favoriteIDs: Set<UUID> = []
     @State private var showFilterEditor = false
@@ -616,7 +616,7 @@ struct EditorView: View {
                     viewModel.selectedPreset = nil
                     viewModel.resetToOriginal()
                 } else {
-                    filterIntensity = 100
+                    filterIntensity = 75
                     viewModel.selectedPreset = preset
                 }
             }

@@ -58,9 +58,19 @@ final class EditorViewModel {
     var selectedPreset: FilterPreset? {
         didSet {
             if let preset = selectedPreset {
+                filterIntensity = preset.clutIntensity
                 applyPreset(preset)
             }
         }
+    }
+
+    /// Current filter intensity (0-100)
+    var filterIntensity: Float = 75
+
+    /// Update filter intensity without triggering preset didSet loop
+    func setFilterIntensity(_ intensity: Float) {
+        filterIntensity = intensity
+        schedulePreviewUpdate()
     }
 
     /// Current adjustment parameters

@@ -252,7 +252,7 @@ actor ExportEngine {
         filter: FilterPreset? = nil,
         parameters: FilterParameters? = nil,
         clutPath: String? = nil,
-        clutIntensity: Float = 100
+        clutIntensity: Float = 75
     ) async throws -> String {
         // Load full-resolution image data
         let imageData = try await loadImageData(for: asset, settings: .default)

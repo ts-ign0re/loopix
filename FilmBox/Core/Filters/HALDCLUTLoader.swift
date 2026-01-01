@@ -193,7 +193,7 @@ actor HALDCLUTLoader {
 
         var pixelData = [UInt8](repeating: 0, count: totalBytes)
 
-        guard let colorSpace = CGColorSpace(name: CGColorSpace.sRGB) else {
+        guard let colorSpace = CGColorSpace(name: CGColorSpace.linearSRGB) else {
             return nil
         }
 
