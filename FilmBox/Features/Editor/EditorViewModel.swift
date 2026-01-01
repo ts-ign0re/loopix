@@ -408,6 +408,11 @@ final class EditorViewModel {
 
     // MARK: - Preview Updates
 
+    /// Public method to schedule a preview update (for external callers like crop)
+    func schedulePreviewUpdatePublic() {
+        schedulePreviewUpdate()
+    }
+
     /// Schedule a debounced preview update
     private func schedulePreviewUpdate() {
         previewUpdateTask?.cancel()
@@ -530,11 +535,14 @@ final class EditorViewModel {
         // === COLOR ADJUSTMENTS ===
 
         // Apply temperature and tint adjustment
+        // Temperature: -100 (cool/blue/10000K) to +100 (warm/orange/3000K)
+        // CITemperatureAndTint: lower targetTemp = warmer, higher = cooler
         if parameters.temperature != 0 || parameters.tint != 0 {
             if let filter = CIFilter(name: "CITemperatureAndTint") {
                 filter.setValue(output, forKey: kCIInputImageKey)
                 filter.setValue(CIVector(x: 6500, y: 0), forKey: "inputNeutral")
-                let targetTemp = 6500 + (parameters.temperature * 30)
+                // Invert: positive temperature = lower Kelvin = warmer
+                let targetTemp = 6500 - (parameters.temperature * 35)
                 filter.setValue(CIVector(x: CGFloat(targetTemp), y: CGFloat(parameters.tint)), forKey: "inputTargetNeutral")
                 output = filter.outputImage ?? output
             }

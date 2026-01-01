@@ -210,8 +210,9 @@ private struct AdjustmentSlider: View {
                 let sign = value >= 0 ? "+" : ""
                 return "\(sign)\(Int(value))"
             case .temperature:
-                // Convert -100...100 to Kelvin (2500K to 10000K, with 6500K at center)
-                let kelvin = Int(6500 + value * 35)
+                // Convert -100...100 to Kelvin display
+                // Left (negative) = cool = high Kelvin, Right (positive) = warm = low Kelvin
+                let kelvin = Int(6500 - value * 35)
                 return "\(kelvin)K"
             case .tint:
                 let sign = value >= 0 ? "+" : ""

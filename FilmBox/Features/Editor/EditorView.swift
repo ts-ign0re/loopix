@@ -42,6 +42,60 @@ enum EffectCategory: String, CaseIterable, Sendable {
     }
 }
 
+// MARK: - Crop Mode
+
+enum CropMode: String, CaseIterable {
+    case transform
+    case ratio
+}
+
+// MARK: - Crop Aspect Ratio
+
+enum CropAspectRatio: String, CaseIterable {
+    case free = "Free"
+    case square = "1:1"
+    case fourThree = "4:3"
+    case threeTwo = "3:2"
+    case sixteenNine = "16:9"
+    case nineSixteen = "9:16"
+
+    var displayName: String { rawValue }
+
+    var ratio: CGFloat? {
+        switch self {
+        case .free: return nil
+        case .square: return 1.0
+        case .fourThree: return 4.0 / 3.0
+        case .threeTwo: return 3.0 / 2.0
+        case .sixteenNine: return 16.0 / 9.0
+        case .nineSixteen: return 9.0 / 16.0
+        }
+    }
+
+    var previewShape: some Shape {
+        switch self {
+        case .free: return AnyShape(Rectangle())
+        case .square: return AnyShape(Rectangle())
+        case .fourThree: return AnyShape(Rectangle())
+        case .threeTwo: return AnyShape(Rectangle())
+        case .sixteenNine: return AnyShape(Rectangle())
+        case .nineSixteen: return AnyShape(Rectangle())
+        }
+    }
+}
+
+struct AnyShape: Shape, @unchecked Sendable {
+    private let _path: @Sendable (CGRect) -> Path
+
+    init<S: Shape>(_ shape: S) {
+        _path = { rect in shape.path(in: rect) }
+    }
+
+    func path(in rect: CGRect) -> Path {
+        _path(rect)
+    }
+}
+
 // MARK: - Editor View
 
 /// Main editor screen for photo editing
@@ -519,7 +573,9 @@ struct EditorView: View {
                     set: { viewModel.updateExposure($0) }
                 ),
                 range: -2...2,
-                defaultValue: 0
+                defaultValue: 0,
+                valueFormat: "%.1f",
+                step: 0.1
             )
             ToolSlider(
                 label: "Contrast",
@@ -610,142 +666,293 @@ struct EditorView: View {
     }
 
     private var effectsToolPanel: some View {
-        ScrollView {
-            VStack(spacing: 10) {
-                // Detail section
-                Text("Detail")
-                    .font(.caption)
-                    .foregroundStyle(.white.opacity(0.5))
-                    .frame(maxWidth: .infinity, alignment: .leading)
+        VStack(spacing: 0) {
+            // Category tabs
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(EffectCategory.allCases, id: \.self) { category in
+                        effectCategoryTab(category)
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+            }
 
-                ToolSlider(
-                    label: "Clarity",
-                    value: Binding(
-                        get: { viewModel.currentParameters.clarity },
-                        set: { viewModel.updateParameter(\.clarity, value: $0) }
-                    ),
-                    range: -100...100,
-                    defaultValue: 0
-                )
-
-                ToolSlider(
-                    label: "Sharpness",
-                    value: Binding(
-                        get: { viewModel.currentParameters.sharpness },
-                        set: { viewModel.updateParameter(\.sharpness, value: $0) }
-                    ),
-                    range: 0...100,
-                    defaultValue: 0
-                )
-
-                Divider().background(Color.white.opacity(0.2))
-
-                // Film effects section
-                Text("Film Effects")
-                    .font(.caption)
-                    .foregroundStyle(.white.opacity(0.5))
-                    .frame(maxWidth: .infinity, alignment: .leading)
-
-                ToolSlider(
-                    label: "Grain",
-                    value: Binding(
-                        get: { viewModel.currentParameters.grain.amount },
-                        set: { viewModel.updateParameter(\.grain.amount, value: $0) }
-                    ),
-                    range: 0...100,
-                    defaultValue: 0
-                )
-
-                ToolSlider(
-                    label: "Fade",
-                    value: Binding(
-                        get: { viewModel.currentParameters.fade },
-                        set: { viewModel.updateParameter(\.fade, value: $0) }
-                    ),
-                    range: 0...100,
-                    defaultValue: 0
-                )
-
-                ToolSlider(
-                    label: "Vignette",
-                    value: Binding(
-                        get: { viewModel.currentParameters.vignette.amount },
-                        set: { viewModel.updateParameter(\.vignette.amount, value: $0) }
-                    ),
-                    range: -100...100,
-                    defaultValue: 0
-                )
-
-                ToolSlider(
-                    label: "Bloom",
-                    value: Binding(
-                        get: { viewModel.currentParameters.bloom.intensity },
-                        set: { viewModel.updateParameter(\.bloom.intensity, value: $0) }
-                    ),
-                    range: 0...100,
-                    defaultValue: 0
-                )
-
-                ToolSlider(
-                    label: "Halation",
-                    value: Binding(
-                        get: { viewModel.currentParameters.halation.intensity },
-                        set: { viewModel.updateParameter(\.halation.intensity, value: $0) }
-                    ),
-                    range: 0...100,
-                    defaultValue: 0
-                )
+            // Sliders for selected category
+            VStack(spacing: 6) {
+                effectSlidersForCategory(effectCategory)
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 8)
+            .padding(.vertical, 4)
         }
     }
+
+    private func effectCategoryTab(_ category: EffectCategory) -> some View {
+        Button {
+            withAnimation(.easeInOut(duration: 0.15)) {
+                effectCategory = category
+            }
+        } label: {
+            Text(category.displayName)
+                .font(.subheadline.weight(effectCategory == category ? .semibold : .regular))
+                .foregroundStyle(effectCategory == category ? .yellow : .white.opacity(0.6))
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(
+                    effectCategory == category ?
+                    Color.white.opacity(0.1) : Color.clear
+                )
+                .clipShape(Capsule())
+        }
+    }
+
+    @ViewBuilder
+    private func effectSlidersForCategory(_ category: EffectCategory) -> some View {
+        switch category {
+        case .clarity:
+            ToolSlider(
+                label: "Amount",
+                value: Binding(
+                    get: { viewModel.currentParameters.clarity },
+                    set: { viewModel.updateParameter(\.clarity, value: $0) }
+                ),
+                range: -100...100,
+                defaultValue: 0
+            )
+        case .sharpen:
+            ToolSlider(
+                label: "Amount",
+                value: Binding(
+                    get: { viewModel.currentParameters.sharpness },
+                    set: { viewModel.updateParameter(\.sharpness, value: $0) }
+                ),
+                range: 0...100,
+                defaultValue: 0
+            )
+            ToolSlider(
+                label: "Radius",
+                value: Binding(
+                    get: { viewModel.currentParameters.sharpenRadius },
+                    set: { viewModel.updateParameter(\.sharpenRadius, value: $0) }
+                ),
+                range: 0.5...3.0,
+                defaultValue: 1.0
+            )
+        case .grain:
+            ToolSlider(
+                label: "Amount",
+                value: Binding(
+                    get: { viewModel.currentParameters.grain.amount },
+                    set: { viewModel.updateParameter(\.grain.amount, value: $0) }
+                ),
+                range: 0...100,
+                defaultValue: 0
+            )
+            ToolSlider(
+                label: "Size",
+                value: Binding(
+                    get: { viewModel.currentParameters.grain.size },
+                    set: { viewModel.updateParameter(\.grain.size, value: $0) }
+                ),
+                range: 0...1,
+                defaultValue: 0.5
+            )
+        case .fade:
+            ToolSlider(
+                label: "Amount",
+                value: Binding(
+                    get: { viewModel.currentParameters.fade },
+                    set: { viewModel.updateParameter(\.fade, value: $0) }
+                ),
+                range: 0...100,
+                defaultValue: 0
+            )
+        case .vignette:
+            ToolSlider(
+                label: "Amount",
+                value: Binding(
+                    get: { viewModel.currentParameters.vignette.amount },
+                    set: { viewModel.updateParameter(\.vignette.amount, value: $0) }
+                ),
+                range: -100...100,
+                defaultValue: 0
+            )
+            ToolSlider(
+                label: "Feather",
+                value: Binding(
+                    get: { viewModel.currentParameters.vignette.feather },
+                    set: { viewModel.updateParameter(\.vignette.feather, value: $0) }
+                ),
+                range: 0...1,
+                defaultValue: 0.5
+            )
+        case .bloom:
+            ToolSlider(
+                label: "Intensity",
+                value: Binding(
+                    get: { viewModel.currentParameters.bloom.intensity },
+                    set: { viewModel.updateParameter(\.bloom.intensity, value: $0) }
+                ),
+                range: 0...100,
+                defaultValue: 0
+            )
+            ToolSlider(
+                label: "Radius",
+                value: Binding(
+                    get: { viewModel.currentParameters.bloom.radius },
+                    set: { viewModel.updateParameter(\.bloom.radius, value: $0) }
+                ),
+                range: 0...1,
+                defaultValue: 0.5
+            )
+        case .halation:
+            ToolSlider(
+                label: "Intensity",
+                value: Binding(
+                    get: { viewModel.currentParameters.halation.intensity },
+                    set: { viewModel.updateParameter(\.halation.intensity, value: $0) }
+                ),
+                range: 0...100,
+                defaultValue: 0
+            )
+            ToolSlider(
+                label: "Spread",
+                value: Binding(
+                    get: { viewModel.currentParameters.halation.spread },
+                    set: { viewModel.updateParameter(\.halation.spread, value: $0) }
+                ),
+                range: 0...1,
+                defaultValue: 0.5
+            )
+        }
+    }
+
+    // Crop state
+    @State private var selectedAspectRatio: CropAspectRatio = .free
+    @State private var cropMode: CropMode = .transform
 
     private var cropToolPanel: some View {
-        HStack {
-            cropToolButton(icon: "rotate.left", label: "Rotate") {
-                viewModel.rotateLeft()
+        VStack(spacing: 0) {
+            // Mode selector
+            HStack(spacing: 16) {
+                cropModeButton(mode: .transform, label: "Transform")
+                cropModeButton(mode: .ratio, label: "Aspect Ratio")
             }
+            .padding(.vertical, 8)
 
-            Spacer()
-
-            cropToolButton(icon: "arrow.left.and.right.righttriangle.left.righttriangle.right", label: "Flip H") {
-                viewModel.flipHorizontal()
-            }
-
-            Spacer()
-
-            cropToolButton(icon: "arrow.up.and.down.righttriangle.up.righttriangle.down", label: "Flip V") {
-                viewModel.flipVertical()
-            }
-
-            Spacer()
-
-            cropToolButton(icon: "aspectratio", label: "Ratio") {
-                // Show aspect ratio picker
-            }
-
-            Spacer()
-
-            cropToolButton(icon: "crop", label: "Free") {
-                // Free crop mode
+            if cropMode == .transform {
+                // Transform tools
+                HStack(spacing: 0) {
+                    cropToolButton(icon: "rotate.left", label: "Rotate L", isActive: false) {
+                        viewModel.rotateLeft()
+                    }
+                    cropToolButton(icon: "rotate.right", label: "Rotate R", isActive: false) {
+                        viewModel.rotateRight()
+                    }
+                    cropToolButton(icon: "arrow.left.and.right.righttriangle.left.righttriangle.right", label: "Flip H", isActive: viewModel.currentParameters.flipHorizontal) {
+                        viewModel.flipHorizontal()
+                    }
+                    cropToolButton(icon: "arrow.up.and.down.righttriangle.up.righttriangle.down", label: "Flip V", isActive: viewModel.currentParameters.flipVertical) {
+                        viewModel.flipVertical()
+                    }
+                }
+                .padding(.horizontal, 16)
+            } else {
+                // Aspect ratio selector
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 12) {
+                        ForEach(CropAspectRatio.allCases, id: \.self) { ratio in
+                            aspectRatioButton(ratio)
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                }
             }
         }
-        .padding(.horizontal, 24)
-        .frame(maxWidth: .infinity)
-        .frame(maxHeight: .infinity)
     }
 
-    private func cropToolButton(icon: String, label: String, action: @escaping () -> Void) -> some View {
+    private func cropModeButton(mode: CropMode, label: String) -> some View {
+        Button {
+            withAnimation(.easeInOut(duration: 0.15)) {
+                cropMode = mode
+            }
+        } label: {
+            Text(label)
+                .font(.subheadline.weight(cropMode == mode ? .semibold : .regular))
+                .foregroundStyle(cropMode == mode ? .yellow : .white.opacity(0.6))
+                .padding(.horizontal, 16)
+                .padding(.vertical, 6)
+                .background(cropMode == mode ? Color.white.opacity(0.1) : Color.clear)
+                .clipShape(Capsule())
+        }
+    }
+
+    private func cropToolButton(icon: String, label: String, isActive: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            VStack(spacing: 6) {
+            VStack(spacing: 4) {
                 Image(systemName: icon)
                     .font(.system(size: 22))
+                    .frame(width: 44, height: 44)
+                    .background(isActive ? Color.yellow.opacity(0.2) : Color.clear)
+                    .clipShape(Circle())
                 Text(label)
                     .font(.caption2)
             }
-            .foregroundStyle(.white.opacity(0.8))
+            .foregroundStyle(isActive ? .yellow : .white.opacity(0.8))
+            .frame(maxWidth: .infinity)
         }
+    }
+
+    private func aspectRatioButton(_ ratio: CropAspectRatio) -> some View {
+        let isSelected = selectedAspectRatio == ratio
+        return Button {
+            withAnimation(.easeInOut(duration: 0.15)) {
+                selectedAspectRatio = ratio
+                applyCropAspectRatio(ratio)
+            }
+        } label: {
+            VStack(spacing: 4) {
+                ratio.previewShape
+                    .stroke(isSelected ? Color.yellow : Color.white.opacity(0.5), lineWidth: 1.5)
+                    .frame(width: 36, height: 36)
+                    .background(isSelected ? Color.yellow.opacity(0.1) : Color.clear)
+                Text(ratio.displayName)
+                    .font(.caption2)
+                    .foregroundStyle(isSelected ? .yellow : .white.opacity(0.7))
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 6)
+        }
+    }
+
+    private func applyCropAspectRatio(_ ratio: CropAspectRatio) {
+        guard let imageSize = viewModel.originalImage?.extent.size else { return }
+
+        if ratio == .free {
+            viewModel.currentParameters.cropRect = nil
+            viewModel.schedulePreviewUpdatePublic()
+            return
+        }
+
+        guard let aspectRatio = ratio.ratio else { return }
+
+        let imageAspect = imageSize.width / imageSize.height
+        var newRect: CGRect
+
+        if aspectRatio > imageAspect {
+            // Crop height
+            let newHeight = imageSize.width / aspectRatio
+            let yOffset = (imageSize.height - newHeight) / 2
+            newRect = CGRect(x: 0, y: yOffset, width: imageSize.width, height: newHeight)
+        } else {
+            // Crop width
+            let newWidth = imageSize.height * aspectRatio
+            let xOffset = (imageSize.width - newWidth) / 2
+            newRect = CGRect(x: xOffset, y: 0, width: newWidth, height: imageSize.height)
+        }
+
+        viewModel.currentParameters.cropRect = newRect
+        viewModel.schedulePreviewUpdatePublic()
     }
 
     private var presetsToolPanel: some View {
