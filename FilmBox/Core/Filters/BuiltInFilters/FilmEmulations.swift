@@ -5,11 +5,11 @@ enum FilmEmulations {
 
     // MARK: - Color Negative Film Stocks
 
-    /// Kodak Portra 160 - Low contrast, warm skin tones, pastel colors
-    /// Known for exceptional skin tone reproduction and fine grain
-    static let kodakPortra160 = FilterPreset(
+    /// AP1 - Low contrast, warm skin tones, pastel colors
+    /// Exceptional skin tone reproduction and fine grain
+    static let ap1 = FilterPreset(
         id: UUID(uuidString: "10000000-0001-0000-0000-000000000001")!,
-        name: "Portra 160",
+        name: "AP1",
         category: .film,
         source: .builtIn,
         parameters: FilterParameters(
@@ -66,18 +66,18 @@ enum FilmEmulations {
             cropRect: nil
         ),
         metadata: FilterPreset.FilterMetadata(
-            filmStock: "Kodak Portra 160",
-            era: "1998-present",
+            filmStock: "Professional Portrait 160",
+            era: nil,
             characteristics: ["low contrast", "warm skin tones", "pastel colors", "fine grain", "professional portrait film"],
             author: "FilmBox"
         )
     )
 
-    /// Kodak Portra 400 - Slightly more contrast, orange shadows, muted highlights
+    /// AP2 - Slightly more contrast, orange shadows, muted highlights
     /// Versatile professional film with excellent exposure latitude
-    static let kodakPortra400 = FilterPreset(
+    static let ap2 = FilterPreset(
         id: UUID(uuidString: "10000000-0001-0000-0000-000000000002")!,
-        name: "Portra 400",
+        name: "AP2",
         category: .film,
         source: .builtIn,
         parameters: FilterParameters(
@@ -146,18 +146,18 @@ enum FilmEmulations {
             cropRect: nil
         ),
         metadata: FilterPreset.FilterMetadata(
-            filmStock: "Kodak Portra 400",
-            era: "1998-present",
+            filmStock: "Professional Portrait 400",
+            era: nil,
             characteristics: ["orange shadows", "muted highlights", "excellent latitude", "warm tones", "versatile"],
             author: "FilmBox"
         )
     )
 
-    /// Kodak Portra 800 - More grain, warmer, higher contrast
+    /// AP3 - More grain, warmer, higher contrast
     /// High-speed film with distinctive warmth and noticeable grain
-    static let kodakPortra800 = FilterPreset(
+    static let ap3 = FilterPreset(
         id: UUID(uuidString: "10000000-0001-0000-0000-000000000003")!,
-        name: "Portra 800",
+        name: "AP3",
         category: .film,
         source: .builtIn,
         parameters: FilterParameters(
@@ -226,18 +226,18 @@ enum FilmEmulations {
             cropRect: nil
         ),
         metadata: FilterPreset.FilterMetadata(
-            filmStock: "Kodak Portra 800",
-            era: "1998-present",
+            filmStock: "Professional Portrait 800",
+            era: nil,
             characteristics: ["visible grain", "warm", "higher contrast", "high-speed", "low-light capable"],
             author: "FilmBox"
         )
     )
 
-    /// Kodak Gold 200 - Saturated, warm, yellow-green cast
+    /// A1 - Saturated, warm, yellow-green cast
     /// Consumer film with punchy, saturated colors and nostalgic feel
-    static let kodakGold200 = FilterPreset(
+    static let a1 = FilterPreset(
         id: UUID(uuidString: "10000000-0001-0000-0000-000000000004")!,
-        name: "Kodak Gold 200",
+        name: "A1",
         category: .film,
         source: .builtIn,
         parameters: FilterParameters(
@@ -306,18 +306,18 @@ enum FilmEmulations {
             cropRect: nil
         ),
         metadata: FilterPreset.FilterMetadata(
-            filmStock: "Kodak Gold 200",
-            era: "1988-present",
+            filmStock: "Classic Gold 200",
+            era: nil,
             characteristics: ["saturated colors", "warm", "yellow-green cast", "consumer film", "nostalgic"],
             author: "FilmBox"
         )
     )
 
-    /// Kodak Ektar 100 - High saturation, punchy, fine grain
-    /// World's finest grain color negative film with vivid color reproduction
-    static let kodakEktar100 = FilterPreset(
+    /// A2 - High saturation, punchy, fine grain
+    /// Finest grain color negative with vivid color reproduction
+    static let a2 = FilterPreset(
         id: UUID(uuidString: "10000000-0001-0000-0000-000000000005")!,
-        name: "Ektar 100",
+        name: "A2",
         category: .film,
         source: .builtIn,
         parameters: FilterParameters(
@@ -386,18 +386,18 @@ enum FilmEmulations {
             cropRect: nil
         ),
         metadata: FilterPreset.FilterMetadata(
-            filmStock: "Kodak Ektar 100",
-            era: "2008-present",
+            filmStock: "Vivid 100",
+            era: nil,
             characteristics: ["high saturation", "punchy colors", "ultra-fine grain", "vivid", "landscape film"],
             author: "FilmBox"
         )
     )
 
-    /// Fuji Pro 400H - Pastel, slightly cyan shadows, soft
+    /// AF1 - Pastel, slightly cyan shadows, soft
     /// Professional portrait film known for soft, flattering skin tones
-    static let fujiPro400H = FilterPreset(
+    static let af1 = FilterPreset(
         id: UUID(uuidString: "10000000-0001-0000-0000-000000000006")!,
-        name: "Pro 400H",
+        name: "AF1",
         category: .film,
         source: .builtIn,
         parameters: FilterParameters(
@@ -472,18 +472,18 @@ enum FilmEmulations {
             cropRect: nil
         ),
         metadata: FilterPreset.FilterMetadata(
-            filmStock: "Fujifilm Pro 400H",
-            era: "2004-2021",
-            characteristics: ["pastel colors", "cyan shadows", "soft rendering", "flattering skin tones", "discontinued"],
+            filmStock: "Professional 400H",
+            era: nil,
+            characteristics: ["pastel colors", "cyan shadows", "soft rendering", "flattering skin tones"],
             author: "FilmBox"
         )
     )
 
-    /// Kodak ColorPlus 200 - Budget consumer film with warm, saturated colors
+    /// A3 - Budget consumer film with warm, saturated colors
     /// Affordable film known for nostalgic, slightly warm tones
-    static let kodakColorPlus200 = FilterPreset(
+    static let a3 = FilterPreset(
         id: UUID(uuidString: "10000000-0001-0000-0000-000000000007")!,
-        name: "ColorPlus 200",
+        name: "A3",
         category: .film,
         source: .builtIn,
         parameters: FilterParameters(
@@ -552,18 +552,18 @@ enum FilmEmulations {
             cropRect: nil
         ),
         metadata: FilterPreset.FilterMetadata(
-            filmStock: "Kodak ColorPlus 200",
-            era: "1999-present",
+            filmStock: "Classic Color 200",
+            era: nil,
             characteristics: ["budget film", "warm tones", "saturated", "nostalgic", "consumer"],
             author: "FilmBox"
         )
     )
 
-    /// Fuji Superia 400 - Versatile consumer film with balanced colors
+    /// AF2 - Versatile consumer film with balanced colors
     /// Popular everyday film with good skin tones and natural colors
-    static let fujiSuperia400 = FilterPreset(
+    static let af2 = FilterPreset(
         id: UUID(uuidString: "10000000-0001-0000-0000-000000000008")!,
-        name: "Superia 400",
+        name: "AF2",
         category: .film,
         source: .builtIn,
         parameters: FilterParameters(
@@ -626,18 +626,18 @@ enum FilmEmulations {
             cropRect: nil
         ),
         metadata: FilterPreset.FilterMetadata(
-            filmStock: "Fujifilm Superia 400",
-            era: "1998-present",
+            filmStock: "Consumer 400",
+            era: nil,
             characteristics: ["versatile", "balanced colors", "natural skin tones", "consumer film", "everyday"],
             author: "FilmBox"
         )
     )
 
-    /// Fuji C200 - Budget consumer film with cooler tones
+    /// AF3 - Budget consumer film with cooler tones
     /// Affordable film known for subtle colors and slight green cast
-    static let fujiC200 = FilterPreset(
+    static let af3 = FilterPreset(
         id: UUID(uuidString: "10000000-0001-0000-0000-000000000009")!,
-        name: "Fuji C200",
+        name: "AF3",
         category: .film,
         source: .builtIn,
         parameters: FilterParameters(
@@ -700,8 +700,8 @@ enum FilmEmulations {
             cropRect: nil
         ),
         metadata: FilterPreset.FilterMetadata(
-            filmStock: "Fujifilm C200",
-            era: "2007-present",
+            filmStock: "Consumer 200",
+            era: nil,
             characteristics: ["budget film", "cool tones", "green cast", "subtle colors", "consumer"],
             author: "FilmBox"
         )
@@ -709,11 +709,11 @@ enum FilmEmulations {
 
     // MARK: - Black & White Film Stocks
 
-    /// Kodak Tri-X 400 - High contrast, visible grain, deep blacks
-    /// Legendary photojournalism film with distinctive punchy look
-    static let kodakTriX400 = FilterPreset(
+    /// BW1 - High contrast, visible grain, deep blacks
+    /// Classic photojournalism film with distinctive punchy look
+    static let bw1 = FilterPreset(
         id: UUID(uuidString: "10000000-0002-0000-0000-000000000001")!,
-        name: "Tri-X 400",
+        name: "BW1",
         category: .bw,
         source: .builtIn,
         parameters: FilterParameters(
@@ -766,18 +766,18 @@ enum FilmEmulations {
             cropRect: nil
         ),
         metadata: FilterPreset.FilterMetadata(
-            filmStock: "Kodak Tri-X 400",
-            era: "1954-present",
+            filmStock: "Classic B&W 400",
+            era: nil,
             characteristics: ["high contrast", "visible grain", "deep blacks", "photojournalism classic", "punchy"],
             author: "FilmBox"
         )
     )
 
-    /// Ilford HP5 Plus - Medium contrast, classic grain
+    /// BW2 - Medium contrast, classic grain
     /// Versatile B&W film with smooth tonal range and classic grain structure
-    static let ilfordHP5Plus = FilterPreset(
+    static let bw2 = FilterPreset(
         id: UUID(uuidString: "10000000-0002-0000-0000-000000000002")!,
-        name: "HP5 Plus",
+        name: "BW2",
         category: .bw,
         source: .builtIn,
         parameters: FilterParameters(
@@ -828,18 +828,18 @@ enum FilmEmulations {
             cropRect: nil
         ),
         metadata: FilterPreset.FilterMetadata(
-            filmStock: "Ilford HP5 Plus",
-            era: "1976-present",
+            filmStock: "Classic B&W 400 II",
+            era: nil,
             characteristics: ["medium contrast", "classic grain", "smooth tones", "versatile", "wide latitude"],
             author: "FilmBox"
         )
     )
 
-    /// Kodak T-Max 400 - Modern tabular grain, smooth tones, fine detail
+    /// BW3 - Modern tabular grain, smooth tones, fine detail
     /// Technical B&W film with ultra-fine grain for its speed
-    static let kodakTMax400 = FilterPreset(
+    static let bw3 = FilterPreset(
         id: UUID(uuidString: "10000000-0002-0000-0000-000000000003")!,
-        name: "T-Max 400",
+        name: "BW3",
         category: .bw,
         source: .builtIn,
         parameters: FilterParameters(
@@ -890,18 +890,18 @@ enum FilmEmulations {
             cropRect: nil
         ),
         metadata: FilterPreset.FilterMetadata(
-            filmStock: "Kodak T-Max 400",
-            era: "1986-present",
+            filmStock: "Technical B&W 400",
+            era: nil,
             characteristics: ["tabular grain", "smooth tones", "fine detail", "technical film", "modern B&W"],
             author: "FilmBox"
         )
     )
 
-    /// Ilford Delta 3200 - High-speed, dramatic grain, low-light specialist
+    /// BW4 - High-speed, dramatic grain, low-light specialist
     /// Ultra-fast B&W film for extreme low-light conditions
-    static let ilfordDelta3200 = FilterPreset(
+    static let bw4 = FilterPreset(
         id: UUID(uuidString: "10000000-0002-0000-0000-000000000004")!,
-        name: "Delta 3200",
+        name: "BW4",
         category: .bw,
         source: .builtIn,
         parameters: FilterParameters(
@@ -954,18 +954,18 @@ enum FilmEmulations {
             cropRect: nil
         ),
         metadata: FilterPreset.FilterMetadata(
-            filmStock: "Ilford Delta 3200",
-            era: "1998-present",
+            filmStock: "High Speed B&W 3200",
+            era: nil,
             characteristics: ["ultra-fast", "dramatic grain", "low-light", "high contrast", "available darkness"],
             author: "FilmBox"
         )
     )
 
-    /// Fuji Neopan Acros 100 - Ultra-fine grain, smooth tones, excellent detail
-    /// Legendary Japanese B&W film known for exceptional sharpness
-    static let fujiAcros100 = FilterPreset(
+    /// BW5 - Ultra-fine grain, smooth tones, excellent detail
+    /// Fine grain B&W film known for exceptional sharpness
+    static let bw5 = FilterPreset(
         id: UUID(uuidString: "10000000-0002-0000-0000-000000000005")!,
-        name: "Acros 100",
+        name: "BW5",
         category: .bw,
         source: .builtIn,
         parameters: FilterParameters(
@@ -1016,20 +1016,20 @@ enum FilmEmulations {
             cropRect: nil
         ),
         metadata: FilterPreset.FilterMetadata(
-            filmStock: "Fujifilm Neopan Acros 100",
-            era: "1997-2018, 2019-present (II)",
-            characteristics: ["ultra-fine grain", "smooth tones", "exceptional sharpness", "legendary", "studio quality"],
+            filmStock: "Fine Grain B&W 100",
+            era: nil,
+            characteristics: ["ultra-fine grain", "smooth tones", "exceptional sharpness", "studio quality"],
             author: "FilmBox"
         )
     )
 
     // MARK: - Cinema Film Stocks
 
-    /// CineStill 800T - Tungsten-balanced, cyan shadows, red halation
-    /// Motion picture film (Kodak Vision3 500T) with remjet removed
-    static let cineStill800T = FilterPreset(
+    /// C1 - Tungsten-balanced, cyan shadows, red halation
+    /// Motion picture film with remjet removed
+    static let c1 = FilterPreset(
         id: UUID(uuidString: "10000000-0003-0000-0000-000000000001")!,
-        name: "CineStill 800T",
+        name: "C1",
         category: .film,
         source: .builtIn,
         parameters: FilterParameters(
@@ -1098,18 +1098,18 @@ enum FilmEmulations {
             cropRect: nil
         ),
         metadata: FilterPreset.FilterMetadata(
-            filmStock: "CineStill 800T",
-            era: "2015-present",
+            filmStock: "Cinema Tungsten 800",
+            era: nil,
             characteristics: ["tungsten balanced", "cyan shadows", "red halation", "cinematic", "night photography"],
             author: "FilmBox"
         )
     )
 
-    /// CineStill 50D - Daylight-balanced, fine grain, rich colors
-    /// Motion picture film (Kodak Vision3 50D) with remjet removed
-    static let cineStill50D = FilterPreset(
+    /// C2 - Daylight-balanced, fine grain, rich colors
+    /// Motion picture film with remjet removed
+    static let c2 = FilterPreset(
         id: UUID(uuidString: "10000000-0003-0000-0000-000000000002")!,
-        name: "CineStill 50D",
+        name: "C2",
         category: .film,
         source: .builtIn,
         parameters: FilterParameters(
@@ -1172,18 +1172,18 @@ enum FilmEmulations {
             cropRect: nil
         ),
         metadata: FilterPreset.FilterMetadata(
-            filmStock: "CineStill 50D",
-            era: "2015-present",
+            filmStock: "Cinema Daylight 50",
+            era: nil,
             characteristics: ["daylight balanced", "fine grain", "rich colors", "cinematic", "high detail"],
             author: "FilmBox"
         )
     )
 
-    /// Kodak Vision3 500T - Professional cinema film, tungsten
+    /// C3 - Professional cinema film, tungsten
     /// Hollywood's most used motion picture film stock
-    static let kodakVision3500T = FilterPreset(
+    static let c3 = FilterPreset(
         id: UUID(uuidString: "10000000-0003-0000-0000-000000000003")!,
-        name: "Vision3 500T",
+        name: "C3",
         category: .film,
         source: .builtIn,
         parameters: FilterParameters(
@@ -1246,18 +1246,18 @@ enum FilmEmulations {
             cropRect: nil
         ),
         metadata: FilterPreset.FilterMetadata(
-            filmStock: "Kodak Vision3 500T",
-            era: "2007-present",
+            filmStock: "Professional Cinema 500T",
+            era: nil,
             characteristics: ["tungsten balanced", "cinema standard", "excellent latitude", "natural skin tones", "Hollywood look"],
             author: "FilmBox"
         )
     )
 
-    /// Kodak Vision3 250D - Daylight cinema film
+    /// C4 - Daylight cinema film
     /// Professional motion picture film for outdoor/daylight scenes
-    static let kodakVision3250D = FilterPreset(
+    static let c4 = FilterPreset(
         id: UUID(uuidString: "10000000-0003-0000-0000-000000000004")!,
-        name: "Vision3 250D",
+        name: "C4",
         category: .film,
         source: .builtIn,
         parameters: FilterParameters(
@@ -1314,8 +1314,8 @@ enum FilmEmulations {
             cropRect: nil
         ),
         metadata: FilterPreset.FilterMetadata(
-            filmStock: "Kodak Vision3 250D",
-            era: "2007-present",
+            filmStock: "Professional Cinema 250D",
+            era: nil,
             characteristics: ["daylight balanced", "cinema film", "natural colors", "fine grain", "outdoor scenes"],
             author: "FilmBox"
         )
@@ -1323,11 +1323,11 @@ enum FilmEmulations {
 
     // MARK: - Slide Film Stocks
 
-    /// Kodak Ektachrome E100 - Neutral, fine grain, accurate colors
+    /// SE1 - Neutral, fine grain, accurate colors
     /// Modern slide film with accurate color reproduction
-    static let kodakEktachromeE100 = FilterPreset(
+    static let se1 = FilterPreset(
         id: UUID(uuidString: "10000000-0004-0000-0000-000000000001")!,
-        name: "Ektachrome E100",
+        name: "SE1",
         category: .film,
         source: .builtIn,
         parameters: FilterParameters(
@@ -1378,18 +1378,18 @@ enum FilmEmulations {
             cropRect: nil
         ),
         metadata: FilterPreset.FilterMetadata(
-            filmStock: "Kodak Ektachrome E100",
-            era: "2018-present",
+            filmStock: "Slide E100",
+            era: nil,
             characteristics: ["accurate colors", "fine grain", "slide film", "high contrast", "neutral"],
             author: "FilmBox"
         )
     )
 
-    /// Fuji Velvia 50 - Ultra-saturated, vivid colors, high contrast
-    /// Legendary landscape slide film known for punchy colors
-    static let fujiVelvia50 = FilterPreset(
+    /// SV1 - Ultra-saturated, vivid colors, high contrast
+    /// Landscape slide film known for punchy colors
+    static let sv1 = FilterPreset(
         id: UUID(uuidString: "10000000-0004-0000-0000-000000000002")!,
-        name: "Velvia 50",
+        name: "SV1",
         category: .film,
         source: .builtIn,
         parameters: FilterParameters(
@@ -1458,18 +1458,18 @@ enum FilmEmulations {
             cropRect: nil
         ),
         metadata: FilterPreset.FilterMetadata(
-            filmStock: "Fujifilm Velvia 50",
-            era: "1991-present",
+            filmStock: "Vivid Slide 50",
+            era: nil,
             characteristics: ["ultra-saturated", "vivid colors", "high contrast", "landscape film", "punchy"],
             author: "FilmBox"
         )
     )
 
-    /// Fuji Provia 100F - Balanced colors, neutral, professional
+    /// SP1 - Balanced colors, neutral, professional
     /// Professional slide film with accurate, neutral rendering
-    static let fujiProvia100F = FilterPreset(
+    static let sp1 = FilterPreset(
         id: UUID(uuidString: "10000000-0004-0000-0000-000000000003")!,
-        name: "Provia 100F",
+        name: "SP1",
         category: .film,
         source: .builtIn,
         parameters: FilterParameters(
@@ -1526,8 +1526,8 @@ enum FilmEmulations {
             cropRect: nil
         ),
         metadata: FilterPreset.FilterMetadata(
-            filmStock: "Fujifilm Provia 100F",
-            era: "2002-present",
+            filmStock: "Professional Slide 100",
+            era: nil,
             characteristics: ["balanced colors", "neutral", "professional", "fine grain", "accurate"],
             author: "FilmBox"
         )
@@ -1535,11 +1535,11 @@ enum FilmEmulations {
 
     // MARK: - Vintage & Instant Film Stocks
 
-    /// Kodachrome 64 - Legendary slide film, warm reds, rich colors
-    /// The most iconic film ever made, discontinued in 2009
-    static let kodachrome64 = FilterPreset(
+    /// VK1 - Legendary slide film, warm reds, rich colors
+    /// Iconic vintage film with rich colors
+    static let vk1 = FilterPreset(
         id: UUID(uuidString: "10000000-0005-0000-0000-000000000001")!,
-        name: "Kodachrome 64",
+        name: "VK1",
         category: .vintage,
         source: .builtIn,
         parameters: FilterParameters(
@@ -1608,18 +1608,18 @@ enum FilmEmulations {
             cropRect: nil
         ),
         metadata: FilterPreset.FilterMetadata(
-            filmStock: "Kodachrome 64",
-            era: "1974-2009",
-            characteristics: ["legendary", "warm reds", "rich colors", "iconic", "discontinued"],
+            filmStock: "Vintage Chrome 64",
+            era: nil,
+            characteristics: ["legendary", "warm reds", "rich colors", "iconic", "vintage"],
             author: "FilmBox"
         )
     )
 
-    /// Polaroid 600 - Classic instant film look, faded colors
-    /// The iconic instant film of the 80s and 90s
-    static let polaroid600 = FilterPreset(
+    /// VP1 - Classic instant film look, faded colors
+    /// Iconic instant film of the 80s and 90s
+    static let vp1 = FilterPreset(
         id: UUID(uuidString: "10000000-0005-0000-0000-000000000002")!,
-        name: "Polaroid 600",
+        name: "VP1",
         category: .vintage,
         source: .builtIn,
         parameters: FilterParameters(
@@ -1694,18 +1694,18 @@ enum FilmEmulations {
             cropRect: nil
         ),
         metadata: FilterPreset.FilterMetadata(
-            filmStock: "Polaroid 600",
-            era: "1981-2008, 2017-present",
+            filmStock: "Vintage Instant 600",
+            era: nil,
             characteristics: ["instant", "faded colors", "nostalgic", "soft", "iconic"],
             author: "FilmBox"
         )
     )
 
-    /// Fujifilm Instax - Modern instant film with vivid colors
+    /// VI1 - Modern instant film with vivid colors
     /// Contemporary instant film with punchy, cheerful colors
-    static let fujiInstax = FilterPreset(
+    static let vi1 = FilterPreset(
         id: UUID(uuidString: "10000000-0005-0000-0000-000000000003")!,
-        name: "Instax",
+        name: "VI1",
         category: .vintage,
         source: .builtIn,
         parameters: FilterParameters(
@@ -1768,18 +1768,18 @@ enum FilmEmulations {
             cropRect: nil
         ),
         metadata: FilterPreset.FilterMetadata(
-            filmStock: "Fujifilm Instax",
-            era: "1998-present",
+            filmStock: "Modern Instant",
+            era: nil,
             characteristics: ["instant", "vivid colors", "cheerful", "modern instant", "popular"],
             author: "FilmBox"
         )
     )
 
-    /// Autochrome - Early color photography look from 1907
+    /// VA1 - Early color photography look from 1907
     /// Recreates the dreamy, soft look of the first practical color process
-    static let autochrome = FilterPreset(
+    static let va1 = FilterPreset(
         id: UUID(uuidString: "10000000-0005-0000-0000-000000000004")!,
-        name: "Autochrome",
+        name: "VA1",
         category: .vintage,
         source: .builtIn,
         parameters: FilterParameters(
@@ -1854,8 +1854,8 @@ enum FilmEmulations {
             cropRect: nil
         ),
         metadata: FilterPreset.FilterMetadata(
-            filmStock: "Autochrome Lumière",
-            era: "1907-1930s",
+            filmStock: "Vintage Autochrome",
+            era: nil,
             characteristics: ["first color process", "dreamy", "soft", "historical", "painterly"],
             author: "FilmBox"
         )
@@ -1865,47 +1865,27 @@ enum FilmEmulations {
 
     /// All color negative film presets
     static let colorNegative: [FilterPreset] = [
-        kodakPortra160,
-        kodakPortra400,
-        kodakPortra800,
-        kodakGold200,
-        kodakEktar100,
-        kodakColorPlus200,
-        fujiPro400H,
-        fujiSuperia400,
-        fujiC200
+        ap1, ap2, ap3, a1, a2, a3, af1, af2, af3
     ]
 
     /// All black & white film presets
     static let blackAndWhite: [FilterPreset] = [
-        kodakTriX400,
-        kodakTMax400,
-        ilfordHP5Plus,
-        ilfordDelta3200,
-        fujiAcros100
+        bw1, bw2, bw3, bw4, bw5
     ]
 
     /// All cinema film presets
     static let cinema: [FilterPreset] = [
-        cineStill800T,
-        cineStill50D,
-        kodakVision3500T,
-        kodakVision3250D
+        c1, c2, c3, c4
     ]
 
     /// All slide film presets
     static let slide: [FilterPreset] = [
-        kodakEktachromeE100,
-        fujiVelvia50,
-        fujiProvia100F
+        se1, sv1, sp1
     ]
 
     /// All vintage & instant film presets
     static let vintage: [FilterPreset] = [
-        kodachrome64,
-        polaroid600,
-        fujiInstax,
-        autochrome
+        vk1, vp1, vi1, va1
     ]
 
     /// All film emulation presets

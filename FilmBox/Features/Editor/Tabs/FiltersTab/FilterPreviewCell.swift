@@ -63,8 +63,7 @@ struct FilterPreviewCell: View {
                 )
 
             Text(displayName)
-                .font(.caption2)
-                .fontWeight(isSelected ? .semibold : .regular)
+                .font(.system(size: 11, weight: isSelected ? .semibold : .regular, design: .monospaced))
                 .foregroundStyle(isSelected ? .primary : .secondary)
                 .lineLimit(1)
                 .frame(width: size)

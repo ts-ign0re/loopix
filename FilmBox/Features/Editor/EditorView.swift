@@ -563,7 +563,7 @@ struct EditorView: View {
 
                 // Name
                 Text(preset.name)
-                    .font(.caption2)
+                    .font(.system(size: 11, weight: isSelected ? .semibold : .regular, design: .monospaced))
                     .foregroundStyle(isSelected ? .yellow : .white.opacity(0.7))
                     .lineLimit(1)
                     .frame(width: 72)
@@ -1088,16 +1088,16 @@ struct EditorView: View {
                 viewModel.selectedTab = tab
             }
         } label: {
-            HStack(spacing: 6) {
+            VStack(spacing: 4) {
                 Image(systemName: tab.iconName)
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.system(size: 18, weight: .medium))
 
-                Text(tab.rawValue.lowercased())
-                    .font(.system(size: 11, weight: .medium, design: .monospaced))
+                Text(tab.rawValue)
+                    .font(.system(size: 9, weight: .medium))
             }
             .foregroundStyle(viewModel.selectedTab == tab ? .yellow : Color(white: 0.6))
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 8)
             .background(
                 RoundedRectangle(cornerRadius: 6)
                     .fill(viewModel.selectedTab == tab ? Color.yellow.opacity(0.15) : Color.clear)
