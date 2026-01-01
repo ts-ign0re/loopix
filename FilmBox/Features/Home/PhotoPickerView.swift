@@ -89,26 +89,35 @@ struct PhotoGalleryPickerView: View {
                     galleryGrid
                 }
             }
-            .navigationTitle("Select Photos")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(.black, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("/ select_photos")
+                        .font(.system(size: 17, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(.white)
+                }
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") {
+                    Button {
                         dismiss()
+                    } label: {
+                        Text("cancel")
+                            .font(.system(size: 14, weight: .medium, design: .monospaced))
+                            .foregroundStyle(.white.opacity(0.6))
                     }
-                    .foregroundStyle(.white)
                 }
 
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Add (\(selectedAssets.count))") {
+                    Button {
                         let selected = assets.filter { selectedAssets.contains($0.localIdentifier) }
                         onSelect(selected)
                         dismiss()
+                    } label: {
+                        Text("add(\(selectedAssets.count))")
+                            .font(.system(size: 14, weight: .medium, design: .monospaced))
+                            .foregroundStyle(selectedAssets.isEmpty ? .white.opacity(0.3) : .yellow)
                     }
-                    .fontWeight(.semibold)
-                    .foregroundStyle(selectedAssets.isEmpty ? .white.opacity(0.3) : .white)
                     .disabled(selectedAssets.isEmpty)
                 }
             }

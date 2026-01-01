@@ -51,6 +51,8 @@
 		CE0756F92F05800100C53D17 /* FilterStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0756FA2F05800100C53D17 /* FilterStorage.swift */; };
 		CE0756FC2F05800200C53D17 /* FujiRecipeImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0756FB2F05800200C53D17 /* FujiRecipeImporter.swift */; };
 		CE0756FD2F05800300C53D17 /* FilterPreviewCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0756FE2F05800300C53D17 /* FilterPreviewCache.swift */; };
+		CE07570B2F05900100C53D17 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE07570A2F05900100C53D17 /* AppSettings.swift */; };
+		CE07570D2F05900100C53D17 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE07570C2F05900100C53D17 /* SettingsView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -111,6 +113,8 @@
 		CE0756F12F05700100C53D17 /* PhotoPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoPickerView.swift; sourceTree = "<group>"; };
 		CE0756F32F05700200C53D17 /* ImportedPhotosManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportedPhotosManager.swift; sourceTree = "<group>"; };
 		CE0756F72F05800000C53D17 /* FiltersManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FiltersManagementView.swift; sourceTree = "<group>"; };
+		CE07570A2F05900100C53D17 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
+		CE07570C2F05900100C53D17 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -232,8 +236,18 @@
 				CE0756F62F05800000C53D17 /* Filters */,
 				A1000001229E000000001070 /* Gallery */,
 				CE0756EE2F05700000C53D17 /* Home */,
+				CE0757092F05900100C53D17 /* Settings */,
 			);
 			path = Features;
+			sourceTree = "<group>";
+		};
+		CE0757092F05900100C53D17 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				CE07570A2F05900100C53D17 /* AppSettings.swift */,
+				CE07570C2F05900100C53D17 /* SettingsView.swift */,
+			);
+			path = Settings;
 			sourceTree = "<group>";
 		};
 		CE0756F62F05800000C53D17 /* Filters */ = {
@@ -521,6 +535,8 @@
 				CE0756F92F05800100C53D17 /* FilterStorage.swift in Sources */,
 				CE0756FC2F05800200C53D17 /* FujiRecipeImporter.swift in Sources */,
 				CE0756FD2F05800300C53D17 /* FilterPreviewCache.swift in Sources */,
+				CE07570B2F05900100C53D17 /* AppSettings.swift in Sources */,
+				CE07570D2F05900100C53D17 /* SettingsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

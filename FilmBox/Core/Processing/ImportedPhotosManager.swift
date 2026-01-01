@@ -470,4 +470,90 @@ final class ImportedPhotosManager {
             print("✅ Regenerated thumbnail for: \(photo.thumbnailFileName) (v\(photos[index].thumbnailVersion))")
         }
     }
+
+    // MARK: - Storage Management
+
+    /// Calculate total storage used by imported images and thumbnails
+    func calculateStorageUsed() -> Int {
+        var totalSize = 0
+
+        // Calculate ImportedImages size
+        if let contents = try? FileManager.default.contentsOfDirectory(
+            at: imagesDirectory,
+            includingPropertiesForKeys: [.fileSizeKey]
+        ) {
+            for fileURL in contents {
+                if let resourceValues = try? fileURL.resourceValues(forKeys: [.fileSizeKey]),
+                   let fileSize = resourceValues.fileSize {
+                    totalSize += fileSize
+                }
+            }
+        }
+
+        // Calculate Thumbnails size
+        if let contents = try? FileManager.default.contentsOfDirectory(
+            at: thumbnailsDirectory,
+            includingPropertiesForKeys: [.fileSizeKey]
+        ) {
+            for fileURL in contents {
+                if let resourceValues = try? fileURL.resourceValues(forKeys: [.fileSizeKey]),
+                   let fileSize = resourceValues.fileSize {
+                    totalSize += fileSize
+                }
+            }
+        }
+
+        return totalSize
+    }
+
+    /// Check if storage limit is exceeded
+    func isStorageLimitExceeded() -> Bool {
+        let used = calculateStorageUsed()
+        let limit = AppSettings.shared.storageLimitBytes
+        return used >= limit
+    }
+
+    /// Get remaining storage space in bytes
+    func getRemainingStorage() -> Int {
+        let used = calculateStorageUsed()
+        let limit = AppSettings.shared.storageLimitBytes
+        return max(0, limit - used)
+    }
+
+    /// Clear all imported photos and thumbnails (preserves user presets and settings)
+    func clearAllPhotos() {
+        // Delete all files in ImportedImages
+        if let contents = try? FileManager.default.contentsOfDirectory(
+            at: imagesDirectory,
+            includingPropertiesForKeys: nil
+        ) {
+            for fileURL in contents {
+                try? FileManager.default.removeItem(at: fileURL)
+            }
+        }
+
+        // Delete all files in Thumbnails
+        if let contents = try? FileManager.default.contentsOfDirectory(
+            at: thumbnailsDirectory,
+            includingPropertiesForKeys: nil
+        ) {
+            for fileURL in contents {
+                try? FileManager.default.removeItem(at: fileURL)
+            }
+        }
+
+        // Clear photos array and metadata
+        photos.removeAll()
+        selectedPhotoIDs.removeAll()
+        isSelectionMode = false
+        thumbnailCache.removeAllObjects()
+        saveMetadataToStorage()
+
+        print("🗑️ Cleared all photos and thumbnails")
+    }
+
+    /// Get photo count
+    var photoCount: Int {
+        photos.count
+    }
 }

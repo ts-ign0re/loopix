@@ -106,11 +106,15 @@ struct FiltersManagementView: View {
                 // FAB overlay
                 fabMenuOverlay
             }
-            .navigationTitle("filters")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(.black, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("/ filters")
+                        .font(.system(size: 17, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(.white)
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         dismiss()

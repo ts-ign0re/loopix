@@ -64,6 +64,7 @@ struct LibraryContentView: View {
     @State private var isExporting = false
     @State private var showSettings = false
     @State private var showFilters = false
+    @State private var showStorageLimitAlert = false
 
     // Grid configuration
     private let columns = 3
@@ -134,10 +135,20 @@ struct LibraryContentView: View {
             }
         }
         .sheet(isPresented: $showSettings) {
-            SettingsTabPlaceholder()
+            SettingsView()
         }
         .sheet(isPresented: $showFilters) {
             FiltersManagementView()
+        }
+        .alert("// storage_limit_reached", isPresented: $showStorageLimitAlert) {
+            Button("cancel", role: .cancel) {}
+            Button("open_settings") {
+                showSettings = true
+            }
+        } message: {
+            let usedGB = Double(manager.calculateStorageUsed()) / 1024 / 1024 / 1024
+            let limitGB = AppSettings.shared.storageLimitGB
+            Text("storage is full (\(String(format: "%.1f", usedGB))gb / \(String(format: "%.0f", limitGB))gb)\nfree up space to import new photos")
         }
     }
 
@@ -235,7 +246,12 @@ struct LibraryContentView: View {
                                 // Default menu (no selection)
                                 fabMenuItem(title: "import", icon: "plus") {
                                     isFabExpanded = false
-                                    showPhotoPicker = true
+                                    // Check storage limit before importing
+                                    if manager.isStorageLimitExceeded() {
+                                        showStorageLimitAlert = true
+                                    } else {
+                                        showPhotoPicker = true
+                                    }
                                 }
                                 .transition(.move(edge: .bottom).combined(with: .opacity))
 
@@ -386,53 +402,15 @@ struct FiltersTabPlaceholder: View {
                         .foregroundStyle(.white.opacity(0.3))
                 }
             }
-            .navigationTitle("filters")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(.black, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(.white.opacity(0.5))
-                    }
+                ToolbarItem(placement: .principal) {
+                    Text("/ filters")
+                        .font(.system(size: 17, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(.white)
                 }
-            }
-        }
-        .preferredColorScheme(.dark)
-    }
-}
-
-struct SettingsTabPlaceholder: View {
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        NavigationStack {
-            ZStack {
-                Color.black.ignoresSafeArea()
-
-                VStack(spacing: 16) {
-                    Image(systemName: "gearshape")
-                        .font(.system(size: 40))
-                        .foregroundStyle(.white.opacity(0.2))
-
-                    Text("// config")
-                        .font(.system(size: 14, weight: .medium, design: .monospaced))
-                        .foregroundStyle(.white.opacity(0.5))
-
-                    Text("preferences & defaults")
-                        .font(.system(size: 12, design: .monospaced))
-                        .foregroundStyle(.white.opacity(0.3))
-                }
-            }
-            .navigationTitle("settings")
-            .navigationBarTitleDisplayMode(.large)
-            .toolbarBackground(.black, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         dismiss()

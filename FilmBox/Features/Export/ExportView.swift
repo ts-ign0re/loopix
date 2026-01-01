@@ -56,15 +56,25 @@ struct ExportView: View {
                 // Export button section
                 exportButtonSection
             }
-            .navigationTitle("Export")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(.black, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("/ export")
+                        .font(.system(size: 17, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(.white)
+                }
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
+                    Button {
                         if viewModel.isExporting {
                             viewModel.cancelExport()
                         }
                         dismiss()
+                    } label: {
+                        Text("cancel")
+                            .font(.system(size: 14, weight: .medium, design: .monospaced))
+                            .foregroundStyle(.white.opacity(0.6))
                     }
                 }
             }

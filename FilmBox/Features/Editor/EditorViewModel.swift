@@ -433,11 +433,27 @@ final class EditorViewModel {
         isProcessing = true
         defer { isProcessing = false }
 
+        // Scale down image for preview based on quality setting
+        let previewImage = scaleForPreview(original)
+
         // Apply filters using the filter pipeline
         // This would integrate with your Metal-based filter processing
-        let processed = await applyFilters(to: original, parameters: currentParameters)
+        let processed = await applyFilters(to: previewImage, parameters: currentParameters)
 
         currentImage = processed
+    }
+
+    /// Scale image for preview based on AppSettings.previewQuality
+    private func scaleForPreview(_ image: CIImage) -> CIImage {
+        let maxDimension = AppSettings.shared.previewQuality.resolution
+        let extent = image.extent
+        let currentMax = max(extent.width, extent.height)
+
+        // Only scale down if image is larger than target
+        guard currentMax > maxDimension else { return image }
+
+        let scale = maxDimension / currentMax
+        return image.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
     }
 
     /// Apply filter parameters to an image
