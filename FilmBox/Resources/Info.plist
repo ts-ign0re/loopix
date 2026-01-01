@@ -3,8 +3,8 @@
 <plist version="1.0">
 <dict>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>FilmBox needs access to your photo library to edit and export your photos with film-inspired filters.</string>
+	<string>RedRoom needs access to your photo library to edit and export your photos with film-inspired filters.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>FilmBox needs permission to save edited photos to your photo library.</string>
+	<string>RedRoom needs permission to save edited photos to your photo library.</string>
 </dict>
 </plist>
