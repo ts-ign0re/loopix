@@ -16,9 +16,9 @@ enum V2CropAspectRatio: String, CaseIterable, Identifiable {
         case .free: return "crop"
         case .square: return "square"
         case .fourThree: return "rectangle"
-        case .threeTwo: return "rectangle.portrait"
-        case .sixteenNine: return "rectangle.ratio.16.to.9"
-        case .nineSixteen: return "rectangle.ratio.9.to.16"
+        case .threeTwo: return "rectangle"
+        case .sixteenNine: return "rectangle"
+        case .nineSixteen: return "rectangle.portrait"
         }
     }
 

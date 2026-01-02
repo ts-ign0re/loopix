@@ -7,8 +7,10 @@ struct VSCOFilterPreviewStrip: View {
     let filters: [FilterPreset]
     @Binding var selectedFilter: FilterPreset?
     let sourceImage: CIImage?
+    var favoriteIDs: Set<UUID> = []
     let onFilterTapWhenSelected: (FilterPreset?) -> Void
     let onFilterDoubleTap: (FilterPreset?) -> Void
+    var onFilterLongPress: ((FilterPreset) -> Void)? = nil
 
     var body: some View {
         ScrollViewReader { proxy in
@@ -19,12 +21,14 @@ struct VSCOFilterPreviewStrip: View {
                         filter: nil,
                         sourceImage: sourceImage,
                         isSelected: selectedFilter == nil,
+                        isFavorite: false,
                         onTap: {
                             selectFilter(nil)
                         },
                         onDoubleTap: {
                             onFilterDoubleTap(nil)
-                        }
+                        },
+                        onLongPress: nil
                     )
                     .id("original")
 
@@ -34,11 +38,15 @@ struct VSCOFilterPreviewStrip: View {
                             filter: filter,
                             sourceImage: sourceImage,
                             isSelected: selectedFilter?.id == filter.id,
+                            isFavorite: favoriteIDs.contains(filter.id),
                             onTap: {
                                 selectFilter(filter)
                             },
                             onDoubleTap: {
                                 onFilterDoubleTap(filter)
+                            },
+                            onLongPress: {
+                                onFilterLongPress?(filter)
                             }
                         )
                         .id(filter.id)

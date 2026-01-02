@@ -7,8 +7,10 @@ struct VSCOFilterPreviewCell: View {
     let filter: FilterPreset?
     let sourceImage: CIImage?
     let isSelected: Bool
+    var isFavorite: Bool = false
     let onTap: () -> Void
     let onDoubleTap: () -> Void
+    var onLongPress: (() -> Void)? = nil
 
     /// Cell dimensions (VSCO style - vertical rectangle)
     static let cellWidth: CGFloat = 64
@@ -42,6 +44,16 @@ struct VSCOFilterPreviewCell: View {
                             }
                     }
                 }
+                .overlay(alignment: .topTrailing) {
+                    // Favorite star badge
+                    if isFavorite {
+                        Image(systemName: "star.fill")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundStyle(.yellow)
+                            .shadow(color: .black.opacity(0.5), radius: 1, x: 0, y: 1)
+                            .padding(4)
+                    }
+                }
 
             // Filter name
             Text(displayName)
@@ -57,6 +69,12 @@ struct VSCOFilterPreviewCell: View {
         .onTapGesture {
             onTap()
         }
+        .simultaneousGesture(
+            LongPressGesture(minimumDuration: 0.5)
+                .onEnded { _ in
+                    onLongPress?()
+                }
+        )
         .task {
             await loadThumbnail()
         }

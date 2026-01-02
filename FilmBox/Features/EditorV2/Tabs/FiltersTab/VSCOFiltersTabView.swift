@@ -5,30 +5,45 @@ struct VSCOFiltersTabView: View {
     @Bindable var viewModel: EditorV2ViewModel
     @State private var filters: [FilterPreset] = []
     @State private var isLoadingFilters: Bool = false
+    @State private var favoriteIDs: Set<UUID> = []
+    @State private var starAnimationFilterID: UUID? = nil
 
     var body: some View {
-        VStack(spacing: 12) {
-            // Category bar
-            VSCOFilterCategoryBar(selectedCategory: $viewModel.selectedFilterCategory)
+        ZStack {
+            VStack(spacing: 12) {
+                // Category bar
+                VSCOFilterCategoryBar(selectedCategory: $viewModel.selectedFilterCategory)
 
-            // Filter preview strip
-            VSCOFilterPreviewStrip(
-                filters: filteredPresets,
-                selectedFilter: Binding(
-                    get: { viewModel.editor.selectedPreset },
-                    set: { viewModel.selectFilter($0) }
-                ),
-                sourceImage: viewModel.editor.originalImage,
-                onFilterTapWhenSelected: { filter in
-                    if filter != nil {
-                        viewModel.enterFilterDetailMode()
+                // Filter preview strip
+                VSCOFilterPreviewStrip(
+                    filters: filteredPresets,
+                    selectedFilter: Binding(
+                        get: { viewModel.editor.selectedPreset },
+                        set: { viewModel.selectFilter($0) }
+                    ),
+                    sourceImage: viewModel.editor.originalImage,
+                    favoriteIDs: favoriteIDs,
+                    onFilterTapWhenSelected: { filter in
+                        if filter != nil {
+                            viewModel.enterFilterDetailMode()
+                        }
+                    },
+                    onFilterDoubleTap: { _ in },
+                    onFilterLongPress: { filter in
+                        toggleFavorite(filter)
                     }
-                },
-                onFilterDoubleTap: { _ in }
-            )
+                )
+            }
+
+            // Star animation overlay
+            if starAnimationFilterID != nil {
+                StarBurstAnimation()
+                    .allowsHitTesting(false)
+            }
         }
         .task {
             await loadFilters()
+            loadFavorites()
         }
         .onChange(of: viewModel.selectedFilterCategory) { _, _ in
             // Filters are recalculated via filteredPresets
@@ -42,7 +57,7 @@ struct VSCOFiltersTabView: View {
         case .all:
             return filters
         case .favorites:
-            return filters.filter { $0.metadata.isFavorite }
+            return filters.filter { favoriteIDs.contains($0.id) }
         case .custom:
             return filters.filter {
                 if case .userCreated = $0.source { return true }
@@ -60,6 +75,110 @@ struct VSCOFiltersTabView: View {
         defer { isLoadingFilters = false }
 
         filters = await FilterStorage.shared.allPresets
+    }
+
+    private func loadFavorites() {
+        if let savedIDs = UserDefaults.standard.array(forKey: "favoriteFilterIDs") as? [String] {
+            favoriteIDs = Set(savedIDs.compactMap { UUID(uuidString: $0) })
+        }
+    }
+
+    // MARK: - Actions
+
+    private func toggleFavorite(_ filter: FilterPreset) {
+        let wasAdded: Bool
+        if favoriteIDs.contains(filter.id) {
+            favoriteIDs.remove(filter.id)
+            wasAdded = false
+        } else {
+            favoriteIDs.insert(filter.id)
+            wasAdded = true
+        }
+
+        // Persist to UserDefaults
+        let idStrings = favoriteIDs.map { $0.uuidString }
+        UserDefaults.standard.set(idStrings, forKey: "favoriteFilterIDs")
+
+        // Haptic feedback
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.impactOccurred()
+
+        // Show star animation only when adding
+        if wasAdded {
+            withAnimation(.easeOut(duration: 0.1)) {
+                starAnimationFilterID = filter.id
+            }
+
+            // Hide after animation
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                withAnimation {
+                    starAnimationFilterID = nil
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Star Burst Animation
+
+struct StarBurstAnimation: View {
+    @State private var scale: CGFloat = 0.3
+    @State private var opacity: Double = 1.0
+    @State private var rotation: Double = 0
+
+    var body: some View {
+        ZStack {
+            // Multiple stars bursting out
+            ForEach(0..<8, id: \.self) { index in
+                Image(systemName: "star.fill")
+                    .font(.system(size: 20))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [.yellow, .orange],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                    .offset(starOffset(for: index))
+                    .opacity(opacity)
+                    .scaleEffect(scale * 0.6)
+            }
+
+            // Center star
+            Image(systemName: "star.fill")
+                .font(.system(size: 44))
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [.yellow, .orange],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .shadow(color: .yellow.opacity(0.8), radius: 10)
+                .scaleEffect(scale)
+                .rotationEffect(.degrees(rotation))
+                .opacity(opacity)
+        }
+        .onAppear {
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.5)) {
+                scale = 1.2
+                rotation = 20
+            }
+
+            withAnimation(.easeOut(duration: 0.6).delay(0.3)) {
+                opacity = 0
+                scale = 1.5
+            }
+        }
+    }
+
+    private func starOffset(for index: Int) -> CGSize {
+        let angle = Double(index) * (360.0 / 8.0) * .pi / 180
+        let distance: CGFloat = 50 * scale
+        return CGSize(
+            width: cos(angle) * distance,
+            height: sin(angle) * distance
+        )
     }
 }
 
