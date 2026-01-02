@@ -14,7 +14,10 @@
       "Bash(swiftlint lint:*)",
       "Bash(xargs:*)",
       "Bash(wc:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(convert:*)",
+      "Bash(python3:*)",
+      "Bash(magick:*)"
     ]
   }
 }
