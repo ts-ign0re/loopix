@@ -122,6 +122,40 @@ actor FilterEngine {
 
         // 0. Crop (apply first, before any other filters)
         if let cropRect = parameters.cropRect {
+            // Validate cropRect doesn't contain NaN or infinite values
+            guard cropRect.origin.x.isFinite, cropRect.origin.y.isFinite,
+                  cropRect.width.isFinite, cropRect.height.isFinite,
+                  cropRect.width > 0, cropRect.height > 0 else {
+                print("⚠️ FilterEngine: Invalid cropRect, skipping crop")
+                // Skip crop, continue with other filters
+                return apply(FilterParameters(
+                    exposure: parameters.exposure,
+                    contrast: parameters.contrast,
+                    highlights: parameters.highlights,
+                    shadows: parameters.shadows,
+                    whites: parameters.whites,
+                    blacks: parameters.blacks,
+                    toneCurve: parameters.toneCurve,
+                    temperature: parameters.temperature,
+                    tint: parameters.tint,
+                    saturation: parameters.saturation,
+                    vibrance: parameters.vibrance,
+                    hsl: parameters.hsl,
+                    splitTone: parameters.splitTone,
+                    skinToneHue: parameters.skinToneHue,
+                    skinToneSaturation: parameters.skinToneSaturation,
+                    clarity: parameters.clarity,
+                    grain: parameters.grain,
+                    vignette: parameters.vignette,
+                    fade: parameters.fade,
+                    bloom: parameters.bloom,
+                    halation: parameters.halation,
+                    sharpness: parameters.sharpness,
+                    sharpenRadius: parameters.sharpenRadius,
+                    rotation: parameters.rotation,
+                    cropRect: nil  // Remove invalid crop
+                ), to: image)
+            }
             // cropRect is in image coordinates (already absolute)
             result = result.cropped(to: cropRect)
             // Translate to origin for consistent processing
@@ -302,11 +336,9 @@ actor FilterEngine {
 
         // Apply intensity blending if not 100%
         if intensity < 100 {
-            print("[FilterEngine] applyCLUT: blending at intensity \(intensity) (amount: \(intensity / 100.0))")
             return blendImages(base: image, overlay: croppedOutput, amount: intensity / 100.0)
         }
 
-        print("[FilterEngine] applyCLUT: returning full CLUT (intensity: \(intensity))")
         return croppedOutput
     }
 

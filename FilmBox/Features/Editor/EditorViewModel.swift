@@ -67,7 +67,6 @@ final class EditorViewModel {
 
     /// Update filter intensity without triggering preset didSet loop
     func setFilterIntensity(_ intensity: Float) {
-        print("[EditorViewModel] setFilterIntensity: \(intensity), preset: \(selectedPreset?.name ?? "nil"), clutPath: \(selectedPreset?.clutPath ?? "nil")")
         filterIntensity = intensity
         schedulePreviewUpdate()
     }
@@ -473,20 +472,29 @@ final class EditorViewModel {
 
         var processed = previewImage
 
-        // Apply CLUT from selected preset if present
-        if let preset = selectedPreset, let clutPath = preset.clutPath {
-            print("[EditorViewModel] updatePreview: applying CLUT '\(clutPath)' at intensity \(filterIntensity)")
-            processed = await FilterEngine.shared.applyCLUT(
-                at: clutPath,
-                to: processed,
-                intensity: filterIntensity
-            )
+        // Determine which parameters to apply based on filter type
+        let effectiveParameters: FilterParameters
+
+        if let preset = selectedPreset {
+            if let clutPath = preset.clutPath {
+                // CLUT-based filter: apply CLUT with intensity, then user adjustments
+                processed = await FilterEngine.shared.applyCLUT(
+                    at: clutPath,
+                    to: processed,
+                    intensity: filterIntensity
+                )
+                effectiveParameters = currentParameters
+            } else {
+                // Parameter-based filter: apply preset parameters at intensity
+                effectiveParameters = preset.parameters(at: filterIntensity)
+            }
         } else {
-            print("[EditorViewModel] updatePreview: no CLUT (preset: \(selectedPreset?.name ?? "nil"), clutPath: \(selectedPreset?.clutPath ?? "nil"))")
+            // No preset selected - just apply current parameters
+            effectiveParameters = currentParameters
         }
 
         // Apply filters using the filter pipeline
-        processed = await applyFilters(to: processed, parameters: currentParameters)
+        processed = await applyFilters(to: processed, parameters: effectiveParameters)
 
         currentImage = processed
     }
@@ -901,17 +909,28 @@ final class EditorViewModel {
 
         var processed = original
 
-        // Apply CLUT from selected preset if present
-        if let preset = selectedPreset, let clutPath = preset.clutPath {
-            processed = await FilterEngine.shared.applyCLUT(
-                at: clutPath,
-                to: processed,
-                intensity: filterIntensity
-            )
+        // Determine which parameters to apply based on filter type
+        let effectiveParameters: FilterParameters
+
+        if let preset = selectedPreset {
+            if let clutPath = preset.clutPath {
+                // CLUT-based filter: apply CLUT with intensity
+                processed = await FilterEngine.shared.applyCLUT(
+                    at: clutPath,
+                    to: processed,
+                    intensity: filterIntensity
+                )
+                effectiveParameters = currentParameters
+            } else {
+                // Parameter-based filter: apply preset parameters at intensity
+                effectiveParameters = preset.parameters(at: filterIntensity)
+            }
+        } else {
+            effectiveParameters = currentParameters
         }
 
         // Apply full quality filters
-        let finalImage = await applyFilters(to: processed, parameters: currentParameters)
+        let finalImage = await applyFilters(to: processed, parameters: effectiveParameters)
 
         return finalImage
     }

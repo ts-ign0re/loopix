@@ -147,26 +147,49 @@ struct CropTabView: View {
     }
 
     private func applyCrop() {
-        guard !cropRect.isEmpty, !imageRect.isEmpty else { return }
+        // Validate rects have positive dimensions
+        guard cropRect.width > 0, cropRect.height > 0,
+              imageRect.width > 0, imageRect.height > 0 else {
+            viewModel.selectedTab = .filters
+            return
+        }
 
         // Convert crop rect from view coordinates to image coordinates
         guard let image = viewModel.editor.originalImage else { return }
 
         let imageExtent = image.extent
+        guard imageExtent.width > 0, imageExtent.height > 0 else { return }
+
         let scaleX = imageExtent.width / imageRect.width
         let scaleY = imageExtent.height / imageRect.height
 
         // Calculate image crop rect
-        let imageCropRect = CGRect(
-            x: (cropRect.minX - imageRect.minX) * scaleX + imageExtent.minX,
-            y: (imageRect.maxY - cropRect.maxY) * scaleY + imageExtent.minY, // Flip Y
-            width: cropRect.width * scaleX,
-            height: cropRect.height * scaleY
-        )
+        let x = (cropRect.minX - imageRect.minX) * scaleX + imageExtent.minX
+        let y = (imageRect.maxY - cropRect.maxY) * scaleY + imageExtent.minY // Flip Y
+        let width = cropRect.width * scaleX
+        let height = cropRect.height * scaleY
+
+        // Validate no NaN or infinite values
+        guard x.isFinite, y.isFinite, width.isFinite, height.isFinite,
+              width > 0, height > 0 else {
+            print("⚠️ Invalid crop rect calculated: x=\(x), y=\(y), w=\(width), h=\(height)")
+            viewModel.selectedTab = .filters
+            return
+        }
+
+        let imageCropRect = CGRect(x: x, y: y, width: width, height: height)
+
+        // Ensure crop rect is within image bounds
+        let clampedCropRect = imageCropRect.intersection(imageExtent)
+        guard !clampedCropRect.isEmpty, clampedCropRect.width > 0, clampedCropRect.height > 0 else {
+            print("⚠️ Crop rect outside image bounds")
+            viewModel.selectedTab = .filters
+            return
+        }
 
         // Apply crop to parameters
         var params = viewModel.editor.currentParameters
-        params.cropRect = imageCropRect
+        params.cropRect = clampedCropRect
         viewModel.editor.currentParameters = params
 
         // Go back to filters tab
