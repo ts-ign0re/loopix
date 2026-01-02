@@ -973,7 +973,16 @@ struct HistogramData: Sendable {
 
         // Sample the image at reduced resolution for performance
         let scale = min(1.0, 256.0 / max(image.extent.width, image.extent.height))
-        let scaledImage = image.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
+        var scaledImage = image.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
+
+        // Translate to origin (0, 0) - required for correct bitmap rendering
+        let extent = scaledImage.extent
+        if extent.origin != .zero {
+            scaledImage = scaledImage.transformed(by: CGAffineTransform(
+                translationX: -extent.origin.x,
+                y: -extent.origin.y
+            ))
+        }
 
         // Render to bitmap
         let width = Int(scaledImage.extent.width)
@@ -984,12 +993,13 @@ struct HistogramData: Sendable {
         }
 
         var bitmap = [UInt8](repeating: 0, count: width * height * 4)
+        let renderBounds = CGRect(origin: .zero, size: CGSize(width: width, height: height))
 
         context.render(
             scaledImage,
             toBitmap: &bitmap,
             rowBytes: width * 4,
-            bounds: scaledImage.extent,
+            bounds: renderBounds,
             format: .RGBA8,
             colorSpace: CGColorSpace(name: CGColorSpace.sRGB)
         )
