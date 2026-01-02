@@ -78,18 +78,19 @@ struct HistogramView: View {
 
     private var histogramCanvas: some View {
         Canvas { context, size in
+            var ctx = context
             guard let data = histogramData else {
-                drawPlaceholder(context: context, size: size)
+                drawPlaceholder(context: ctx, size: size)
                 return
             }
 
             switch displayMode {
             case .rgb:
-                drawRGBHistogram(context: context, size: size, data: data)
+                drawRGBHistogram(context: ctx, size: size, data: data)
             case .luminance:
-                drawLuminanceHistogram(context: context, size: size, data: data)
+                drawLuminanceHistogram(context: ctx, size: size, data: data)
             case .channels:
-                drawSeparateChannels(context: context, size: size, data: data)
+                drawSeparateChannels(context: &ctx, size: size, data: data)
             }
         }
     }
@@ -154,7 +155,7 @@ struct HistogramView: View {
     }
 
     /// Draw separate R, G, B channel histograms stacked
-    private func drawSeparateChannels(context: GraphicsContext, size: CGSize, data: HistogramData) {
+    private func drawSeparateChannels(context: inout GraphicsContext, size: CGSize, data: HistogramData) {
         let channelHeight = size.height / 3
         let binCount = data.red.count
         let binWidth = size.width / CGFloat(binCount)

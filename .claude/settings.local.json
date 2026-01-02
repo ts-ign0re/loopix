@@ -11,7 +11,9 @@
       "Bash(find:*)",
       "Bash(xcrun simctl list:*)",
       "Bash(xargs basename:*)",
-      "Bash(swiftlint lint:*)"
+      "Bash(swiftlint lint:*)",
+      "Bash(xargs:*)",
+      "Bash(wc:*)"
     ]
   }
 }

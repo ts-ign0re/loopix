@@ -790,11 +790,7 @@ struct EditorView: View {
                     set: { viewModel.updateTemperature($0) }
                 ),
                 range: -100...100,
-                defaultValue: 0,
-                customValueDisplay: { value in
-                    let kelvin = Int(6500 - value * 35)
-                    return "\(kelvin)K"
-                }
+                defaultValue: 0
             )
             ToolSlider(
                 label: "Tint",

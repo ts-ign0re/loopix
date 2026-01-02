@@ -112,23 +112,21 @@ actor FilterPreviewCache {
         options.resizeMode = .fast
         options.isSynchronous = false
 
-        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+        let image: CGImage? = await withCheckedContinuation { (continuation: CheckedContinuation<CGImage?, Never>) in
             PHImageManager.default().requestImage(
                 for: asset,
                 targetSize: Self.previewSize,
                 contentMode: .aspectFill,
                 options: options
-            ) { [weak self] image, info in
+            ) { image, info in
                 let isDegraded = (info?[PHImageResultIsDegradedKey] as? Bool) ?? false
-                if !isDegraded, let cgImage = image?.cgImage {
-                    Task {
-                        await self?.setReferenceImage(cgImage)
-                    }
-                }
                 if !isDegraded {
-                    continuation.resume()
+                    continuation.resume(returning: image?.cgImage)
                 }
             }
+        }
+        if let image {
+            await setReferenceImage(image)
         }
     }
 
@@ -416,6 +414,44 @@ extension FilterPreviewCache {
     static let shared = FilterPreviewCache()
 }
 
+// MARK: - Convenience Methods for FiltersManagementView
+
+@available(iOS 17.0, *)
+extension FilterPreviewCache {
+
+    /// Generate initial previews for a set of filters
+    func generateInitialPreviews(for presets: [FilterPreset]) async {
+        requestPreviews(for: presets, priority: .low)
+    }
+
+    /// Alias for cachedPreview for compatibility
+    func getPreview(for preset: FilterPreset) async -> CGImage? {
+        return cachedPreview(for: preset)
+    }
+
+    /// Generate a preview for a filter (public wrapper)
+    func generatePreview(for preset: FilterPreset) async -> CGImage? {
+        return await preview(for: preset, priority: .high)
+    }
+
+    /// Delete cached preview for a filter
+    func deletePreview(for presetID: UUID) async {
+        let key = "filter_\(presetID.uuidString)"
+        memoryCache.removeObject(forKey: NSString(string: key))
+        // Remove disk cache file
+        let fileURL = diskCacheURL.appendingPathComponent("\(key).jpg")
+        try? FileManager.default.removeItem(at: fileURL)
+    }
+
+    /// Regenerate preview for a filter
+    func regeneratePreview(for preset: FilterPreset) async {
+        // Remove old cache entry
+        await deletePreview(for: preset.id)
+        // Generate new preview
+        _ = await preview(for: preset, priority: .high)
+    }
+}
+
 // MARK: - SwiftUI Integration
 
 import SwiftUI
@@ -433,17 +469,18 @@ final class FilterPreviewLoader: ObservableObject {
         // Cancel any existing load
         loadTask?.cancel()
 
-        // Check for cached first
-        if let cached = Task {
-            await FilterPreviewCache.shared.cachedPreview(for: preset)
-        } as? CGImage {
-            self.image = cached
-            return
-        }
-
         isLoading = true
 
         loadTask = Task {
+            // Check for cached first
+            if let cached = await FilterPreviewCache.shared.cachedPreview(for: preset) {
+                await MainActor.run {
+                    self.image = cached
+                    self.isLoading = false
+                }
+                return
+            }
+
             let preview = await FilterPreviewCache.shared.preview(for: preset, priority: priority)
 
             guard !Task.isCancelled else { return }
