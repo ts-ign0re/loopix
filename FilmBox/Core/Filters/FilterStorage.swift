@@ -50,9 +50,9 @@ actor FilterStorage {
 
     // MARK: - Built-in Presets
 
-    /// All built-in presets (film emulations + creative filters)
+    /// All built-in presets (film emulations + creative filters + fuji recipes)
     nonisolated var builtInPresets: [FilterPreset] {
-        [FilterPreset.original] + FilmEmulations.all + CreativeFilters.all
+        [FilterPreset.original] + FilmEmulations.all + CreativeFilters.all + FujiRecipes.all
     }
 
     // MARK: - All Presets

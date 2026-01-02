@@ -489,7 +489,7 @@ struct EditorView: View {
         }
 
         // Get all built-in presets
-        let allBuiltIn = FilmEmulations.all + CreativeFilters.all
+        let allBuiltIn = FilmEmulations.all + CreativeFilters.all + FujiRecipes.all
         let allFilters = allBuiltIn + userPresets
 
         // Filter by category
@@ -519,6 +519,8 @@ struct EditorView: View {
             filtered = FilmEmulations.blackAndWhite
         case .creative:
             filtered = []
+        case .fujiRecipes:
+            filtered = FujiRecipes.all
         }
 
         availableFilters = filtered

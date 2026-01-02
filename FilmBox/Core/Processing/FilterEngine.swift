@@ -239,6 +239,11 @@ actor FilterEngine {
             result = applyClarity(to: result, amount: parameters.clarity)
         }
 
+        // 8.5. Noise Reduction
+        if parameters.noiseReduction != 0 {
+            result = applyNoiseReduction(to: result, amount: parameters.noiseReduction)
+        }
+
         // 9. Sharpening
         if parameters.sharpness > 0 {
             result = applySharpening(
@@ -732,6 +737,35 @@ actor FilterEngine {
         return filter.outputImage ?? image
     }
 
+    /// Apply noise reduction or detail enhancement
+    /// - Parameters:
+    ///   - image: Source image
+    ///   - amount: Amount (-100 to +100). Negative = detail enhancement, Positive = noise reduction
+    /// - Returns: Adjusted image
+    private func applyNoiseReduction(to image: CIImage, amount: Float) -> CIImage {
+        guard abs(amount) > kFilterEpsilon else { return image }
+
+        if amount > 0 {
+            // Positive = noise reduction (smooth)
+            guard let filter = getCachedFilter(name: "CINoiseReduction") else {
+                return image
+            }
+            filter.setValue(image, forKey: kCIInputImageKey)
+            filter.setValue(amount / 100.0 * 0.02, forKey: "inputNoiseLevel")
+            filter.setValue(amount / 100.0 * 0.4, forKey: "inputSharpness")
+            return filter.outputImage ?? image
+        } else {
+            // Negative = detail enhancement (sharpen high frequencies)
+            guard let filter = getCachedFilter(name: "CIUnsharpMask") else {
+                return image
+            }
+            filter.setValue(image, forKey: kCIInputImageKey)
+            filter.setValue(abs(amount) / 100.0 * 0.5, forKey: kCIInputIntensityKey)
+            filter.setValue(0.5, forKey: kCIInputRadiusKey)
+            return filter.outputImage ?? image
+        }
+    }
+
     /// Apply sharpening
     /// - Parameters:
     ///   - image: Source image
@@ -1206,57 +1240,119 @@ actor FilterEngine {
 
         case .classicNegative:
             // High contrast, muted colors, distinctive blue shadows
+            // Calibrated against Fuji Classic Negative look
             let curve = ToneCurveData(
                 composite: [
-                    .init(x: 0, y: 0.05),      // Lifted blacks
-                    .init(x: 0.25, y: 0.20),   // Deep shadows
-                    .init(x: 0.5, y: 0.50),
-                    .init(x: 0.75, y: 0.80),
-                    .init(x: 1, y: 0.98)       // Slightly rolled highlights
+                    .init(x: 0, y: 0.06),      // Lifted blacks (film base)
+                    .init(x: 0.25, y: 0.18),   // Compressed shadows
+                    .init(x: 0.5, y: 0.48),    // Slight midtone dip
+                    .init(x: 0.75, y: 0.78),
+                    .init(x: 1, y: 0.96)       // Rolled highlights
                 ],
-                red: [], green: [], blue: []
+                red: [
+                    .init(x: 0, y: 0.04),      // Less red in shadows (blue shift)
+                    .init(x: 0.5, y: 0.50),
+                    .init(x: 1, y: 0.98)
+                ],
+                green: [],
+                blue: [
+                    .init(x: 0, y: 0.08),      // More blue in shadows
+                    .init(x: 0.5, y: 0.52),
+                    .init(x: 1, y: 0.96)
+                ]
             )
-            return (curve, -15, 20, -5)
+            return (curve, -18, 22, -8)
 
         case .classicChrome:
             // Muted, documentary-style, cyan shadows
+            // Calibrated for classic photojournalism look
             let curve = ToneCurveData(
                 composite: [
-                    .init(x: 0, y: 0.03),
-                    .init(x: 0.25, y: 0.22),
+                    .init(x: 0, y: 0.04),      // Slightly lifted blacks
+                    .init(x: 0.25, y: 0.21),
+                    .init(x: 0.5, y: 0.46),    // Lower midtones
+                    .init(x: 0.75, y: 0.73),
+                    .init(x: 1, y: 0.95)       // Rolled highlights
+                ],
+                red: [
+                    .init(x: 0, y: 0.02),      // Reduced red in shadows
                     .init(x: 0.5, y: 0.48),
-                    .init(x: 0.75, y: 0.75),
-                    .init(x: 1, y: 0.97)
+                    .init(x: 1, y: 0.96)
+                ],
+                green: [
+                    .init(x: 0, y: 0.05),      // Slight green boost in shadows (cyan)
+                    .init(x: 0.5, y: 0.50),
+                    .init(x: 1, y: 0.95)
+                ],
+                blue: [
+                    .init(x: 0, y: 0.06),      // Blue boost in shadows
+                    .init(x: 0.5, y: 0.50),
+                    .init(x: 1, y: 0.94)
+                ]
+            )
+            return (curve, -25, 12, 3)
+
+        case .provia:
+            // Natural, balanced, slightly vivid - "Standard" look
+            // Calibrated against Fuji Provia 100F reference
+            let proviaCurve = ToneCurveData(
+                composite: [
+                    .init(x: 0, y: 0.0),
+                    .init(x: 0.25, y: 0.24),
+                    .init(x: 0.5, y: 0.50),
+                    .init(x: 0.75, y: 0.76),
+                    .init(x: 1, y: 1.0)
                 ],
                 red: [], green: [], blue: []
             )
-            return (curve, -20, 15, 5)
-
-        case .provia:
-            // Natural, balanced, slightly vivid
-            return (.identity, 10, 5, 0)
+            return (proviaCurve, 12, 8, 0)
 
         case .velvia:
-            // High saturation, vivid, punchy
-            return (.identity, 40, 15, 0)
+            // High saturation, vivid, punchy - "Vivid" look
+            // Calibrated against Fuji Velvia 50 reference
+            let velviaCurve = ToneCurveData(
+                composite: [
+                    .init(x: 0, y: 0.0),
+                    .init(x: 0.25, y: 0.22),   // Deeper shadows
+                    .init(x: 0.5, y: 0.52),    // Slight S-curve
+                    .init(x: 0.75, y: 0.80),   // Brighter highlights
+                    .init(x: 1, y: 1.0)
+                ],
+                red: [], green: [], blue: []
+            )
+            return (velviaCurve, 45, 18, -2)
 
         case .astia:
-            // Soft, flattering skin tones
-            return (.identity, -5, -10, 3)
-
-        case .acros:
-            // High-quality B&W with rich tones
-            let curve = ToneCurveData(
+            // Soft, flattering skin tones - "Soft" look
+            // Calibrated against Fuji Astia 100F reference
+            let astiaCurve = ToneCurveData(
                 composite: [
-                    .init(x: 0, y: 0.02),
-                    .init(x: 0.25, y: 0.20),
-                    .init(x: 0.5, y: 0.52),
-                    .init(x: 0.75, y: 0.82),
+                    .init(x: 0, y: 0.02),      // Very slightly lifted blacks
+                    .init(x: 0.25, y: 0.26),   // Open shadows
+                    .init(x: 0.5, y: 0.50),
+                    .init(x: 0.75, y: 0.74),   // Softer highlights
                     .init(x: 1, y: 0.98)
                 ],
                 red: [], green: [], blue: []
             )
-            return (curve, -100, 10, 0)  // Full desaturation for B&W
+            return (astiaCurve, -8, -12, 5)
+
+        case .acros:
+            // High-quality B&W with rich tones
+            // Calibrated against Fuji Acros 100 reference - deeper blacks, rich midtones
+            let curve = ToneCurveData(
+                composite: [
+                    .init(x: 0, y: 0.0),       // True black
+                    .init(x: 0.15, y: 0.08),   // Deeper shadows
+                    .init(x: 0.35, y: 0.30),   // Shadow detail
+                    .init(x: 0.5, y: 0.50),
+                    .init(x: 0.65, y: 0.72),   // Highlight lift
+                    .init(x: 0.85, y: 0.92),
+                    .init(x: 1, y: 1.0)        // Clean whites
+                ],
+                red: [], green: [], blue: []
+            )
+            return (curve, -100, 15, 0)  // Full desaturation for B&W
 
         case .eterna:
             // Cinema-style, low saturation, soft

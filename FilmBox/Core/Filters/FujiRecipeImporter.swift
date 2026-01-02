@@ -131,28 +131,52 @@ final class FujiRecipeImporter {
         // Dynamic Range
         params.dynamicRange = parseDynamicRange(recipe.dynamicRange)
 
-        // Highlight/Shadow (Fuji -2...+2 → App -100...+100)
-        params.highlights = recipe.highlight * 50  // -2 → -100, +2 → +100
-        params.shadows = recipe.shadow * 50
+        // Highlight/Shadow (Fuji -4...+4 → App -100...+100)
+        params.highlights = clamp(recipe.highlight * 25, min: -100, max: 100)
+        params.shadows = clamp(recipe.shadow * 25, min: -100, max: 100)
 
-        // Color (Fuji 1-4 → saturation + vibrance)
-        let colorBoost = Float(recipe.color - 2) * 15  // Normalize around 2 (neutral)
-        params.saturation = colorBoost
-        params.vibrance = colorBoost * 0.5
-
-        // Sharpness (Fuji -4...+4 → App 0...100, with -4 = 0, 0 = 50, +4 = 100)
-        params.sharpness = (Float(recipe.sharpness) + 4) * 12.5  // Map -4...+4 to 0...100
+        // Color (Fuji 0-4 → saturation + vibrance)
+        // color=0 → 0, color=4 → +50 saturation
+        let colorBoost = Float(recipe.color) * 12.5
+        params.saturation = clamp(colorBoost, min: -100, max: 100)
+        params.vibrance = clamp(colorBoost * 0.3, min: -100, max: 100)
 
         // Clarity (Fuji -4...+4 → App -100...+100)
+        // Apply clarity FIRST, before sharpness modifies it
         params.clarity = Float(recipe.clarity) * 25  // -4 → -100, +4 → +100
 
+        // Sharpness (Fuji -4...+4)
+        // Negative values = softening (via additional negative clarity)
+        // Positive values = sharpening (0...100 range)
+        if recipe.sharpness < 0 {
+            params.sharpness = 0
+            // Negative sharpness adds to negative clarity
+            params.clarity += Float(recipe.sharpness) * 10  // -4 → -40 additional clarity
+        } else {
+            params.sharpness = clamp(Float(recipe.sharpness) * 12.5, min: 0, max: 100)
+        }
+
+        // Final clamp for clarity after sharpness modification
+        params.clarity = clamp(params.clarity, min: -100, max: 100)
+
+        // Noise Reduction (Fuji -4...+4 → App -100...+100)
+        // Negative = detail enhancement, Positive = noise reduction
+        params.noiseReduction = clamp(Float(recipe.noiseReduction) * 25, min: -100, max: 100)
+
         return params
+    }
+
+    // MARK: - Validation Helper
+
+    /// Clamp a value to a specified range
+    static func clamp(_ value: Float, min: Float, max: Float) -> Float {
+        Swift.min(Swift.max(value, min), max)
     }
 
     // MARK: - Parsing Helpers
 
     /// Parse film simulation string to enum
-    private static func parseFilmSimulation(_ string: String) -> FilmSimulationType {
+    static func parseFilmSimulation(_ string: String) -> FilmSimulationType {
         switch string.lowercased() {
         case "classic negative":
             return .classicNegative
@@ -181,7 +205,7 @@ final class FujiRecipeImporter {
 
     /// Parse grain effect string to GrainData
     /// Format: "Strength / Size" e.g., "Strong / Large", "Weak / Small"
-    private static func parseGrainEffect(_ string: String) -> GrainData {
+    static func parseGrainEffect(_ string: String) -> GrainData {
         let components = string.lowercased().split(separator: "/").map { $0.trimmingCharacters(in: .whitespaces) }
 
         guard components.count >= 1 else { return .none }
@@ -223,7 +247,7 @@ final class FujiRecipeImporter {
     }
 
     /// Parse color chrome level string
-    private static func parseColorChromeLevel(_ string: String) -> ColorChromeData.ColorChromeLevel {
+    static func parseColorChromeLevel(_ string: String) -> ColorChromeData.ColorChromeLevel {
         switch string.lowercased() {
         case "off", "none":
             return .off
@@ -237,7 +261,7 @@ final class FujiRecipeImporter {
     }
 
     /// Parse dynamic range string
-    private static func parseDynamicRange(_ string: String) -> DynamicRangeMode {
+    static func parseDynamicRange(_ string: String) -> DynamicRangeMode {
         switch string.uppercased() {
         case "DR100":
             return .dr100

@@ -40,6 +40,7 @@ struct FilterParameters: Codable, Hashable, Sendable {
 
     // === EFFECTS ===
     var clarity: Float = 0          // -100...+100
+    var noiseReduction: Float = 0   // -100...+100 (negative = detail enhancement, positive = smoothing)
     var grain: GrainData = .none
     var vignette: VignetteData = .none
     var fade: Float = 0             // 0...100
@@ -396,6 +397,7 @@ extension FilterParameters {
         case saturation
         case vibrance
         case clarity
+        case noiseReduction
         case sharpness
         case sharpenRadius
         case fade
@@ -428,6 +430,7 @@ extension FilterParameters {
             case .temperature, .tint: return -100...100
             case .saturation, .vibrance: return -100...100
             case .clarity: return -100...100
+            case .noiseReduction: return -100...100
             case .sharpness: return 0...100
             case .sharpenRadius: return 0.5...3.0
             case .fade: return 0...100

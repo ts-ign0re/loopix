@@ -14,8 +14,14 @@ enum FilterCategory: String, Codable, CaseIterable, Sendable {
     case bw = "b&w"
     case vintage = "vintage"
     case creative = "creative"
+    case fujiRecipes = "fuji"
 
-    var displayName: String { rawValue }
+    var displayName: String {
+        switch self {
+        case .fujiRecipes: return "fuji x"
+        default: return rawValue
+        }
+    }
 
     /// Icon name for the category (SF Symbols)
     var iconName: String {
@@ -32,6 +38,7 @@ enum FilterCategory: String, Codable, CaseIterable, Sendable {
         case .bw: return "circle.lefthalf.filled"
         case .vintage: return "clock.arrow.circlepath"
         case .creative: return "wand.and.stars"
+        case .fujiRecipes: return "camera"
         }
     }
 

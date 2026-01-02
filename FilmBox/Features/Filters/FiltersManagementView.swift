@@ -64,6 +64,8 @@ struct FiltersManagementView: View {
             result = userFilters
         case .all:
             break
+        case .fujiRecipes:
+            result = FujiRecipes.all
         default:
             result = result.filter { $0.category == selectedCategory }
         }
@@ -352,6 +354,8 @@ struct FiltersManagementView: View {
             return [Color.indigo.opacity(0.5), Color.purple.opacity(0.3)]
         case .custom:
             return [Color.yellow.opacity(0.4), Color.orange.opacity(0.3)]
+        case .fujiRecipes:
+            return [Color.green.opacity(0.4), Color.teal.opacity(0.3)]
         default:
             return [Color.gray.opacity(0.4), Color.gray.opacity(0.6)]
         }
@@ -462,7 +466,7 @@ struct FiltersManagementView: View {
     // MARK: - Data Loading
 
     private func loadFilters() async {
-        builtInFilters = FilmEmulations.all + CreativeFilters.all
+        builtInFilters = FilmEmulations.all + CreativeFilters.all + FujiRecipes.all
         userFilters = await FilterStorage.shared.getUserPresets()
     }
 

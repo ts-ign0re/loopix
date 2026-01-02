@@ -4,6 +4,7 @@ import CoreGraphics
 import CoreImage
 import ImageIO
 import UniformTypeIdentifiers
+import UIKit
 
 /// Specialized cache for filter preview thumbnails in the filter strip
 /// Optimized for 350+ presets with small size, progressive loading, and cancellation support
@@ -89,6 +90,73 @@ actor FilterPreviewCache {
             .useSoftwareRenderer: false,
             .workingColorSpace: CGColorSpace(name: CGColorSpace.sRGB)!
         ])
+
+        // Load bundled reference image from Asset Catalog
+        self.referenceImage = Self.loadBundledReferenceImageSync()
+    }
+
+    /// Load the bundled reference image from Asset Catalog (synchronous, non-isolated)
+    private nonisolated static func loadBundledReferenceImageSync() -> CGImage? {
+        // Try to load from Asset Catalog first
+        if let uiImage = UIImage(named: "FilterPreviewImage"),
+           let cgImage = uiImage.cgImage {
+            return scaleImageSync(cgImage, to: previewSize)
+        }
+
+        // Fallback: try to load from bundle directly
+        if let url = Bundle.main.url(forResource: "image", withExtension: "jpg"),
+           let source = CGImageSourceCreateWithURL(url as CFURL, nil),
+           let cgImage = CGImageSourceCreateImageAtIndex(source, 0, nil) {
+            return scaleImageSync(cgImage, to: previewSize)
+        }
+
+        return nil
+    }
+
+    /// Scale image synchronously with aspect-fill (cover) - non-isolated helper
+    private nonisolated static func scaleImageSync(_ image: CGImage, to size: CGSize) -> CGImage {
+        let targetWidth = Int(size.width)
+        let targetHeight = Int(size.height)
+
+        let sourceWidth = CGFloat(image.width)
+        let sourceHeight = CGFloat(image.height)
+
+        // Calculate scale to cover (aspect-fill)
+        let scaleX = size.width / sourceWidth
+        let scaleY = size.height / sourceHeight
+        let scale = max(scaleX, scaleY)  // Use max for cover/fill
+
+        // Calculate scaled size and crop offset (center crop)
+        let scaledWidth = sourceWidth * scale
+        let scaledHeight = sourceHeight * scale
+        let offsetX = (scaledWidth - size.width) / 2
+        let offsetY = (scaledHeight - size.height) / 2
+
+        let colorSpace = image.colorSpace ?? CGColorSpace(name: CGColorSpace.sRGB)!
+        guard let context = CGContext(
+            data: nil,
+            width: targetWidth,
+            height: targetHeight,
+            bitsPerComponent: 8,
+            bytesPerRow: 0,
+            space: colorSpace,
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else {
+            return image
+        }
+
+        context.interpolationQuality = .high
+
+        // Draw with offset to center-crop
+        let drawRect = CGRect(
+            x: -offsetX,
+            y: -offsetY,
+            width: scaledWidth,
+            height: scaledHeight
+        )
+        context.draw(image, in: drawRect)
+
+        return context.makeImage() ?? image
     }
 
     // MARK: - Reference Image
@@ -374,26 +442,8 @@ actor FilterPreviewCache {
     }
 
     private func scaleImage(_ image: CGImage, to size: CGSize) -> CGImage {
-        let width = Int(size.width)
-        let height = Int(size.height)
-
-        let colorSpace = image.colorSpace ?? CGColorSpace(name: CGColorSpace.sRGB)!
-        guard let context = CGContext(
-            data: nil,
-            width: width,
-            height: height,
-            bitsPerComponent: 8,
-            bytesPerRow: 0,
-            space: colorSpace,
-            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-        ) else {
-            return image
-        }
-
-        context.interpolationQuality = .high
-        context.draw(image, in: CGRect(origin: .zero, size: size))
-
-        return context.makeImage() ?? image
+        // Use static method for consistency
+        Self.scaleImageSync(image, to: size)
     }
 }
 
@@ -424,9 +474,9 @@ extension FilterPreviewCache {
         requestPreviews(for: presets, priority: .low)
     }
 
-    /// Alias for cachedPreview for compatibility
+    /// Get or generate preview for a filter
     func getPreview(for preset: FilterPreset) async -> CGImage? {
-        return cachedPreview(for: preset)
+        return await preview(for: preset, priority: .medium)
     }
 
     /// Generate a preview for a filter (public wrapper)

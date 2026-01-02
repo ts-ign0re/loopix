@@ -18,6 +18,7 @@
 		A1000001229E000100000013 /* HALDCLUTLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000013 /* HALDCLUTLoader.swift */; };
 		A1000001229E000100000014 /* BuiltInFilters/FilmEmulations.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000014 /* BuiltInFilters/FilmEmulations.swift */; };
 		A1000001229E000100000015 /* BuiltInFilters/CreativeFilters.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000015 /* BuiltInFilters/CreativeFilters.swift */; };
+		A1000001229E000100000016 /* BuiltInFilters/FujiRecipes.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000016 /* BuiltInFilters/FujiRecipes.swift */; };
 		A1000001229E000100000020 /* MetalFilterLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000020 /* MetalFilterLoader.swift */; };
 		A1000001229E000100000040 /* ExportEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000040 /* ExportEngine.swift */; };
 		A1000001229E000100000060 /* ExportSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000060 /* ExportSettings.swift */; };
@@ -95,6 +96,7 @@
 		A1000001229E000000000013 /* HALDCLUTLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HALDCLUTLoader.swift; sourceTree = "<group>"; };
 		A1000001229E000000000014 /* BuiltInFilters/FilmEmulations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuiltInFilters/FilmEmulations.swift; sourceTree = "<group>"; };
 		A1000001229E000000000015 /* BuiltInFilters/CreativeFilters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuiltInFilters/CreativeFilters.swift; sourceTree = "<group>"; };
+		A1000001229E000000000016 /* BuiltInFilters/FujiRecipes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuiltInFilters/FujiRecipes.swift; sourceTree = "<group>"; };
 		A1000001229E000000000020 /* MetalFilterLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetalFilterLoader.swift; sourceTree = "<group>"; };
 		A1000001229E000000000040 /* ExportEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportEngine.swift; sourceTree = "<group>"; };
 		A1000001229E000000000041 /* FilterEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterEngine.swift; sourceTree = "<group>"; };
@@ -231,6 +233,7 @@
 				A1000001229E000000000013 /* HALDCLUTLoader.swift */,
 				A1000001229E000000000014 /* BuiltInFilters/FilmEmulations.swift */,
 				A1000001229E000000000015 /* BuiltInFilters/CreativeFilters.swift */,
+				A1000001229E000000000016 /* BuiltInFilters/FujiRecipes.swift */,
 				CE0756FA2F05800100C53D17 /* FilterStorage.swift */,
 				CE0756FB2F05800200C53D17 /* FujiRecipeImporter.swift */,
 				CE0757142F08A00300C53D17 /* RecentlyUsedFiltersManager.swift */,
@@ -644,6 +647,7 @@
 				A1000001229E000100000013 /* HALDCLUTLoader.swift in Sources */,
 				A1000001229E000100000014 /* BuiltInFilters/FilmEmulations.swift in Sources */,
 				A1000001229E000100000015 /* BuiltInFilters/CreativeFilters.swift in Sources */,
+				A1000001229E000100000016 /* BuiltInFilters/FujiRecipes.swift in Sources */,
 				A1000001229E000100000020 /* MetalFilterLoader.swift in Sources */,
 				A1000001229E000100000040 /* ExportEngine.swift in Sources */,
 				A1000001229E000100000041 /* FilterEngine.swift in Sources */,
