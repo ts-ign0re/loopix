@@ -406,7 +406,7 @@ struct EditorView: View {
 
     @State private var selectedFilterCategory: FilterCategory = .all
     @State private var availableFilters: [FilterPreset] = []
-    @State private var filterIntensity: Float = 75
+    // filterIntensity is now managed by viewModel (two-layer architecture)
     @State private var userPresets: [FilterPreset] = []
     @State private var favoriteIDs: Set<UUID> = []
     @State private var showFilterEditor = false
@@ -454,17 +454,12 @@ struct EditorView: View {
                         .foregroundStyle(.white.opacity(0.6))
 
                     Slider(value: Binding(
-                        get: { filterIntensity },
-                        set: { newValue in
-                            filterIntensity = newValue
-                            if let preset = viewModel.selectedPreset {
-                                viewModel.applyPreset(preset, intensity: filterIntensity)
-                            }
-                        }
+                        get: { viewModel.filterIntensity },
+                        set: { viewModel.setFilterIntensity($0) }
                     ), in: 0...100)
                     .tint(.yellow)
 
-                    Text("\(Int(filterIntensity))%")
+                    Text("\(Int(viewModel.filterIntensity))%")
                         .font(.system(.caption, design: .monospaced))
                         .foregroundStyle(.white.opacity(0.8))
                         .frame(width: 40, alignment: .trailing)
@@ -614,7 +609,7 @@ struct EditorView: View {
                     viewModel.selectedPreset = nil
                     viewModel.resetToOriginal()
                 } else {
-                    filterIntensity = 75
+                    // filterIntensity is set automatically by viewModel.selectedPreset.didSet
                     viewModel.selectedPreset = preset
                 }
             }

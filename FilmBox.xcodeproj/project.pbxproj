@@ -35,12 +35,6 @@
 		A1000001229E000100000090 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000090 /* Theme.swift */; };
 		A1000001229E0001000000A0 /* PhotoLibraryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E0000000000A0 /* PhotoLibraryManager.swift */; };
 		A1000001229E0001000000B0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1000001229E0000000000B0 /* Assets.xcassets */; };
-		A1000001229E0001000000C0 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A1000001229E0000000000C0 /* SwiftUI.framework */; };
-		A1000001229E0001000000C1 /* CoreImage.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A1000001229E0000000000C1 /* CoreImage.framework */; };
-		A1000001229E0001000000C2 /* Photos.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A1000001229E0000000000C2 /* Photos.framework */; };
-		A1000001229E0001000000C3 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A1000001229E0000000000C3 /* Metal.framework */; };
-		A1000001229E0001000000C4 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A1000001229E0000000000C4 /* MetalKit.framework */; };
-		A1000001229E0001000000C5 /* UniformTypeIdentifiers.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A1000001229E0000000000C5 /* UniformTypeIdentifiers.framework */; };
 		CE0756E32F05603A00C53D17 /* ImagePreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0756E22F05603900C53D17 /* ImagePreview.swift */; };
 		CE0756E52F05604700C53D17 /* ToolSlider.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0756E42F05604700C53D17 /* ToolSlider.swift */; };
 		CE0756E72F05606000C53D17 /* HistogramView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0756E62F05606000C53D17 /* HistogramView.swift */; };
@@ -76,7 +70,12 @@
 		CE6526472F07936C008466F6 /* VerticalIntensitySlider.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE65261D2F07936C008466F6 /* VerticalIntensitySlider.swift */; };
 		CE6526482F07936C008466F6 /* EditorV2Tab.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE6526212F07936C008466F6 /* EditorV2Tab.swift */; };
 		CE65264B2F079BF0008466F6 /* CropTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE6526492F079BF0008466F6 /* CropTabView.swift */; };
-		CED9E57F2F06F811002E41A9 /* Screenshot 2026-01-01 at 8.43.31 PM.png in Resources */ = {isa = PBXBuildFile; fileRef = CED9E57E2F06F811002E41A9 /* Screenshot 2026-01-01 at 8.43.31 PM.png */; };
+		CE65264C2F07BC50008466F6 /* CoreImage.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A1000001229E0000000000C1 /* CoreImage.framework */; };
+		CE65264F2F07BC51008466F6 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A1000001229E0000000000C3 /* Metal.framework */; };
+		CE6526512F07BC54008466F6 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A1000001229E0000000000C4 /* MetalKit.framework */; };
+		CE6526532F07BC55008466F6 /* Photos.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A1000001229E0000000000C2 /* Photos.framework */; };
+		CE6526552F07BC56008466F6 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A1000001229E0000000000C0 /* SwiftUI.framework */; };
+		CE6526572F07BC57008466F6 /* UniformTypeIdentifiers.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A1000001229E0000000000C5 /* UniformTypeIdentifiers.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -162,7 +161,6 @@
 		CE6526322F07936C008466F6 /* EditorV2View.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorV2View.swift; sourceTree = "<group>"; };
 		CE6526332F07936C008466F6 /* EditorV2ViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorV2ViewModel.swift; sourceTree = "<group>"; };
 		CE6526492F079BF0008466F6 /* CropTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CropTabView.swift; sourceTree = "<group>"; };
-		CED9E57E2F06F811002E41A9 /* Screenshot 2026-01-01 at 8.43.31 PM.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Screenshot 2026-01-01 at 8.43.31 PM.png"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -170,12 +168,12 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A1000001229E0001000000C0 /* SwiftUI.framework in Frameworks */,
-				A1000001229E0001000000C1 /* CoreImage.framework in Frameworks */,
-				A1000001229E0001000000C2 /* Photos.framework in Frameworks */,
-				A1000001229E0001000000C3 /* Metal.framework in Frameworks */,
-				A1000001229E0001000000C4 /* MetalKit.framework in Frameworks */,
-				A1000001229E0001000000C5 /* UniformTypeIdentifiers.framework in Frameworks */,
+				CE6526572F07BC57008466F6 /* UniformTypeIdentifiers.framework in Frameworks */,
+				CE6526512F07BC54008466F6 /* MetalKit.framework in Frameworks */,
+				CE65264F2F07BC51008466F6 /* Metal.framework in Frameworks */,
+				CE65264C2F07BC50008466F6 /* CoreImage.framework in Frameworks */,
+				CE6526552F07BC56008466F6 /* SwiftUI.framework in Frameworks */,
+				CE6526532F07BC55008466F6 /* Photos.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -519,7 +517,6 @@
 			isa = PBXGroup;
 			children = (
 				CE6526182F079245008466F6 /* Icon.jpg */,
-				CED9E57E2F06F811002E41A9 /* Screenshot 2026-01-01 at 8.43.31 PM.png */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -606,7 +603,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				CED9E57F2F06F811002E41A9 /* Screenshot 2026-01-01 at 8.43.31 PM.png in Resources */,
 				A1000001229E0001000000B0 /* Assets.xcassets in Resources */,
 				CE6526192F079245008466F6 /* Icon.jpg in Resources */,
 			);
@@ -744,22 +740,22 @@
 				DEVELOPMENT_TEAM = 3R9CAB5MFA;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FilmBox/Resources/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = RedRoom;
+				INFOPLIST_KEY_CFBundleDisplayName = Loopix;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.photography";
-				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "RedRoom needs permission to save edited photos to your photo library.";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "RedRoom needs access to your photo library to edit and export your photos with film-inspired filters.";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Loopix needs permission to save edited photos to your photo library.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Loopix needs access to your photo library to edit and export your photos with film-inspired filters.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UIStatusBarStyle = "";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = redroom.truebloom.ltd;
+				PRODUCT_BUNDLE_IDENTIFIER = loopix.truebloom.ltd;
 				PRODUCT_NAME = FilmBox;
 				SDKROOT = iphoneos;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -778,15 +774,15 @@
 				DEVELOPMENT_TEAM = 3R9CAB5MFA;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FilmBox/Resources/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = RedRoom;
+				INFOPLIST_KEY_CFBundleDisplayName = Loopix;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.photography";
-				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "RedRoom needs permission to save edited photos to your photo library.";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "RedRoom needs access to your photo library to edit and export your photos with film-inspired filters.";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Loopix needs permission to save edited photos to your photo library.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Loopix needs access to your photo library to edit and export your photos with film-inspired filters.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UIStatusBarStyle = "";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

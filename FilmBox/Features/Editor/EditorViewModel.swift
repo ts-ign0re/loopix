@@ -29,11 +29,14 @@ enum EditorTab: String, CaseIterable, Identifiable, Sendable {
 
 /// Represents a snapshot of editor state for undo/redo
 private struct EditorState: Equatable {
-    let parameters: FilterParameters
-    let preset: FilterPreset?
+    let parameters: FilterParameters      // User adjustments (independent of filter)
+    let preset: FilterPreset?             // Selected filter
+    let intensity: Float                   // Filter intensity (0-100)
 
     static func == (lhs: EditorState, rhs: EditorState) -> Bool {
-        lhs.parameters == rhs.parameters && lhs.preset?.id == rhs.preset?.id
+        lhs.parameters == rhs.parameters &&
+        lhs.preset?.id == rhs.preset?.id &&
+        lhs.intensity == rhs.intensity
     }
 }
 
@@ -52,12 +55,16 @@ final class EditorViewModel {
     /// The original unedited image
     private(set) var originalImage: CIImage?
 
-    /// Currently selected filter preset
+    /// Currently selected filter preset (Filter Layer - independent of user adjustments)
     var selectedPreset: FilterPreset? {
         didSet {
             if let preset = selectedPreset {
                 filterIntensity = preset.clutIntensity
-                applyPreset(preset)
+                // DON'T modify currentParameters - filter is a separate layer
+                schedulePreviewUpdate()
+            } else {
+                // Filter deselected - still don't touch currentParameters
+                schedulePreviewUpdate()
             }
         }
     }
@@ -266,44 +273,13 @@ final class EditorViewModel {
 
     // MARK: - Preset Application
 
-    /// Apply a filter preset to the current image
-    func applyPreset(_ preset: FilterPreset) {
+    /// Select a filter preset (Filter Layer) - does NOT modify user adjustments
+    /// Use this for programmatic preset selection with undo support
+    func applyPreset(_ preset: FilterPreset?) {
         pushUndoState()
-        // Preserve geometry transforms when applying filter
-        let savedCropRect = currentParameters.cropRect
-        let savedRotation = currentParameters.rotation
-        let savedFlipH = currentParameters.flipHorizontal
-        let savedFlipV = currentParameters.flipVertical
-
-        currentParameters = preset.parameters
-
-        // Restore geometry
-        currentParameters.cropRect = savedCropRect
-        currentParameters.rotation = savedRotation
-        currentParameters.flipHorizontal = savedFlipH
-        currentParameters.flipVertical = savedFlipV
-
-        schedulePreviewUpdate()
-    }
-
-    /// Apply preset at a specific intensity (0-100)
-    func applyPreset(_ preset: FilterPreset, intensity: Float) {
-        pushUndoState()
-        // Preserve geometry transforms when applying filter
-        let savedCropRect = currentParameters.cropRect
-        let savedRotation = currentParameters.rotation
-        let savedFlipH = currentParameters.flipHorizontal
-        let savedFlipV = currentParameters.flipVertical
-
-        currentParameters = preset.parameters(at: intensity)
-
-        // Restore geometry
-        currentParameters.cropRect = savedCropRect
-        currentParameters.rotation = savedRotation
-        currentParameters.flipHorizontal = savedFlipH
-        currentParameters.flipVertical = savedFlipV
-
-        schedulePreviewUpdate()
+        // Set the filter - this does NOT modify currentParameters (user adjustments)
+        // The filter is applied as a separate layer in updatePreview()
+        selectedPreset = preset
     }
 
     // MARK: - Parameter Updates
@@ -400,7 +376,11 @@ final class EditorViewModel {
 
     /// Push current state to undo stack
     private func pushUndoState() {
-        let state = EditorState(parameters: currentParameters, preset: selectedPreset)
+        let state = EditorState(
+            parameters: currentParameters,
+            preset: selectedPreset,
+            intensity: filterIntensity
+        )
         undoStack.append(state)
 
         // Limit undo stack size
@@ -417,13 +397,21 @@ final class EditorViewModel {
         guard let previousState = undoStack.popLast() else { return }
 
         // Save current state to redo stack
-        let currentState = EditorState(parameters: currentParameters, preset: selectedPreset)
+        let currentState = EditorState(
+            parameters: currentParameters,
+            preset: selectedPreset,
+            intensity: filterIntensity
+        )
         redoStack.append(currentState)
 
         // Restore previous state without pushing to undo
+        // IMPORTANT: Order matters!
+        // 1. Set parameters first (triggers schedulePreviewUpdate via didSet)
+        // 2. Set preset (triggers didSet which overwrites filterIntensity with clutIntensity)
+        // 3. Set intensity LAST to override what didSet set
         currentParameters = previousState.parameters
         selectedPreset = previousState.preset
-        schedulePreviewUpdate()
+        filterIntensity = previousState.intensity
     }
 
     /// Redo the last undone change
@@ -431,13 +419,18 @@ final class EditorViewModel {
         guard let nextState = redoStack.popLast() else { return }
 
         // Save current state to undo stack
-        let currentState = EditorState(parameters: currentParameters, preset: selectedPreset)
+        let currentState = EditorState(
+            parameters: currentParameters,
+            preset: selectedPreset,
+            intensity: filterIntensity
+        )
         undoStack.append(currentState)
 
         // Apply redo state
+        // IMPORTANT: Order matters! Set intensity LAST to override didSet
         currentParameters = nextState.parameters
         selectedPreset = nextState.preset
-        schedulePreviewUpdate()
+        filterIntensity = nextState.intensity
     }
 
     // MARK: - Preview Updates
@@ -470,33 +463,45 @@ final class EditorViewModel {
         // Scale down image for preview based on quality setting
         let previewImage = scaleForPreview(original)
 
-        var processed = previewImage
+        // Apply two-layer filter pipeline
+        let processed = await applyFilterPipeline(to: previewImage)
 
-        // Determine which parameters to apply based on filter type
-        let effectiveParameters: FilterParameters
+        currentImage = processed
+    }
 
+    // MARK: - Two-Layer Filter Pipeline
+
+    /// Apply filter pipeline: Filter Layer + User Adjustments (DRY - used by both preview and save)
+    /// - Layer 1: Filter Effect (selectedPreset + filterIntensity)
+    /// - Layer 2: User Adjustments (currentParameters - independent of filter)
+    private func applyFilterPipeline(to image: CIImage) async -> CIImage {
+        var processed = image
+
+        // === LAYER 1: Filter Effect ===
+        // Apply the selected filter preset with intensity
         if let preset = selectedPreset {
             if let clutPath = preset.clutPath {
-                // CLUT-based filter: apply CLUT with intensity, then user adjustments
+                // CLUT-based filter: apply CLUT file with intensity blending
                 processed = await FilterEngine.shared.applyCLUT(
                     at: clutPath,
                     to: processed,
                     intensity: filterIntensity
                 )
-                effectiveParameters = currentParameters
             } else {
-                // Parameter-based filter: apply preset parameters at intensity
-                effectiveParameters = preset.parameters(at: filterIntensity)
+                // Parameter-based filter: interpolate preset parameters by intensity
+                let filterParams = preset.parameters(at: filterIntensity)
+                processed = await applyFilters(to: processed, parameters: filterParams)
             }
-        } else {
-            // No preset selected - just apply current parameters
-            effectiveParameters = currentParameters
         }
 
-        // Apply filters using the filter pipeline
-        processed = await applyFilters(to: processed, parameters: effectiveParameters)
+        // === LAYER 2: User Adjustments ===
+        // Apply user's manual adjustments on top of filter (if any)
+        // These are independent of filter selection - always start from .identity
+        if currentParameters != .identity {
+            processed = await applyFilters(to: processed, parameters: currentParameters)
+        }
 
-        currentImage = processed
+        return processed
     }
 
     /// Scale image for preview based on AppSettings.previewQuality
@@ -898,7 +903,7 @@ final class EditorViewModel {
 
     // MARK: - Save
 
-    /// Save the edited image
+    /// Save the edited image (full resolution with two-layer pipeline)
     func saveChanges() async throws -> CIImage {
         guard let original = originalImage else {
             throw EditorError.noImageLoaded
@@ -907,30 +912,8 @@ final class EditorViewModel {
         isProcessing = true
         defer { isProcessing = false }
 
-        var processed = original
-
-        // Determine which parameters to apply based on filter type
-        let effectiveParameters: FilterParameters
-
-        if let preset = selectedPreset {
-            if let clutPath = preset.clutPath {
-                // CLUT-based filter: apply CLUT with intensity
-                processed = await FilterEngine.shared.applyCLUT(
-                    at: clutPath,
-                    to: processed,
-                    intensity: filterIntensity
-                )
-                effectiveParameters = currentParameters
-            } else {
-                // Parameter-based filter: apply preset parameters at intensity
-                effectiveParameters = preset.parameters(at: filterIntensity)
-            }
-        } else {
-            effectiveParameters = currentParameters
-        }
-
-        // Apply full quality filters
-        let finalImage = await applyFilters(to: processed, parameters: effectiveParameters)
+        // Apply two-layer filter pipeline at full resolution
+        let finalImage = await applyFilterPipeline(to: original)
 
         return finalImage
     }
