@@ -470,7 +470,8 @@ struct EditorView: View {
                         .frame(width: 40, alignment: .trailing)
                 }
                 .padding(.horizontal, 16)
-                .padding(.vertical, 4)
+                .padding(.top, 4)
+                .padding(.bottom, 12)
             }
         }
         .task {
@@ -623,7 +624,6 @@ struct EditorView: View {
                 ZStack {
                     RoundedRectangle(cornerRadius: 8)
                         .fill(Color.white.opacity(0.1))
-                        .frame(width: 72, height: 72)
 
                     if viewModel.currentImage != nil {
                         // Show a preview of the filter applied to thumbnail
@@ -638,20 +638,18 @@ struct EditorView: View {
                             .font(.title3)
                             .foregroundStyle(.white.opacity(0.6))
                     }
-
+                }
+                .frame(width: 72, height: 72)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .overlay(alignment: .topTrailing) {
                     // Favorite indicator
                     if isFavorite && !isOriginal {
-                        VStack {
-                            HStack {
-                                Spacer()
-                                Image(systemName: "star.fill")
-                                    .font(.system(size: 10, weight: .bold))
-                                    .foregroundStyle(.yellow)
-                                    .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 1)
-                                    .padding(4)
-                            }
-                            Spacer()
-                        }
+                        Image(systemName: "star.fill")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundStyle(.yellow)
+                            .padding(4)
+                            .background(Circle().fill(.black.opacity(0.5)))
+                            .padding(4)
                     }
                 }
                 .overlay {

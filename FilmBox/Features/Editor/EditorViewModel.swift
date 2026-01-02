@@ -540,6 +540,9 @@ final class EditorViewModel {
             output = output.transformed(by: translateTransform)
         }
 
+        // Save target extent - filters must not change image dimensions
+        let targetExtent = output.extent
+
         // === LIGHT ADJUSTMENTS ===
 
         // Apply exposure adjustment
@@ -652,6 +655,9 @@ final class EditorViewModel {
         if parameters.halation.isActive {
             output = applyHalation(parameters.halation, to: output)
         }
+
+        // Ensure filters didn't change dimensions
+        output = output.cropped(to: targetExtent)
 
         return output
     }

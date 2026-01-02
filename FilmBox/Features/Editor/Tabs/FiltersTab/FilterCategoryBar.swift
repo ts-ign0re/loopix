@@ -57,19 +57,22 @@ private struct CategoryPill: View {
         HStack(spacing: 6) {
             if category == .favorites {
                 Image(systemName: "star.fill")
-                    .font(.system(size: 11))
+                    .font(.system(size: 13))
                     .foregroundStyle(isSelected ? .black : .yellow)
             } else if category == .custom {
                 Image(systemName: "person.fill")
                     .font(.system(size: 11))
                     .foregroundStyle(isSelected ? .black : .white.opacity(0.7))
+                Text(category.displayName)
+                    .font(.system(size: 13, weight: .medium, design: .monospaced))
+            } else {
+                Text(category.displayName)
+                    .font(.system(size: 13, weight: .medium, design: .monospaced))
             }
-            Text(category.displayName)
-                .font(.system(size: 13, weight: .medium, design: .monospaced))
         }
         .foregroundStyle(isSelected ? .black : .white.opacity(0.7))
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
+        .padding(.horizontal, category == .favorites ? 14 : 12)
+        .padding(.vertical, category == .favorites ? 10 : 8)
         .background {
             if isSelected {
                 Capsule()
