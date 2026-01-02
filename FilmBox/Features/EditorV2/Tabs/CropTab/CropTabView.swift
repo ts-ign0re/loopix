@@ -75,13 +75,15 @@ struct CropTabView: View {
 
             Spacer()
 
-            // Aspect ratio buttons
-            HStack(spacing: 24) {
-                ForEach(V2CropAspectRatio.allCases) { ratio in
-                    ratioButton(ratio)
+            // Aspect ratio buttons (scrollable)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 20) {
+                    ForEach(V2CropAspectRatio.allCases) { ratio in
+                        ratioButton(ratio)
+                    }
                 }
+                .padding(.horizontal, 16)
             }
-            .padding(.horizontal, 16)
 
             Spacer()
 

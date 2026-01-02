@@ -10,6 +10,21 @@ import Photos
 import SwiftUI
 import UniformTypeIdentifiers
 
+// MARK: - Edit Snapshot Model
+
+/// Complete snapshot of all edit state for a photo
+struct EditSnapshot: Codable, Equatable {
+    var parameters: FilterParameters
+    var selectedPresetID: UUID?
+    var filterIntensity: Float
+
+    init(parameters: FilterParameters = .identity, selectedPresetID: UUID? = nil, filterIntensity: Float = 100) {
+        self.parameters = parameters
+        self.selectedPresetID = selectedPresetID
+        self.filterIntensity = filterIntensity
+    }
+}
+
 // MARK: - Imported Photo Model
 
 /// Represents a photo imported into the app with local storage
@@ -18,6 +33,7 @@ struct ImportedPhoto: Identifiable, Hashable, Codable {
     let assetIdentifier: String
     let importedAt: Date
     var editedParametersData: Data?
+    var editSnapshotData: Data?
 
     /// Version counter for thumbnail - incremented when thumbnail is regenerated
     /// Used to trigger UI refresh in HomePhotoCell
@@ -38,14 +54,16 @@ struct ImportedPhoto: Identifiable, Hashable, Codable {
         self.assetIdentifier = asset.localIdentifier
         self.importedAt = Date()
         self.editedParametersData = nil
+        self.editSnapshotData = nil
         self.thumbnailVersion = 0
     }
 
-    init(id: UUID = UUID(), assetIdentifier: String, importedAt: Date = Date(), editedParametersData: Data? = nil, thumbnailVersion: Int = 0) {
+    init(id: UUID = UUID(), assetIdentifier: String, importedAt: Date = Date(), editedParametersData: Data? = nil, editSnapshotData: Data? = nil, thumbnailVersion: Int = 0) {
         self.id = id
         self.assetIdentifier = assetIdentifier
         self.importedAt = importedAt
         self.editedParametersData = editedParametersData
+        self.editSnapshotData = editSnapshotData
         self.thumbnailVersion = thumbnailVersion
     }
 }
@@ -71,6 +89,21 @@ final class ImportedPhotosManager {
 
     /// Whether selection mode is active
     var isSelectionMode: Bool = false
+
+    /// Copied edits for paste functionality (crop excluded)
+    var copiedEdits: EditSnapshot?
+
+    /// ID of the photo from which edits were copied (to exclude from paste)
+    var copiedFromPhotoID: UUID?
+
+    /// Progress for batch paste operation (0.0 to 1.0)
+    var pasteProgress: Double = 0.0
+
+    /// Whether paste operation is in progress
+    var isPasting: Bool = false
+
+    /// Set of photo IDs currently being regenerated (for per-thumbnail loading indicator)
+    var regeneratingPhotoIDs: Set<UUID> = []
 
     /// Loading state
     private(set) var isLoading: Bool = false
@@ -348,6 +381,93 @@ final class ImportedPhotosManager {
         selectedPhotoIDs.count
     }
 
+    // MARK: - Copy/Paste Edits
+
+    /// Copy edits from selected photo (requires single selection with edits)
+    /// Excludes cropRect from copied edits
+    func copyEditsFromSelected() -> Bool {
+        guard selectedCount == 1,
+              let photoID = selectedPhotoIDs.first,
+              var snapshot = getEditSnapshot(for: photoID) else {
+            // Try legacy format if no snapshot
+            if let photoID = selectedPhotoIDs.first,
+               var params = getEditedParameters(for: photoID) {
+                params.cropRect = nil
+                copiedEdits = EditSnapshot(parameters: params)
+                copiedFromPhotoID = photoID
+                return true
+            }
+            return false
+        }
+        // Exclude crop from copy - each photo keeps its own crop
+        snapshot.parameters.cropRect = nil
+        copiedEdits = snapshot
+        copiedFromPhotoID = photoID
+        return true
+    }
+
+    /// Check if selected photo has edits that can be copied
+    func selectedHasEdits() -> Bool {
+        guard selectedCount == 1,
+              let photoID = selectedPhotoIDs.first else {
+            return false
+        }
+        return getEditSnapshot(for: photoID) != nil || getEditedParameters(for: photoID) != nil
+    }
+
+    /// Check if we can paste to current selection (has targets excluding source)
+    func canPasteToSelection() -> Bool {
+        guard copiedEdits != nil else { return false }
+        // Filter out the source photo
+        let targetIDs = selectedPhotoIDs.filter { $0 != copiedFromPhotoID }
+        return !targetIDs.isEmpty
+    }
+
+    /// Paste copied edits to all selected photos (excluding source) with progress
+    func pasteEditsToSelected() async {
+        guard let copiedSnapshot = copiedEdits, !selectedPhotoIDs.isEmpty else { return }
+
+        // Filter out the source photo from targets
+        let targetIDs = Array(selectedPhotoIDs.filter { $0 != copiedFromPhotoID })
+        guard !targetIDs.isEmpty else { return }
+
+        isPasting = true
+        pasteProgress = 0.0
+
+        // Clear selection immediately to prevent flickering
+        let idsToProcess = targetIDs
+        selectedPhotoIDs.removeAll()
+        isSelectionMode = false
+
+        // Mark all photos as regenerating (shows loading indicator on each thumbnail)
+        regeneratingPhotoIDs = Set(idsToProcess)
+
+        let total = idsToProcess.count
+
+        for (index, photoID) in idsToProcess.enumerated() {
+            // Create new snapshot preserving target's cropRect
+            var newSnapshot = copiedSnapshot
+            if let existingParams = getEditedParameters(for: photoID) {
+                newSnapshot.parameters.cropRect = existingParams.cropRect
+            }
+
+            // Update full snapshot for this photo (includes filter selection)
+            updateEditSnapshot(for: photoID, snapshot: newSnapshot)
+
+            // Regenerate thumbnail
+            await regenerateThumbnail(for: photoID)
+
+            // Remove from regenerating set when done
+            regeneratingPhotoIDs.remove(photoID)
+
+            // Update progress
+            pasteProgress = Double(index + 1) / Double(total)
+        }
+
+        isPasting = false
+        pasteProgress = 0.0
+    }
+
     // MARK: - Persistence
 
     private func saveMetadataToStorage() {
@@ -378,7 +498,7 @@ final class ImportedPhotosManager {
         loadFromStorage()
     }
 
-    /// Update edited parameters for a photo
+    /// Update edited parameters for a photo (legacy - use updateEditSnapshot for full state)
     func updateEditedParameters(for photoID: UUID, parameters: FilterParameters) {
         guard let index = photos.firstIndex(where: { $0.id == photoID }) else { return }
         photos[index].editedParametersData = try? JSONEncoder().encode(parameters)
@@ -387,9 +507,30 @@ final class ImportedPhotosManager {
 
     /// Get edited parameters for a photo
     func getEditedParameters(for photoID: UUID) -> FilterParameters? {
+        // First try to get from EditSnapshot (new format)
+        if let snapshot = getEditSnapshot(for: photoID) {
+            return snapshot.parameters
+        }
+        // Fall back to legacy editedParametersData
         guard let photo = photos.first(where: { $0.id == photoID }),
               let data = photo.editedParametersData else { return nil }
         return try? JSONDecoder().decode(FilterParameters.self, from: data)
+    }
+
+    /// Update full edit snapshot for a photo (parameters + filter selection)
+    func updateEditSnapshot(for photoID: UUID, snapshot: EditSnapshot) {
+        guard let index = photos.firstIndex(where: { $0.id == photoID }) else { return }
+        photos[index].editSnapshotData = try? JSONEncoder().encode(snapshot)
+        // Also update legacy field for backward compatibility
+        photos[index].editedParametersData = try? JSONEncoder().encode(snapshot.parameters)
+        saveMetadataToStorage()
+    }
+
+    /// Get full edit snapshot for a photo
+    func getEditSnapshot(for photoID: UUID) -> EditSnapshot? {
+        guard let photo = photos.first(where: { $0.id == photoID }),
+              let data = photo.editSnapshotData else { return nil }
+        return try? JSONDecoder().decode(EditSnapshot.self, from: data)
     }
 
     /// Get selected photos for export with their local images and parameters
@@ -429,13 +570,27 @@ final class ImportedPhotosManager {
 
         let photo = photos[index]
 
-        // Get edited parameters if any
-        let parameters = getEditedParameters(for: photoID)
+        // Get full edit snapshot (includes preset selection and intensity)
+        let snapshot = getEditSnapshot(for: photoID)
 
         var processedImage = ciImage
 
-        // Apply filter parameters FIRST (including crop) on full resolution
-        if let params = parameters {
+        // Apply filter preset (CLUT) if selected
+        if let presetID = snapshot?.selectedPresetID {
+            if #available(iOS 17.0, *) {
+                let allPresets = await FilterStorage.shared.allPresets
+                if let preset = allPresets.first(where: { $0.id == presetID }) {
+                    // Apply preset with intensity
+                    let intensity = snapshot?.filterIntensity ?? 100
+                    var adjustedPreset = preset
+                    adjustedPreset.clutIntensity = intensity
+                    processedImage = await FilterEngine.shared.apply(adjustedPreset, to: processedImage)
+                }
+            }
+        }
+
+        // Apply additional filter parameters (exposure, contrast, crop, etc.)
+        if let params = snapshot?.parameters {
             if #available(iOS 17.0, *) {
                 processedImage = await FilterEngine.shared.apply(params, to: processedImage)
             }
@@ -456,6 +611,10 @@ final class ImportedPhotosManager {
             options: [kCGImageDestinationLossyCompressionQuality as CIImageRepresentationOption: 0.85]
         ) {
             try? jpegData.write(to: thumbnailURL)
+
+            // Invalidate old cache entry before incrementing version
+            let oldVersion = photos[index].thumbnailVersion
+            invalidateThumbnailCache(for: photoID, version: oldVersion)
 
             // Increment thumbnail version to trigger UI refresh
             photos[index].thumbnailVersion += 1

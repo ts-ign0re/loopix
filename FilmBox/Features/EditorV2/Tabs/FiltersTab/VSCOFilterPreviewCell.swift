@@ -85,7 +85,7 @@ struct VSCOFilterPreviewCell: View {
     @ViewBuilder
     private var thumbnailView: some View {
         if let image = thumbnailImage {
-            Image(decorative: image, scale: 1.0)
+            Image(decorative: image, scale: 3.0)
                 .resizable()
                 .aspectRatio(contentMode: .fill)
         } else if isLoading {
@@ -134,8 +134,12 @@ struct VSCOFilterPreviewCell: View {
     }
 
     private func generateThumbnail(from image: CIImage, filter: FilterPreset?) async -> CGImage? {
-        // Scale down to thumbnail size
-        let targetSize = CGSize(width: Self.cellWidth * 2, height: Self.imageHeight * 2)
+        // Scale for Retina displays (@3x)
+        let displayScale: CGFloat = 3.0
+        let targetSize = CGSize(
+            width: Self.cellWidth * displayScale,
+            height: Self.imageHeight * displayScale
+        )
         let scale = min(
             targetSize.width / image.extent.width,
             targetSize.height / image.extent.height

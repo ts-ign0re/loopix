@@ -66,6 +66,8 @@ struct LibraryContentView: View {
     @State private var showSettings = false
     @State private var showFilters = false
     @State private var showStorageLimitAlert = false
+    @State private var showCopiedFeedback = false
+    @State private var showMoreMenu = false
     @AppStorage("useEditorV2") private var useEditorV2: Bool = false
 
     // Grid configuration
@@ -93,6 +95,7 @@ struct LibraryContentView: View {
 
                 // FAB Menu - always visible
                 fabMenuOverlay
+
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(.black, for: .navigationBar)
@@ -123,10 +126,10 @@ struct LibraryContentView: View {
             if let ciImage = manager.loadCIImage(for: photo) {
                 if useEditorV2 {
                     let viewModel = EditorV2ViewModel()
-                    let initialParams = manager.getEditedParameters(for: photo.id)
+                    let editSnapshot = manager.getEditSnapshot(for: photo.id)
                     EditorV2View(viewModel: viewModel, photoID: photo.id)
                         .onAppear {
-                            viewModel.loadImage(ciImage, parameters: initialParams)
+                            viewModel.loadImage(ciImage, snapshot: editSnapshot)
                         }
                 } else {
                     EditorView(
@@ -198,6 +201,7 @@ struct LibraryContentView: View {
                             photo: photo,
                             isSelected: manager.isSelected(photo),
                             isSelectionMode: manager.isSelectionMode,
+                            isRegenerating: manager.regeneratingPhotoIDs.contains(photo.id),
                             targetSize: itemSize,
                             onTap: {
                                 handlePhotoTap(photo)
@@ -214,6 +218,17 @@ struct LibraryContentView: View {
 
     private var fabMenuOverlay: some View {
         ZStack(alignment: .bottom) {
+            // Dismiss overlay for popup menu
+            if showMoreMenu {
+                Color.clear
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        withAnimation(.spring(response: 0.2, dampingFraction: 0.8)) {
+                            showMoreMenu = false
+                        }
+                    }
+            }
+
             // Left side - Action tabs (when photos selected)
             if hasSelection {
                 VStack {
@@ -290,43 +305,81 @@ struct LibraryContentView: View {
 
     // MARK: - Action Tabs (left side when photos selected)
 
+    /// Check if we should show "more" button (has copy or paste available)
+    private var hasMoreOptions: Bool {
+        manager.selectedHasEdits() || manager.canPasteToSelection()
+    }
+
     private var actionTabsView: some View {
+        // Main action bar
         HStack(spacing: 0) {
             if isSingleSelection {
-                // Single selection: edit | export | delete
-                actionTab(title: "edit") {
+                // Single selection: EDIT (primary) | export | delete | more
+                // Edit button - highlighted with text label
+                Button {
                     if let selectedID = manager.selectedPhotoIDs.first,
                        let photo = manager.photos.first(where: { $0.id == selectedID }) {
                         photoToEdit = photo
                     }
+                } label: {
+                    Text("edit")
+                        .font(.system(size: 14, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(.black)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(
+                            Capsule()
+                                .fill(Color.yellow)
+                        )
                 }
+                .buttonStyle(.plain)
 
                 actionTabDivider
 
-                actionTab(title: "export") {
+                actionButton(icon: "square.and.arrow.up") {
                     exportAndShare()
                 }
 
                 actionTabDivider
 
-                actionTab(title: "delete") {
+                actionButton(icon: "trash") {
                     showDeleteConfirmation = true
+                }
+
+                // Show "more" button if copy or paste is available
+                if hasMoreOptions {
+                    actionTabDivider
+                    actionButton(icon: "ellipsis") {
+                        withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
+                            showMoreMenu.toggle()
+                        }
+                    }
                 }
             } else {
-                // Multiple selection: export | delete
-                actionTab(title: "export") {
+                // Multiple selection: export | delete | more (for paste)
+                actionButton(icon: "square.and.arrow.up") {
                     exportAndShare()
                 }
 
                 actionTabDivider
 
-                actionTab(title: "delete") {
+                actionButton(icon: "trash") {
                     showDeleteConfirmation = true
+                }
+
+                // Show "more" button if paste is available
+                if manager.canPasteToSelection() {
+                    actionTabDivider
+                    actionButton(icon: "ellipsis") {
+                        withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
+                            showMoreMenu.toggle()
+                        }
+                    }
                 }
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 6)
         .background(
             Capsule()
                 .fill(.ultraThinMaterial)
@@ -335,13 +388,26 @@ struct LibraryContentView: View {
                         .stroke(Color.white.opacity(0.2), lineWidth: 0.5)
                 )
         )
+        .overlay(alignment: .topTrailing) {
+            // Floating popup menu
+            if showMoreMenu {
+                floatingMoreMenu
+                    .offset(x: 0, y: -52)
+                    .transition(.asymmetric(
+                        insertion: .scale(scale: 0.8, anchor: .bottomTrailing).combined(with: .opacity),
+                        removal: .scale(scale: 0.8, anchor: .bottomTrailing).combined(with: .opacity)
+                    ))
+            }
+        }
     }
 
-    private func actionTab(title: String, action: @escaping () -> Void) -> some View {
+    private func actionButton(icon: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Text(title)
-                .font(.system(size: 14, weight: .medium, design: .monospaced))
+            Image(systemName: icon)
+                .font(.system(size: 16, weight: .medium))
                 .foregroundStyle(.white)
+                .frame(width: 44, height: 36)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }
@@ -350,7 +416,78 @@ struct LibraryContentView: View {
         Text("|")
             .font(.system(size: 14, weight: .light, design: .monospaced))
             .foregroundStyle(.white.opacity(0.3))
-            .padding(.horizontal, 12)
+            .padding(.horizontal, 2)
+    }
+
+    // MARK: - Floating Popup Menu (Glass style)
+
+    private var floatingMoreMenu: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // Copy Edits - only for single selection with edits
+            if isSingleSelection && manager.selectedHasEdits() {
+                menuItem(
+                    title: showCopiedFeedback ? "copied!" : "copy edits",
+                    icon: showCopiedFeedback ? "checkmark" : "doc.on.doc"
+                ) {
+                    _ = manager.copyEditsFromSelected()
+                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                    showCopiedFeedback = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                        showCopiedFeedback = false
+                        withAnimation(.spring(response: 0.2, dampingFraction: 0.8)) {
+                            showMoreMenu = false
+                        }
+                    }
+                }
+            }
+
+            // Paste Edits - when edits are copied and can paste
+            if manager.canPasteToSelection() {
+                // Add divider if both options visible
+                if isSingleSelection && manager.selectedHasEdits() {
+                    Divider()
+                        .background(Color.white.opacity(0.15))
+                }
+
+                menuItem(title: "paste edits", icon: "doc.on.clipboard") {
+                    withAnimation(.spring(response: 0.2, dampingFraction: 0.8)) {
+                        showMoreMenu = false
+                    }
+                    Task {
+                        await manager.pasteEditsToSelected()
+                    }
+                }
+            }
+        }
+        .padding(.vertical, 4)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(Color.white.opacity(0.2), lineWidth: 0.5)
+                )
+                .shadow(color: .black.opacity(0.3), radius: 12, y: 4)
+        )
+    }
+
+    private func menuItem(title: String, icon: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 10) {
+                Image(systemName: icon)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.7))
+                    .frame(width: 20)
+
+                Text(title)
+                    .font(.system(size: 14, weight: .medium, design: .monospaced))
+                    .foregroundStyle(.white)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 11)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 
     private func fabMenuItem(title: String, icon: String, action: @escaping () -> Void) -> some View {
@@ -497,6 +634,7 @@ struct HomePhotoCell: View {
     let photo: ImportedPhoto
     let isSelected: Bool
     let isSelectionMode: Bool
+    let isRegenerating: Bool
     let targetSize: CGSize
     let onTap: () -> Void
 
@@ -515,6 +653,15 @@ struct HomePhotoCell: View {
                 Rectangle()
                     .fill(Color(white: 0.9).opacity(0.08))
                     .frame(width: targetSize.width, height: targetSize.height)
+            }
+
+            // Regenerating overlay (loading indicator)
+            if isRegenerating {
+                Color.black.opacity(0.6)
+
+                ProgressView()
+                    .progressViewStyle(CircularProgressViewStyle(tint: .white.opacity(0.8)))
+                    .scaleEffect(0.8)
             }
 
             // Selection overlay

@@ -236,6 +236,25 @@ final class EditorV2ViewModel {
     func loadImage(_ image: CIImage, parameters: FilterParameters? = nil) {
         editor.loadCIImage(image, initialParameters: parameters)
     }
+
+    /// Load a CIImage with full edit snapshot (restores filter selection)
+    func loadImage(_ image: CIImage, snapshot: EditSnapshot?) {
+        editor.loadCIImage(image, initialParameters: snapshot?.parameters)
+
+        // Restore filter selection if we have a preset ID
+        if let presetID = snapshot?.selectedPresetID {
+            Task {
+                // Find the preset by ID
+                let allPresets = await FilterStorage.shared.allPresets
+                if let preset = allPresets.first(where: { $0.id == presetID }) {
+                    await MainActor.run {
+                        editor.selectedPreset = preset
+                        editor.filterIntensity = snapshot?.filterIntensity ?? 100
+                    }
+                }
+            }
+        }
+    }
 }
 
 // MARK: - Filter Parameter Mapping

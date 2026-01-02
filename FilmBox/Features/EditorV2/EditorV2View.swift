@@ -128,11 +128,15 @@ struct EditorV2View: View {
         isSaving = true
         defer { isSaving = false }
 
-        // Get current parameters from editor
-        let parameters = viewModel.editor.currentParameters
+        // Create full edit snapshot with parameters, filter selection, and intensity
+        let snapshot = EditSnapshot(
+            parameters: viewModel.editor.currentParameters,
+            selectedPresetID: viewModel.editor.selectedPreset?.id,
+            filterIntensity: viewModel.editor.filterIntensity
+        )
 
-        // Save parameters to ImportedPhotosManager
-        ImportedPhotosManager.shared.updateEditedParameters(for: photoID, parameters: parameters)
+        // Save full snapshot to ImportedPhotosManager
+        ImportedPhotosManager.shared.updateEditSnapshot(for: photoID, snapshot: snapshot)
 
         // Regenerate thumbnail with new parameters
         await ImportedPhotosManager.shared.regenerateThumbnail(for: photoID)
