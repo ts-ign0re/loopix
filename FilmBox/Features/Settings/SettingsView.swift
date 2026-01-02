@@ -18,6 +18,7 @@ struct SettingsView: View {
     @State private var showSecurityHelp = false
     @State private var backupInfo: BackupInfo?
     @State private var isBackingUp = false
+    @AppStorage("useEditorV2") private var useEditorV2: Bool = false
 
     var body: some View {
         NavigationStack {
@@ -37,6 +38,12 @@ struct SettingsView: View {
 
                     // Performance Section
                     performanceSection
+
+                    Divider()
+                        .background(Color.white.opacity(0.1))
+
+                    // Editor Section
+                    editorSection
 
                     Divider()
                         .background(Color.white.opacity(0.1))
@@ -396,6 +403,65 @@ struct SettingsView: View {
                     .font(.system(size: 11, design: .monospaced))
                     .foregroundStyle(.white.opacity(0.4))
             }
+        }
+    }
+
+    // MARK: - Editor Section
+
+    private var editorSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            sectionHeader("editor")
+
+            VStack(alignment: .leading, spacing: 12) {
+                Toggle(isOn: $useEditorV2) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("vsco_style_editor")
+                            .font(.system(size: 13, weight: .medium, design: .monospaced))
+                            .foregroundStyle(.white)
+
+                        Text("// new editor with vsco-inspired ui")
+                            .font(.system(size: 11, design: .monospaced))
+                            .foregroundStyle(.white.opacity(0.4))
+                    }
+                }
+                .tint(.yellow)
+
+                if useEditorV2 {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("features:")
+                            .font(.system(size: 11, weight: .medium, design: .monospaced))
+                            .foregroundStyle(.white.opacity(0.5))
+
+                        VStack(alignment: .leading, spacing: 3) {
+                            editorFeatureItem("histogram overlay")
+                            editorFeatureItem("vertical filter cells")
+                            editorFeatureItem("full-screen sliders")
+                            editorFeatureItem("filter sub-parameters")
+                            editorFeatureItem("tool category tabs")
+                        }
+                    }
+                    .padding(12)
+                    .background(Color.yellow.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.yellow.opacity(0.3), lineWidth: 1)
+                    )
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+                }
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: useEditorV2)
+    }
+
+    private func editorFeatureItem(_ text: String) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: "checkmark")
+                .font(.system(size: 8, weight: .bold))
+                .foregroundStyle(.yellow.opacity(0.8))
+            Text(text)
+                .font(.system(size: 11, design: .monospaced))
+                .foregroundStyle(.white.opacity(0.6))
         }
     }
 

@@ -1,0 +1,156 @@
+import SwiftUI
+import Photos
+import CoreImage
+
+/// VSCO-style filter preview cell (64x96 vertical rectangle)
+struct VSCOFilterPreviewCell: View {
+    let filter: FilterPreset?
+    let sourceImage: CIImage?
+    let isSelected: Bool
+    let onTap: () -> Void
+    let onDoubleTap: () -> Void
+
+    /// Cell dimensions (VSCO style - vertical rectangle)
+    static let cellWidth: CGFloat = 64
+    static let cellHeight: CGFloat = 96
+    static let imageHeight: CGFloat = 80
+    static let spacing: CGFloat = 8
+
+    @State private var thumbnailImage: CGImage?
+    @State private var isLoading: Bool = false
+
+    private var isOriginal: Bool {
+        filter == nil
+    }
+
+    var body: some View {
+        VStack(spacing: 4) {
+            // Thumbnail image
+            thumbnailView
+                .frame(width: Self.cellWidth, height: Self.imageHeight)
+                .clipShape(RoundedRectangle(cornerRadius: 4))
+
+            // Filter name
+            Text(displayName)
+                .font(.system(size: 10, weight: .medium, design: .monospaced))
+                .foregroundColor(isSelected ? .yellow : .white.opacity(0.8))
+                .lineLimit(1)
+        }
+        .frame(width: Self.cellWidth)
+        .contentShape(Rectangle())
+        .onTapGesture(count: 2) {
+            onDoubleTap()
+        }
+        .onTapGesture {
+            onTap()
+        }
+        .task {
+            await loadThumbnail()
+        }
+    }
+
+    // MARK: - Subviews
+
+    @ViewBuilder
+    private var thumbnailView: some View {
+        if let image = thumbnailImage {
+            Image(decorative: image, scale: 1.0)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+        } else if isLoading {
+            Rectangle()
+                .fill(Color.gray.opacity(0.2))
+                .overlay {
+                    ProgressView()
+                        .tint(.white.opacity(0.5))
+                        .scaleEffect(0.6)
+                }
+        } else {
+            Rectangle()
+                .fill(Color.gray.opacity(0.2))
+                .overlay {
+                    Image(systemName: "photo")
+                        .font(.system(size: 16))
+                        .foregroundColor(.gray.opacity(0.5))
+                }
+        }
+    }
+
+    private var displayName: String {
+        if isOriginal {
+            return "orig"
+        }
+        // Shorten long names
+        let name = filter?.name ?? ""
+        if name.count > 8 {
+            return String(name.prefix(6)).lowercased() + ".."
+        }
+        return name.lowercased()
+    }
+
+    // MARK: - Thumbnail Loading
+
+    private func loadThumbnail() async {
+        guard let source = sourceImage else { return }
+
+        isLoading = true
+
+        // Generate thumbnail with filter applied
+        let image = await generateThumbnail(from: source, filter: isOriginal ? nil : filter)
+
+        thumbnailImage = image
+        isLoading = false
+    }
+
+    private func generateThumbnail(from image: CIImage, filter: FilterPreset?) async -> CGImage? {
+        // Scale down to thumbnail size
+        let targetSize = CGSize(width: Self.cellWidth * 2, height: Self.imageHeight * 2)
+        let scale = min(
+            targetSize.width / image.extent.width,
+            targetSize.height / image.extent.height
+        )
+        let scaledImage = image.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
+
+        // Apply filter if needed
+        var result = scaledImage
+        if let filter = filter {
+            result = await FilterEngine.shared.apply(filter, to: scaledImage)
+        }
+
+        // Render to CGImage
+        let context = CIContext(options: [.useSoftwareRenderer: false])
+        return context.createCGImage(result, from: result.extent)
+    }
+}
+
+// MARK: - Preview
+
+#Preview {
+    HStack(spacing: VSCOFilterPreviewCell.spacing) {
+        VSCOFilterPreviewCell(
+            filter: nil,
+            sourceImage: nil,
+            isSelected: false,
+            onTap: {},
+            onDoubleTap: {}
+        )
+
+        VSCOFilterPreviewCell(
+            filter: FilterPreset.original,
+            sourceImage: nil,
+            isSelected: true,
+            onTap: {},
+            onDoubleTap: {}
+        )
+
+        VSCOFilterPreviewCell(
+            filter: FilterPreset.original,
+            sourceImage: nil,
+            isSelected: false,
+            onTap: {},
+            onDoubleTap: {}
+        )
+    }
+    .padding()
+    .background(Color.black)
+}

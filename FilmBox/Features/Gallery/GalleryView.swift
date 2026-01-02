@@ -63,13 +63,18 @@ struct GalleryView: View {
             }
             .navigationDestination(isPresented: $navigateToEditor) {
                 if let asset = selectedAssetForEditor {
-                    // Placeholder for editor navigation
-                    Text("Editor for \(asset.localIdentifier)")
+                    EditorV2View(viewModel: EditorV2ViewModel(), asset: asset)
+                        .navigationBarBackButtonHidden(true)
                 }
             }
         }
         .task {
             await viewModel.requestAuthorizationAndLoad()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .photoSavedFromEditor)) { _ in
+            Task {
+                await viewModel.loadPhotos()
+            }
         }
         .overlay(alignment: .bottom) {
             if viewModel.isSelectionMode && viewModel.selectedCount > 0 {

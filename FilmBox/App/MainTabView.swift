@@ -66,6 +66,7 @@ struct LibraryContentView: View {
     @State private var showSettings = false
     @State private var showFilters = false
     @State private var showStorageLimitAlert = false
+    @AppStorage("useEditorV2") private var useEditorV2: Bool = false
 
     // Grid configuration
     private let columns = 3
@@ -120,11 +121,19 @@ struct LibraryContentView: View {
         }
         .fullScreenCover(item: $photoToEdit) { photo in
             if let ciImage = manager.loadCIImage(for: photo) {
-                EditorView(
-                    ciImage: ciImage,
-                    photoID: photo.id,
-                    initialParameters: manager.getEditedParameters(for: photo.id)
-                )
+                if useEditorV2 {
+                    let viewModel = EditorV2ViewModel()
+                    EditorV2View(viewModel: viewModel)
+                        .onAppear {
+                            viewModel.loadImage(ciImage)
+                        }
+                } else {
+                    EditorView(
+                        ciImage: ciImage,
+                        photoID: photo.id,
+                        initialParameters: manager.getEditedParameters(for: photo.id)
+                    )
+                }
             }
         }
         .sheet(isPresented: $showSettings) {

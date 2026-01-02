@@ -1,8 +1,13 @@
 import SwiftUI
+import Photos
 
 /// App-wide navigation coordinator using iOS 17+ Observable macro
 @Observable
 final class AppCoordinator {
+
+    /// Whether to use the new VSCO-style EditorV2
+    @ObservationIgnored
+    @AppStorage("useEditorV2") var useEditorV2: Bool = false
 
     // MARK: - Navigation Destinations
 
@@ -160,23 +165,29 @@ struct GalleryViewPlaceholder: View {
     }
 }
 
-/// Placeholder for the editor view
+/// Placeholder for the editor view (supports both Editor and EditorV2)
 struct EditorViewPlaceholder: View {
     let photoId: String
+    @AppStorage("useEditorV2") private var useEditorV2: Bool = false
 
     var body: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "slider.horizontal.3")
-                .font(.system(size: 60))
-                .foregroundStyle(.secondary)
-            Text("Editor")
-                .font(.title)
-                .fontWeight(.semibold)
-            Text("Editing photo: \(photoId)")
-                .foregroundStyle(.secondary)
+        if useEditorV2 {
+            EditorV2View(viewModel: EditorV2ViewModel())
+        } else {
+            // Original editor placeholder
+            VStack(spacing: 16) {
+                Image(systemName: "slider.horizontal.3")
+                    .font(.system(size: 60))
+                    .foregroundStyle(.secondary)
+                Text("Editor")
+                    .font(.title)
+                    .fontWeight(.semibold)
+                Text("Editing photo: \(photoId)")
+                    .foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color(.systemGroupedBackground))
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(.systemGroupedBackground))
     }
 }
 
