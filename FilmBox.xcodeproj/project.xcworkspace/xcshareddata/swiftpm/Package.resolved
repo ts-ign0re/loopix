@@ -1,0 +1,15 @@
+{
+  "originHash" : "f7cd9ca8ed61017a9dc908d24f56a4aacdbcec67282d818dfb8b3ab1f388f329",
+  "pins" : [
+    {
+      "identity" : "matomo-sdk-ios",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/matomo-org/matomo-sdk-ios",
+      "state" : {
+        "revision" : "f140afcb7cedebdcbf8b8230fdd822b4b61e3685",
+        "version" : "7.8.0"
+      }
+    }
+  ],
+  "version" : 3
+}

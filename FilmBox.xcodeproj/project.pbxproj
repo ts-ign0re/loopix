@@ -21,19 +21,21 @@
 		A1000001229E000100000016 /* BuiltInFilters/FujiRecipes.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000016 /* BuiltInFilters/FujiRecipes.swift */; };
 		A1000001229E000100000020 /* MetalFilterLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000020 /* MetalFilterLoader.swift */; };
 		A1000001229E000100000040 /* ExportEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000040 /* ExportEngine.swift */; };
-		A1000001229E000100000060 /* ExportSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000060 /* ExportSettings.swift */; };
-		A1000001229E000100000052 /* HistogramView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000052 /* HistogramView.swift */; };
-		A1000001229E000100000053 /* ImagePreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000053 /* ImagePreview.swift */; };
-		A1000001229E000100000054 /* ToolSlider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000054 /* ToolSlider.swift */; };
 		A1000001229E000100000041 /* FilterEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000041 /* FilterEngine.swift */; };
 		A1000001229E000100000042 /* ThumbnailCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000042 /* ThumbnailCache.swift */; };
 		A1000001229E000100000050 /* EditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000050 /* EditorView.swift */; };
 		A1000001229E000100000051 /* EditorViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000051 /* EditorViewModel.swift */; };
+		A1000001229E000100000052 /* HistogramView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000052 /* HistogramView.swift */; };
+		A1000001229E000100000053 /* ImagePreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000053 /* ImagePreview.swift */; };
+		A1000001229E000100000054 /* ToolSlider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000054 /* ToolSlider.swift */; };
+		A1000001229E000100000060 /* ExportSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000060 /* ExportSettings.swift */; };
 		A1000001229E000100000080 /* CGImage+WebP.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000080 /* CGImage+WebP.swift */; };
 		A1000001229E000100000081 /* CIImage+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000081 /* CIImage+Extensions.swift */; };
 		A1000001229E000100000090 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000090 /* Theme.swift */; };
 		A1000001229E0001000000A0 /* PhotoLibraryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E0000000000A0 /* PhotoLibraryManager.swift */; };
 		A1000001229E0001000000B0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1000001229E0000000000B0 /* Assets.xcassets */; };
+		ANALY00000000000000001 /* Analytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = ANALY00000000000000000 /* Analytics.swift */; };
+		APERT00100000000000000001 /* ApertureLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = APERT00000000000000000001 /* ApertureLoader.swift */; };
 		CE0756F22F05700100C53D17 /* PhotoPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0756F12F05700100C53D17 /* PhotoPickerView.swift */; };
 		CE0756F42F05700200C53D17 /* ImportedPhotosManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0756F32F05700200C53D17 /* ImportedPhotosManager.swift */; };
 		CE0756F82F05800000C53D17 /* FiltersManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0756F72F05800000C53D17 /* FiltersManagementView.swift */; };
@@ -44,8 +46,6 @@
 		CE07570D2F05900100C53D17 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE07570C2F05900100C53D17 /* SettingsView.swift */; };
 		CE0757102F08A00100C53D17 /* CloudBackupManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0757112F08A00100C53D17 /* CloudBackupManager.swift */; };
 		CE0757132F08A00300C53D17 /* RecentlyUsedFiltersManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0757142F08A00300C53D17 /* RecentlyUsedFiltersManager.swift */; };
-		APERT00100000000000000001 /* ApertureLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = APERT00000000000000000001 /* ApertureLoader.swift */; };
-		FUJIR00100000000000000001 /* FujiRecipeFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FUJIR00000000000000000001 /* FujiRecipeFormView.swift */; };
 		CE6526192F079245008466F6 /* Icon.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE6526182F079245008466F6 /* Icon.jpg */; };
 		CE6526352F07936C008466F6 /* ToolCategoryBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE65262D2F07936C008466F6 /* ToolCategoryBar.swift */; };
 		CE6526362F07936C008466F6 /* VSCOFiltersTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE6526292F07936C008466F6 /* VSCOFiltersTabView.swift */; };
@@ -74,6 +74,8 @@
 		CE6526532F07BC55008466F6 /* Photos.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A1000001229E0000000000C2 /* Photos.framework */; };
 		CE6526552F07BC56008466F6 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A1000001229E0000000000C0 /* SwiftUI.framework */; };
 		CE6526572F07BC57008466F6 /* UniformTypeIdentifiers.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A1000001229E0000000000C5 /* UniformTypeIdentifiers.framework */; };
+		FUJIR00100000000000000001 /* FujiRecipeFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FUJIR00000000000000000001 /* FujiRecipeFormView.swift */; };
+		SPLASH00000000000000001 /* SplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SPLASH00000000000000000 /* SplashView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -123,6 +125,8 @@
 		A1000001229E0000000000C5 /* UniformTypeIdentifiers.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UniformTypeIdentifiers.framework; path = System/Library/Frameworks/UniformTypeIdentifiers.framework; sourceTree = SDKROOT; };
 		A1000001229E000000000D00 /* FilmBox.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FilmBox.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1000001229E000000000D01 /* FilmBoxTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FilmBoxTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		ANALY00000000000000000 /* Analytics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Analytics.swift; sourceTree = "<group>"; };
+		APERT00000000000000000001 /* ApertureLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApertureLoader.swift; sourceTree = "<group>"; };
 		CE0756F12F05700100C53D17 /* PhotoPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoPickerView.swift; sourceTree = "<group>"; };
 		CE0756F32F05700200C53D17 /* ImportedPhotosManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportedPhotosManager.swift; sourceTree = "<group>"; };
 		CE0756F72F05800000C53D17 /* FiltersManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FiltersManagementView.swift; sourceTree = "<group>"; };
@@ -133,8 +137,6 @@
 		CE07570C2F05900100C53D17 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		CE0757112F08A00100C53D17 /* CloudBackupManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudBackupManager.swift; sourceTree = "<group>"; };
 		CE0757142F08A00300C53D17 /* RecentlyUsedFiltersManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecentlyUsedFiltersManager.swift; sourceTree = "<group>"; };
-		APERT00000000000000000001 /* ApertureLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApertureLoader.swift; sourceTree = "<group>"; };
-		FUJIR00000000000000000001 /* FujiRecipeFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FujiRecipeFormView.swift; sourceTree = "<group>"; };
 		CE6526182F079245008466F6 /* Icon.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = Icon.jpg; sourceTree = "<group>"; };
 		CE65261A2F07936C008466F6 /* ActionButtons.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionButtons.swift; sourceTree = "<group>"; };
 		CE65261B2F07936C008466F6 /* HistogramOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistogramOverlay.swift; sourceTree = "<group>"; };
@@ -157,6 +159,8 @@
 		CE6526322F07936C008466F6 /* EditorV2View.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorV2View.swift; sourceTree = "<group>"; };
 		CE6526332F07936C008466F6 /* EditorV2ViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorV2ViewModel.swift; sourceTree = "<group>"; };
 		CE6526492F079BF0008466F6 /* CropTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CropTabView.swift; sourceTree = "<group>"; };
+		FUJIR00000000000000000001 /* FujiRecipeFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FujiRecipeFormView.swift; sourceTree = "<group>"; };
+		SPLASH00000000000000000 /* SplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -213,6 +217,7 @@
 				A1000001229E000000000003 /* AppCoordinator.swift */,
 				A1000001229E000000000004 /* Dependencies.swift */,
 				A1000001229E000000000005 /* MainTabView.swift */,
+				SPLASH00000000000000000 /* SplashView.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -220,6 +225,7 @@
 		A1000001229E000000001010 /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				ANALY00000000000000010 /* Analytics */,
 				A1000001229E000000001011 /* Filters */,
 				A1000001229E000000001020 /* Metal */,
 				A1000001229E000000001040 /* Processing */,
@@ -389,6 +395,14 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		ANALY00000000000000010 /* Analytics */ = {
+			isa = PBXGroup;
+			children = (
+				ANALY00000000000000000 /* Analytics.swift */,
+			);
+			path = Analytics;
+			sourceTree = "<group>";
+		};
 		CE0756EE2F05700000C53D17 /* Home */ = {
 			isa = PBXGroup;
 			children = (
@@ -532,6 +546,9 @@
 			dependencies = (
 			);
 			name = FilmBox;
+			packageProductDependencies = (
+				MATOMO0000000000000001 /* MatomoTracker */,
+			);
 			productName = FilmBox;
 			productReference = A1000001229E000000000D00 /* FilmBox.app */;
 			productType = "com.apple.product-type.application";
@@ -582,6 +599,9 @@
 				Base,
 			);
 			mainGroup = A1000001229E000000000F00;
+			packageReferences = (
+				CE65265C2F084CAD008466F6 /* XCRemoteSwiftPackageReference "matomo-sdk-ios" */,
+			);
 			productRefGroup = A1000001229E000000001F10 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -647,6 +667,8 @@
 				A1000001229E000100000003 /* AppCoordinator.swift in Sources */,
 				A1000001229E000100000004 /* Dependencies.swift in Sources */,
 				A1000001229E000100000005 /* MainTabView.swift in Sources */,
+				SPLASH00000000000000001 /* SplashView.swift in Sources */,
+				ANALY00000000000000001 /* Analytics.swift in Sources */,
 				A1000001229E000100000010 /* FilterCategory.swift in Sources */,
 				A1000001229E000100000011 /* FilterParameters.swift in Sources */,
 				A1000001229E000100000012 /* FilterPreset.swift in Sources */,
@@ -976,6 +998,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		CE65265C2F084CAD008466F6 /* XCRemoteSwiftPackageReference "matomo-sdk-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/matomo-org/matomo-sdk-ios";
+			requirement = {
+				kind = exactVersion;
+				version = 7.8.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		MATOMO0000000000000001 /* MatomoTracker */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CE65265C2F084CAD008466F6 /* XCRemoteSwiftPackageReference "matomo-sdk-ios" */;
+			productName = MatomoTracker;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = A1000001229E000000000F01 /* Project object */;
 }

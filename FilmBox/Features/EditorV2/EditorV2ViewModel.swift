@@ -69,6 +69,9 @@ final class EditorV2ViewModel {
 
     init(editor: EditorViewModel = EditorViewModel()) {
         self.editor = editor
+
+        // Track editor open (funnel step 2)
+        Analytics.shared.trackEditorOpen()
     }
 
     // MARK: - Mode Transitions
@@ -101,6 +104,12 @@ final class EditorV2ViewModel {
 
     /// Confirm current changes and return to browse mode
     func confirmChanges() {
+        // Track tool/filter usage before clearing
+        if let tool = activeTool {
+            let value = getValue(for: tool)
+            Analytics.shared.trackToolUse(toolName: tool.name, value: value)
+        }
+
         // Clear snapshots (changes are kept)
         pendingParametersSnapshot = nil
         pendingPresetSnapshot = nil
@@ -210,6 +219,15 @@ final class EditorV2ViewModel {
     /// Select a filter preset
     func selectFilter(_ preset: FilterPreset?) {
         editor.selectedPreset = preset
+
+        // Track filter application
+        if let preset = preset {
+            Analytics.shared.trackFilterApply(
+                filterName: preset.name,
+                category: preset.category.rawValue,
+                intensity: editor.filterIntensity
+            )
+        }
     }
 
     /// Update filter intensity
@@ -223,6 +241,9 @@ final class EditorV2ViewModel {
     func selectTab(_ tab: EditorV2Tab) {
         guard mode == .browse else { return }
         selectedTab = tab
+
+        // Track tab switch
+        Analytics.shared.trackEditorTabSwitch(tab: tab.rawValue)
     }
 
     // MARK: - Image Loading

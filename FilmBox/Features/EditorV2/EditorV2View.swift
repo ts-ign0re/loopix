@@ -104,6 +104,9 @@ struct EditorV2View: View {
         .frame(height: 44)
         .alert("discard changes?", isPresented: $showDiscardAlert) {
             Button("discard", role: .destructive) {
+                // Track editor cancel with changes discarded
+                let hasChanges = viewModel.editor.currentParameters.hasAdjustments || viewModel.editor.selectedPreset != nil
+                Analytics.shared.trackEditorCancel(hadChanges: hasChanges)
                 dismiss()
             }
             Button("cancel", role: .cancel) {}
@@ -134,6 +137,11 @@ struct EditorV2View: View {
             selectedPresetID: viewModel.editor.selectedPreset?.id,
             filterIntensity: viewModel.editor.filterIntensity
         )
+
+        // Track editor save (funnel step before export)
+        let hasFilter = viewModel.editor.selectedPreset != nil
+        let hasToolEdits = viewModel.editor.currentParameters.hasAdjustments
+        Analytics.shared.trackEditorSave(hasFilter: hasFilter, hasToolAdjustments: hasToolEdits)
 
         // Save full snapshot to ImportedPhotosManager
         ImportedPhotosManager.shared.updateEditSnapshot(for: photoID, snapshot: snapshot)

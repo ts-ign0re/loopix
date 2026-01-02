@@ -80,6 +80,9 @@ struct SettingsView: View {
         }
         .preferredColorScheme(.dark)
         .onAppear {
+            // Track screen view
+            Analytics.shared.trackScreen(.settings)
+
             storageUsed = manager.calculateStorageUsed()
             Task {
                 backupInfo = await CloudBackupManager.shared.getBackupInfo()
@@ -91,8 +94,12 @@ struct SettingsView: View {
             titleVisibility: .visible
         ) {
             Button("delete all photos", role: .destructive) {
+                let oldStorage = storageUsed
                 manager.clearAllPhotos()
                 storageUsed = manager.calculateStorageUsed()
+
+                // Track photos cleared
+                Analytics.shared.trackCacheClear(type: "photos", sizeCleared: oldStorage - storageUsed)
             }
             Button("cancel", role: .cancel) {}
         } message: {
@@ -319,6 +326,7 @@ struct SettingsView: View {
                             isSelected: settings.exportFormat == format
                         ) {
                             settings.exportFormat = format
+                            Analytics.shared.trackSettingChange(setting: "export_format", value: format.rawValue)
                         }
                     }
                 }
@@ -362,6 +370,7 @@ struct SettingsView: View {
                             isSelected: settings.exportSize == size
                         ) {
                             settings.exportSize = size
+                            Analytics.shared.trackSettingChange(setting: "export_size", value: size.rawValue)
                         }
                     }
                 }
@@ -387,6 +396,7 @@ struct SettingsView: View {
                             isSelected: settings.previewQuality == quality
                         ) {
                             settings.previewQuality = quality
+                            Analytics.shared.trackSettingChange(setting: "preview_quality", value: quality.rawValue)
                         }
                     }
                 }
@@ -415,7 +425,13 @@ struct SettingsView: View {
             }
 
             VStack(alignment: .leading, spacing: 12) {
-                Toggle(isOn: $settings.securityMode) {
+                Toggle(isOn: Binding(
+                    get: { settings.securityMode },
+                    set: { newValue in
+                        settings.securityMode = newValue
+                        Analytics.shared.trackFeatureToggle(feature: "security_mode", enabled: newValue)
+                    }
+                )) {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("strip_metadata")
                             .font(.system(size: 13, weight: .medium, design: .monospaced))
@@ -605,8 +621,9 @@ struct SettingsView: View {
         Task {
             do {
                 try await CloudBackupManager.shared.triggerManualBackup()
+                Analytics.shared.trackCloudBackup(action: "manual_backup", success: true)
             } catch {
-                // Silently fail
+                Analytics.shared.trackCloudBackup(action: "manual_backup", success: false)
             }
             backupInfo = await CloudBackupManager.shared.getBackupInfo()
             isBackingUp = false
@@ -741,9 +758,14 @@ struct SettingsView: View {
     }
 
     private func clearCache() {
+        let cacheSize = getCacheSize()
+
         // Clear thumbnail cache
         manager.clearThumbnailCache()
         // TODO: Clear filter preview cache if available
+
+        // Track cache clear
+        Analytics.shared.trackCacheClear(type: "cache", sizeCleared: cacheSize)
     }
 
     private func getCacheSize() -> Int {

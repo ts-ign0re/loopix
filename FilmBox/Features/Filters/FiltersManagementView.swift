@@ -134,6 +134,9 @@ struct FiltersManagementView: View {
         }
         .preferredColorScheme(.dark)
         .task {
+            // Track screen view
+            Analytics.shared.trackScreen(.filters)
+
             await loadFilters()
             await loadFavorites()
 
@@ -191,6 +194,8 @@ struct FiltersManagementView: View {
             withAnimation(.easeInOut(duration: 0.2)) {
                 selectedCategory = category
             }
+            // Track category switch
+            Analytics.shared.trackFilterCategorySwitch(category: category.displayName)
         } label: {
             HStack(spacing: 6) {
                 if category == .favorites {
@@ -489,13 +494,21 @@ struct FiltersManagementView: View {
     // MARK: - Actions
 
     private func toggleFavorite(_ filter: FilterPreset) {
-        withAnimation(.easeInOut(duration: 0.2)) {
-            if favoriteIDs.contains(filter.id) {
+        let isFavorite: Bool
+        if favoriteIDs.contains(filter.id) {
+            withAnimation(.easeInOut(duration: 0.2)) {
                 favoriteIDs.remove(filter.id)
-            } else {
+            }
+            isFavorite = false
+        } else {
+            withAnimation(.easeInOut(duration: 0.2)) {
                 favoriteIDs.insert(filter.id)
             }
+            isFavorite = true
         }
+
+        // Track filter favorite/unfavorite
+        Analytics.shared.trackFilterFavorite(filterName: filter.name, isFavorite: isFavorite)
 
         // Persist to UserDefaults
         let idStrings = favoriteIDs.map { $0.uuidString }
@@ -520,6 +533,9 @@ struct FiltersManagementView: View {
             clutIntensity: filter.clutIntensity
         )
 
+        // Track filter duplicate as creation
+        Analytics.shared.trackFilterCreate(name: newFilter.name, source: "duplicate")
+
         Task {
             try? await FilterStorage.shared.save(newFilter)
 
@@ -542,6 +558,13 @@ struct FiltersManagementView: View {
 
         do {
             try await FilterStorage.shared.delete(id: filter.id)
+
+            // Track filter delete
+            Analytics.shared.trackEvent(
+                category: .filter,
+                action: .delete,
+                name: filter.name
+            )
 
             // Delete the preview for this filter
             await FilterPreviewCache.shared.deletePreview(for: filter.id)
@@ -1118,9 +1141,19 @@ struct FilterEditorView: View {
                 if isNewFilter {
                     // New filter - save
                     try await FilterStorage.shared.save(savedFilter)
+
+                    // Track filter creation
+                    Analytics.shared.trackFilterCreate(name: savedFilter.name, source: "manual")
                 } else {
                     // Existing filter - update
                     try await FilterStorage.shared.update(savedFilter)
+
+                    // Track filter update
+                    Analytics.shared.trackEvent(
+                        category: .filter,
+                        action: "update",
+                        name: savedFilter.name
+                    )
                 }
                 onSave(savedFilter)
                 dismiss()

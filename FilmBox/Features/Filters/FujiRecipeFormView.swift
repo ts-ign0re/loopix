@@ -288,6 +288,10 @@ struct FujiRecipeFormView: View {
         // Save to storage
         try? await FilterStorage.shared.save(preset)
 
+        // Track Fuji recipe creation
+        Analytics.shared.trackFilterCreate(name: preset.name, source: "fuji_recipe")
+        Analytics.shared.trackScreen(.fujiRecipeForm)
+
         // Small delay for loader visibility
         try? await Task.sleep(for: .milliseconds(300))
 

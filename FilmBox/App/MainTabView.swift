@@ -569,9 +569,16 @@ struct LibraryContentView: View {
         let photos = manager.getSelectedPhotosForLocalExport()
         guard !photos.isEmpty else { return }
 
+        // Track export start (North Star funnel)
+        Analytics.shared.trackExportStart(photoCount: photos.count, format: "jpeg")
+
+        let exportStartTime = Date()
+
         Task {
             isExporting = true
             var urls: [URL] = []
+            var hasFilter = false
+            var hasToolEdits = false
 
             // Check security mode setting
             let securityMode = AppSettings.shared.securityMode
@@ -581,6 +588,7 @@ struct LibraryContentView: View {
                     var processedImage = ciImage
                     if let params = item.parameters {
                         processedImage = await FilterEngine.shared.apply(params, to: ciImage)
+                        hasToolEdits = true
                     }
 
                     let context = CIContext()
@@ -601,6 +609,23 @@ struct LibraryContentView: View {
             }
 
             isExporting = false
+
+            // Track export complete (NORTH STAR METRIC)
+            let exportDuration = Float(Date().timeIntervalSince(exportStartTime))
+            Analytics.shared.trackExportComplete(
+                photoCount: photos.count,
+                successCount: urls.count,
+                format: "jpeg",
+                durationSeconds: exportDuration
+            )
+
+            // Track export details for analytics
+            Analytics.shared.trackExportWithDetails(
+                photoCount: urls.count,
+                hasFilter: hasFilter,
+                hasToolEdits: hasToolEdits,
+                format: "jpeg"
+            )
 
             if !urls.isEmpty {
                 let activityVC = UIActivityViewController(activityItems: urls, applicationActivities: nil)

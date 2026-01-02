@@ -147,6 +147,8 @@ final class ImportedPhotosManager {
         print("📥 Importing \(assets.count) photos")
         isLoading = true
 
+        let importCount = assets.count
+
         Task {
             for asset in assets {
                 await importSingleAsset(asset)
@@ -155,6 +157,9 @@ final class ImportedPhotosManager {
             await MainActor.run {
                 self.isLoading = false
                 self.saveMetadataToStorage()
+
+                // Track photo import (funnel step 1)
+                Analytics.shared.trackPhotoImport(source: .photoLibrary, count: importCount)
             }
         }
     }
