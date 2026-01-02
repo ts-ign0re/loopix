@@ -638,48 +638,6 @@ actor ExportEngine {
                 throw ExportError.encodingFailed(format: format)
             }
             outputData = data
-
-        case .webp:
-            // WebP encoding using CGImageDestination (iOS 14+)
-            if #available(iOS 14.0, *) {
-                guard let cgImage = ciContext.createCGImage(image, from: image.extent) else {
-                    throw ExportError.encodingFailed(format: format)
-                }
-
-                let mutableData = NSMutableData()
-                guard let destination = CGImageDestinationCreateWithData(
-                    mutableData,
-                    UTType.webP.identifier as CFString,
-                    1,
-                    nil
-                ) else {
-                    throw ExportError.encodingFailed(format: format)
-                }
-
-                let options: [CFString: Any] = [
-                    kCGImageDestinationLossyCompressionQuality: quality
-                ]
-
-                CGImageDestinationAddImage(destination, cgImage, options as CFDictionary)
-
-                guard CGImageDestinationFinalize(destination) else {
-                    throw ExportError.encodingFailed(format: format)
-                }
-
-                outputData = mutableData as Data
-            } else {
-                // Fallback to JPEG on older iOS versions
-                guard let data = ciContext.jpegRepresentation(
-                    of: image,
-                    colorSpace: colorSpace,
-                    options: [
-                        CIImageRepresentationOption(rawValue: kCGImageDestinationLossyCompressionQuality as String): quality
-                    ]
-                ) else {
-                    throw ExportError.encodingFailed(format: format)
-                }
-                outputData = data
-            }
         }
 
         // Always embed metadata (at minimum includes Loopix iOS source)

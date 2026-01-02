@@ -39,6 +39,15 @@ struct ImportedPhoto: Identifiable, Hashable, Codable {
     /// Used to trigger UI refresh in HomePhotoCell
     var thumbnailVersion: Int = 0
 
+    /// True while photo is being imported (thumbnail not yet ready)
+    /// This is a runtime-only state, not persisted to storage
+    var isImporting: Bool = false
+
+    // Custom CodingKeys to exclude isImporting from persistence
+    private enum CodingKeys: String, CodingKey {
+        case id, assetIdentifier, importedAt, editedParametersData, editSnapshotData, thumbnailVersion
+    }
+
     /// Local file name for the stored image
     var localFileName: String {
         "\(id.uuidString).jpg"
@@ -143,51 +152,76 @@ final class ImportedPhotosManager {
     // MARK: - Public API
 
     /// Import photos from PHAssets - saves full images locally
+    /// Immediately inserts placeholders with shimmer, then processes in background
     func importPhotos(_ assets: [PHAsset]) {
         print("📥 Importing \(assets.count) photos")
-        isLoading = true
 
-        let importCount = assets.count
+        // 1. Filter out duplicates and create placeholders immediately
+        let existingIdentifiers = Set(photos.map { $0.assetIdentifier })
+        var placeholders: [(photo: ImportedPhoto, asset: PHAsset)] = []
 
+        for asset in assets {
+            guard !existingIdentifiers.contains(asset.localIdentifier) else {
+                print("⏭️ Skipping duplicate: \(asset.localIdentifier)")
+                continue
+            }
+            var photo = ImportedPhoto(asset: asset)
+            photo.isImporting = true
+            placeholders.append((photo: photo, asset: asset))
+        }
+
+        guard !placeholders.isEmpty else {
+            print("📥 No new photos to import")
+            return
+        }
+
+        // 2. Insert all placeholders at once (newest first)
+        let placeholderPhotos = placeholders.map { $0.photo }
+        photos.insert(contentsOf: placeholderPhotos, at: 0)
+
+        let importCount = placeholders.count
+        print("📥 Added \(importCount) placeholders, starting background processing")
+
+        // 3. Process each photo in background
         Task {
-            for asset in assets {
-                await importSingleAsset(asset)
+            for (photo, asset) in placeholders {
+                await processImport(photo: photo, asset: asset)
             }
 
             await MainActor.run {
-                self.isLoading = false
                 self.saveMetadataToStorage()
-
                 // Track photo import (funnel step 1)
                 Analytics.shared.trackPhotoImport(source: .photoLibrary, count: importCount)
             }
         }
     }
 
-    /// Import a single asset - saves to local storage with optimization
-    private func importSingleAsset(_ asset: PHAsset) async {
-        // Check for duplicates
-        let existingIdentifiers = Set(photos.map { $0.assetIdentifier })
-        guard !existingIdentifiers.contains(asset.localIdentifier) else {
-            print("⏭️ Skipping duplicate: \(asset.localIdentifier)")
-            return
-        }
-
-        let photo = ImportedPhoto(asset: asset)
-
+    /// Process a single photo import - called after placeholder is already in the array
+    private func processImport(photo: ImportedPhoto, asset: PHAsset) async {
         // Request full-size image
         let options = PHImageRequestOptions()
         options.deliveryMode = .highQualityFormat
         options.isNetworkAccessAllowed = true
         options.isSynchronous = false
 
+        let photoID = photo.id
+
         await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
             PHImageManager.default().requestImageDataAndOrientation(
                 for: asset,
                 options: options
             ) { [weak self] data, _, orientation, _ in
-                guard let self = self, let imageData = data else {
+                guard let self = self else {
+                    continuation.resume()
+                    return
+                }
+
+                guard let imageData = data else {
                     print("❌ Failed to get image data for: \(asset.localIdentifier)")
+                    // Remove failed placeholder
+                    Task { @MainActor [weak self] in
+                        self?.photos.removeAll { $0.id == photoID }
+                    }
                     continuation.resume()
                     return
                 }
@@ -209,12 +243,18 @@ final class ImportedPhotosManager {
                     // Generate and save thumbnail
                     self.generateThumbnail(from: imageURL, for: photo)
 
-                    // Add to photos array on main thread
-                    Task { @MainActor in
-                        self.photos.insert(photo, at: 0)
+                    // Mark as done importing (triggers UI update)
+                    Task { @MainActor [weak self] in
+                        if let index = self?.photos.firstIndex(where: { $0.id == photoID }) {
+                            self?.photos[index].isImporting = false
+                        }
                     }
                 } catch {
                     print("❌ Failed to save image: \(error)")
+                    // Remove failed placeholder
+                    Task { @MainActor [weak self] in
+                        self?.photos.removeAll { $0.id == photoID }
+                    }
                 }
 
                 continuation.resume()

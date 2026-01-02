@@ -6,14 +6,12 @@ import Foundation
 enum ExportFormat: String, CaseIterable, Codable, Sendable {
     case jpeg = "JPEG"
     case png = "PNG"
-    case webp = "WebP"
 
     /// Display name with recommendation hint
     var displayName: String {
         switch self {
         case .jpeg: return "JPEG (Recommended)"
         case .png: return "PNG"
-        case .webp: return "WebP"
         }
     }
 
@@ -22,7 +20,6 @@ enum ExportFormat: String, CaseIterable, Codable, Sendable {
         switch self {
         case .jpeg: return "jpg"
         case .png: return "png"
-        case .webp: return "webp"
         }
     }
 
@@ -31,28 +28,14 @@ enum ExportFormat: String, CaseIterable, Codable, Sendable {
         switch self {
         case .jpeg: return "public.jpeg"
         case .png: return "public.png"
-        case .webp: return "org.webmproject.webp"
         }
     }
 
     /// Whether the format supports quality compression
     var supportsQuality: Bool {
         switch self {
-        case .jpeg, .webp: return true
+        case .jpeg: return true
         case .png: return false
-        }
-    }
-
-    /// Whether this format is available on the current iOS version
-    var isAvailable: Bool {
-        switch self {
-        case .webp:
-            if #available(iOS 14.0, *) {
-                return true
-            }
-            return false
-        default:
-            return true
         }
     }
 }
@@ -112,7 +95,7 @@ struct ExportSettings: Codable, Sendable, Equatable {
     /// Output image format
     var format: ExportFormat
 
-    /// Quality level (0.0 to 1.0, applies to JPEG/WebP)
+    /// Quality level (0.0 to 1.0, applies to JPEG)
     var quality: Double
 
     /// Size/dimension option

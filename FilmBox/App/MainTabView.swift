@@ -6,6 +6,7 @@
 //
 
 import ImageIO
+import Photos
 import SwiftUI
 
 // MARK: - App Tab
@@ -68,6 +69,7 @@ struct LibraryContentView: View {
     @State private var showStorageLimitAlert = false
     @State private var showCopiedFeedback = false
     @State private var showMoreMenu = false
+    @State private var showPermissionDeniedAlert = false
 
     // Grid configuration
     private let columns = 3
@@ -148,6 +150,44 @@ struct LibraryContentView: View {
             Text(
                 "storage is full (\(String(format: "%.1f", usedGB))gb / \(String(format: "%.0f", limitGB))gb)\nfree up space to import new photos"
             )
+        }
+        .alert("// photo_access_required", isPresented: $showPermissionDeniedAlert) {
+            Button("cancel", role: .cancel) {}
+            Button("open_settings") {
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            }
+        } message: {
+            Text("allow photo access in settings to import photos")
+        }
+    }
+
+    // MARK: - Permission Handling
+
+    private func requestPermissionAndOpenPicker() async {
+        let status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+
+        switch status {
+        case .authorized, .limited:
+            await MainActor.run {
+                showPhotoPicker = true
+            }
+        case .notDetermined:
+            let newStatus = await PHPhotoLibrary.requestAuthorization(for: .readWrite)
+            await MainActor.run {
+                if newStatus == .authorized || newStatus == .limited {
+                    showPhotoPicker = true
+                } else {
+                    showPermissionDeniedAlert = true
+                }
+            }
+        case .denied, .restricted:
+            await MainActor.run {
+                showPermissionDeniedAlert = true
+            }
+        @unknown default:
+            break
         }
     }
 
@@ -251,7 +291,10 @@ struct LibraryContentView: View {
                                 if manager.isStorageLimitExceeded() {
                                     showStorageLimitAlert = true
                                 } else {
-                                    showPhotoPicker = true
+                                    // Request permission first, then open picker
+                                    Task {
+                                        await requestPermissionAndOpenPicker()
+                                    }
                                 }
                             }
                             .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -580,8 +623,10 @@ struct LibraryContentView: View {
         let photos = manager.getSelectedPhotosForLocalExport()
         guard !photos.isEmpty else { return }
 
+        let format = AppSettings.shared.exportFormat
+
         // Track export start (North Star funnel)
-        Analytics.shared.trackExportStart(photoCount: photos.count, format: "jpeg")
+        Analytics.shared.trackExportStart(photoCount: photos.count, format: format.rawValue)
 
         let exportStartTime = Date()
 
@@ -593,6 +638,7 @@ struct LibraryContentView: View {
 
             // Check security mode setting
             let securityMode = AppSettings.shared.securityMode
+            let colorSpace = CGColorSpace(name: CGColorSpace.sRGB)!
 
             for item in photos {
                 if let ciImage = ImportedPhotosManager.shared.loadCIImage(for: item.photo) {
@@ -604,20 +650,31 @@ struct LibraryContentView: View {
 
                     let context = CIContext()
                     let tempURL = FileManager.default.temporaryDirectory
-                        .appendingPathComponent("\(item.photo.id.uuidString).jpg")
+                        .appendingPathComponent("\(item.photo.id.uuidString).\(format.fileExtension)")
 
-                    if var jpegData = context.jpegRepresentation(
-                        of: processedImage,
-                        colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!,
-                        options: [
-                            kCGImageDestinationLossyCompressionQuality
-                                as CIImageRepresentationOption: 0.95
-                        ]
-                    ) {
+                    var imageData: Data?
+
+                    switch format {
+                    case .jpeg:
+                        imageData = context.jpegRepresentation(
+                            of: processedImage,
+                            colorSpace: colorSpace,
+                            options: [kCGImageDestinationLossyCompressionQuality as CIImageRepresentationOption: 0.95]
+                        )
+                    case .png:
+                        imageData = context.pngRepresentation(
+                            of: processedImage,
+                            format: .RGBA8,
+                            colorSpace: colorSpace
+                        )
+                    }
+
+                    if var data = imageData {
                         // Add Loopix iOS source metadata (strip all if security mode)
-                        jpegData =
-                            addSourceMetadata(to: jpegData, securityMode: securityMode) ?? jpegData
-                        try? jpegData.write(to: tempURL)
+                        if format == .jpeg {
+                            data = addSourceMetadata(to: data, securityMode: securityMode) ?? data
+                        }
+                        try? data.write(to: tempURL)
                         urls.append(tempURL)
                     }
                 }
@@ -630,7 +687,7 @@ struct LibraryContentView: View {
             Analytics.shared.trackExportComplete(
                 photoCount: photos.count,
                 successCount: urls.count,
-                format: "jpeg",
+                format: format.rawValue,
                 durationSeconds: exportDuration
             )
 
@@ -639,7 +696,7 @@ struct LibraryContentView: View {
                 photoCount: urls.count,
                 hasFilter: hasFilter,
                 hasToolEdits: hasToolEdits,
-                format: "jpeg"
+                format: format.rawValue
             )
 
             if !urls.isEmpty {
@@ -675,8 +732,18 @@ struct HomePhotoCell: View {
 
     var body: some View {
         ZStack {
-            // Thumbnail
-            if let thumbnail {
+            // Thumbnail or loading placeholder
+            if photo.isImporting {
+                // Show placeholder with activity indicator while importing
+                ZStack {
+                    Rectangle()
+                        .fill(Color(white: 0.12))
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white.opacity(0.6)))
+                        .scaleEffect(0.8)
+                }
+                .frame(width: targetSize.width, height: targetSize.height)
+            } else if let thumbnail {
                 Image(uiImage: thumbnail)
                     .resizable()
                     .aspectRatio(contentMode: .fill)
@@ -689,7 +756,7 @@ struct HomePhotoCell: View {
             }
 
             // Regenerating overlay (loading indicator)
-            if isRegenerating {
+            if isRegenerating && !photo.isImporting {
                 Color.black.opacity(0.6)
 
                 ProgressView()
@@ -697,8 +764,8 @@ struct HomePhotoCell: View {
                     .scaleEffect(0.8)
             }
 
-            // Selection overlay
-            if isSelected {
+            // Selection overlay (don't show during import)
+            if isSelected && !photo.isImporting {
                 Color.black.opacity(0.4)
 
                 // Selection border
@@ -725,9 +792,13 @@ struct HomePhotoCell: View {
         }
         .contentShape(Rectangle())
         .onTapGesture {
+            // Don't allow tap during import
+            guard !photo.isImporting else { return }
             onTap()
         }
-        .task(id: photo.thumbnailVersion) {
+        .task(id: "\(photo.thumbnailVersion)_\(photo.isImporting)") {
+            // Don't load thumbnail while importing (not ready yet)
+            guard !photo.isImporting else { return }
             await loadThumbnail()
         }
     }
