@@ -132,8 +132,8 @@ final class EditorViewModel {
     /// Debounce timer for preview updates
     private var previewUpdateTask: Task<Void, Never>?
 
-    /// Debounce interval in seconds
-    private let debounceInterval: TimeInterval = 0.1
+    /// Debounce interval in seconds (33ms = ~30fps responsiveness)
+    private let debounceInterval: TimeInterval = 0.033
 
     /// Core Image context for rendering
     private let ciContext: CIContext

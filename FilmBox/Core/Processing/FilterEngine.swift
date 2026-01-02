@@ -855,7 +855,7 @@ actor FilterEngine {
     /// This creates a 3D LUT that maps input colors to adjusted colors
     private func applyHSLAdjustments(to image: CIImage, hsl: HSLAdjustments) -> CIImage {
         // Create color cube data for HSL adjustments
-        let cubeSize = 32  // 32x32x32 LUT for good quality/performance balance
+        let cubeSize = 17  // 17x17x17 LUT - 7x faster than 32 (4913 vs 32768 iterations)
         let cubeData = generateHSLColorCube(size: cubeSize, adjustments: hsl)
 
         guard let filter = CIFilter(name: "CIColorCubeWithColorSpace") else {

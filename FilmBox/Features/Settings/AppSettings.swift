@@ -19,9 +19,9 @@ enum PreviewQuality: String, Codable, CaseIterable, Sendable {
 
     var resolution: CGFloat {
         switch self {
-        case .low: return 1024
-        case .medium: return 2048
-        case .high: return 4096
+        case .low: return 512      // Fast editing
+        case .medium: return 1024  // Balanced (was 2048)
+        case .high: return 2048    // Detail view (was 4096)
         }
     }
 }

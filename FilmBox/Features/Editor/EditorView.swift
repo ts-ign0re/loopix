@@ -260,9 +260,7 @@ struct EditorView: View {
             }
 
             if viewModel.isProcessing {
-                ProgressView()
-                    .tint(.white)
-                    .scaleEffect(0.8)
+                ApertureLoader(size: 20, color: .white)
             }
         }
     }
