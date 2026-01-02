@@ -10,7 +10,7 @@ struct VSCOFiltersTabView: View {
 
     var body: some View {
         ZStack {
-            VStack(spacing: 12) {
+            VStack(spacing: 8) {
                 // Category bar
                 VSCOFilterCategoryBar(selectedCategory: $viewModel.selectedFilterCategory)
 

@@ -18,10 +18,9 @@ struct VSCOImagePreview: View {
                 // Background
                 Color.black
 
-                // Image preview - centered
+                // Image preview - fills available space, Metal handles aspect-fit internally
                 if let image = viewModel.editor.currentImage {
                     MetalImageViewWrapper(image: image)
-                        .aspectRatio(contentMode: .fit)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if viewModel.editor.isLoading {
                     ProgressView()
@@ -41,6 +40,14 @@ struct VSCOImagePreview: View {
                             .frame(height: 80)
                             .padding(.horizontal, 16)
                             .padding(.bottom, 8)
+                            .background(
+                                LinearGradient(
+                                    colors: [.clear, .black.opacity(0.6)],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                                .padding(.top, -40)
+                            )
                     }
                 }
 

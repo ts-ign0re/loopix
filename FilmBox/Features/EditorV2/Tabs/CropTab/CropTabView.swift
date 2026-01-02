@@ -6,6 +6,7 @@ enum V2CropAspectRatio: String, CaseIterable, Identifiable {
     case square = "1:1"
     case fourThree = "4:3"
     case threeTwo = "3:2"
+    case twoThree = "2:3"
     case sixteenNine = "16:9"
     case nineSixteen = "9:16"
 
@@ -17,6 +18,7 @@ enum V2CropAspectRatio: String, CaseIterable, Identifiable {
         case .square: return "square"
         case .fourThree: return "rectangle"
         case .threeTwo: return "rectangle"
+        case .twoThree: return "rectangle.portrait"
         case .sixteenNine: return "rectangle"
         case .nineSixteen: return "rectangle.portrait"
         }
@@ -29,6 +31,7 @@ enum V2CropAspectRatio: String, CaseIterable, Identifiable {
         case .square: return 1.0
         case .fourThree: return 4.0 / 3.0
         case .threeTwo: return 3.0 / 2.0
+        case .twoThree: return 2.0 / 3.0
         case .sixteenNine: return 16.0 / 9.0
         case .nineSixteen: return 9.0 / 16.0
         }

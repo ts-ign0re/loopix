@@ -167,12 +167,13 @@ struct EditorV2View: View {
             if viewModel.selectedTab == .crop {
                 CropTabView(viewModel: viewModel, geometry: geometry)
             } else {
-                // Image preview with histogram overlay (fills available space)
+                // Image preview with histogram overlay (fills all available space)
                 VSCOImagePreview(viewModel: viewModel)
+                    .layoutPriority(1)
 
-                // Tool panel based on selected tab (fixed at bottom)
+                // Tool panel based on selected tab (fixed height at bottom)
                 toolPanel(geometry: geometry)
-                    .padding(.top, 8)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }
@@ -191,7 +192,6 @@ struct EditorV2View: View {
                 viewModel: viewModel,
                 category: mapTabToCategory(viewModel.selectedTab)
             )
-            .padding(.bottom, 16)
         }
     }
 
