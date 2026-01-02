@@ -16,6 +16,8 @@ struct SettingsView: View {
     @State private var showClearCacheConfirmation = false
     @State private var showCopiedToast = false
     @State private var showSecurityHelp = false
+    @State private var backupInfo: BackupInfo?
+    @State private var isBackingUp = false
 
     var body: some View {
         NavigationStack {
@@ -41,6 +43,12 @@ struct SettingsView: View {
 
                     // Security Section
                     securitySection
+
+                    Divider()
+                        .background(Color.white.opacity(0.1))
+
+                    // Backup Section
+                    backupSection
 
                     Divider()
                         .background(Color.white.opacity(0.1))
@@ -74,6 +82,9 @@ struct SettingsView: View {
         .preferredColorScheme(.dark)
         .onAppear {
             storageUsed = manager.calculateStorageUsed()
+            Task {
+                backupInfo = await CloudBackupManager.shared.getBackupInfo()
+            }
         }
         .confirmationDialog(
             "clear_photos()",
@@ -460,6 +471,146 @@ struct SettingsView: View {
             Text(text)
                 .font(.system(size: 11, design: .monospaced))
                 .foregroundStyle(.white.opacity(0.6))
+        }
+    }
+
+    // MARK: - Backup Section
+
+    private var backupSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            sectionHeader("backup")
+
+            VStack(alignment: .leading, spacing: 12) {
+                // Status row
+                HStack {
+                    Text("status")
+                        .font(.system(size: 12, weight: .medium, design: .monospaced))
+                        .foregroundStyle(.white.opacity(0.6))
+                    Spacer()
+                    HStack(spacing: 6) {
+                        Circle()
+                            .fill(backupStatusColor)
+                            .frame(width: 8, height: 8)
+                        Text(backupStatusText)
+                            .font(.system(size: 12, design: .monospaced))
+                            .foregroundStyle(.white.opacity(0.8))
+                    }
+                }
+
+                // Last backup info
+                if let info = backupInfo, let lastDate = info.lastBackupDate {
+                    Text("last: \(formatRelativeTime(lastDate))\(info.lastDeviceName.map { " from \($0)" } ?? "")")
+                        .font(.system(size: 11, design: .monospaced))
+                        .foregroundStyle(.white.opacity(0.4))
+                }
+
+                // iCloud unavailable message
+                if backupInfo?.status == .noAccount {
+                    Text("// sign in to iCloud to enable backup")
+                        .font(.system(size: 11, design: .monospaced))
+                        .foregroundStyle(.white.opacity(0.4))
+                } else if backupInfo?.status == .disabled {
+                    Text("// enable iCloud Drive to enable backup")
+                        .font(.system(size: 11, design: .monospaced))
+                        .foregroundStyle(.white.opacity(0.4))
+                }
+            }
+
+            // Action button
+            if backupInfo?.status == .available || backupInfo?.status == .syncing {
+                Button {
+                    triggerBackup()
+                } label: {
+                    HStack {
+                        if isBackingUp {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .yellow))
+                                .scaleEffect(0.8)
+                        }
+                        Text(isBackingUp ? "syncing..." : "backup_now()")
+                            .font(.system(size: 13, weight: .medium, design: .monospaced))
+                            .foregroundStyle(.yellow)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(Color.yellow.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.yellow.opacity(0.3), lineWidth: 1)
+                    )
+                }
+                .buttonStyle(.plain)
+                .disabled(isBackingUp)
+            } else {
+                // Open Settings button for iCloud issues
+                Button {
+                    if let url = URL(string: UIApplication.openSettingsURLString) {
+                        UIApplication.shared.open(url)
+                    }
+                } label: {
+                    Text("open_settings()")
+                        .font(.system(size: 13, weight: .medium, design: .monospaced))
+                        .foregroundStyle(.white.opacity(0.6))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(Color(white: 0.15))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                        )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private var backupStatusColor: Color {
+        guard let info = backupInfo else { return .gray }
+        switch info.status {
+        case .available: return .green
+        case .syncing: return .yellow
+        case .noAccount, .disabled: return .red
+        }
+    }
+
+    private var backupStatusText: String {
+        guard let info = backupInfo else { return "checking..." }
+        switch info.status {
+        case .available: return "synced"
+        case .syncing: return "syncing..."
+        case .noAccount: return "unavailable"
+        case .disabled: return "disabled"
+        }
+    }
+
+    private func formatRelativeTime(_ date: Date) -> String {
+        let interval = Date().timeIntervalSince(date)
+        if interval < 60 {
+            return "just now"
+        } else if interval < 3600 {
+            let minutes = Int(interval / 60)
+            return "\(minutes) min ago"
+        } else if interval < 86400 {
+            let hours = Int(interval / 3600)
+            return "\(hours) hr ago"
+        } else {
+            let days = Int(interval / 86400)
+            return "\(days) day\(days == 1 ? "" : "s") ago"
+        }
+    }
+
+    private func triggerBackup() {
+        isBackingUp = true
+        Task {
+            do {
+                try await CloudBackupManager.shared.triggerManualBackup()
+            } catch {
+                // Silently fail
+            }
+            backupInfo = await CloudBackupManager.shared.getBackupInfo()
+            isBackingUp = false
         }
     }
 

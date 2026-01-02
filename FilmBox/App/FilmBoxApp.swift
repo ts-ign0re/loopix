@@ -10,6 +10,13 @@ struct FilmBoxApp: App {
     /// Shared dependencies container
     @State private var dependencies = Dependencies.shared
 
+    init() {
+        // Sync iCloud backup on launch
+        Task {
+            await CloudBackupManager.shared.syncOnLaunch()
+        }
+    }
+
     var body: some Scene {
         WindowGroup {
             ContentView()

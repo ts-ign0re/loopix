@@ -52,6 +52,8 @@
 		CE0756FD2F05800300C53D17 /* FilterPreviewCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0756FE2F05800300C53D17 /* FilterPreviewCache.swift */; };
 		CE07570B2F05900100C53D17 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE07570A2F05900100C53D17 /* AppSettings.swift */; };
 		CE07570D2F05900100C53D17 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE07570C2F05900100C53D17 /* SettingsView.swift */; };
+		CE0757102F08A00100C53D17 /* CloudBackupManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0757112F08A00100C53D17 /* CloudBackupManager.swift */; };
+		CE0757132F08A00300C53D17 /* RecentlyUsedFiltersManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0757142F08A00300C53D17 /* RecentlyUsedFiltersManager.swift */; };
 		CED9E57F2F06F811002E41A9 /* Screenshot 2026-01-01 at 8.43.31 PM.png in Resources */ = {isa = PBXBuildFile; fileRef = CED9E57E2F06F811002E41A9 /* Screenshot 2026-01-01 at 8.43.31 PM.png */; };
 /* End PBXBuildFile section */
 
@@ -114,6 +116,8 @@
 		CE0756FE2F05800300C53D17 /* FilterPreviewCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterPreviewCache.swift; sourceTree = "<group>"; };
 		CE07570A2F05900100C53D17 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
 		CE07570C2F05900100C53D17 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		CE0757112F08A00100C53D17 /* CloudBackupManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudBackupManager.swift; sourceTree = "<group>"; };
+		CE0757142F08A00300C53D17 /* RecentlyUsedFiltersManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecentlyUsedFiltersManager.swift; sourceTree = "<group>"; };
 		CED9E57E2F06F811002E41A9 /* Screenshot 2026-01-01 at 8.43.31 PM.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Screenshot 2026-01-01 at 8.43.31 PM.png"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -181,6 +185,7 @@
 				A1000001229E000000001011 /* Filters */,
 				A1000001229E000000001020 /* Metal */,
 				A1000001229E000000001040 /* Processing */,
+				CE0757122F08A00200C53D17 /* Storage */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -197,6 +202,7 @@
 				CE0756FA2F05800100C53D17 /* FilterStorage.swift */,
 				CE0756FB2F05800200C53D17 /* FujiRecipeImporter.swift */,
 				CE0756FE2F05800300C53D17 /* FilterPreviewCache.swift */,
+				CE0757142F08A00300C53D17 /* RecentlyUsedFiltersManager.swift */,
 			);
 			path = Filters;
 			sourceTree = "<group>";
@@ -226,6 +232,14 @@
 				CE0756F32F05700200C53D17 /* ImportedPhotosManager.swift */,
 			);
 			path = Processing;
+			sourceTree = "<group>";
+		};
+		CE0757122F08A00200C53D17 /* Storage */ = {
+			isa = PBXGroup;
+			children = (
+				CE0757112F08A00100C53D17 /* CloudBackupManager.swift */,
+			);
+			path = Storage;
 			sourceTree = "<group>";
 		};
 		A1000001229E000000001050 /* Features */ = {
@@ -545,6 +559,8 @@
 				CE0756FD2F05800300C53D17 /* FilterPreviewCache.swift in Sources */,
 				CE07570B2F05900100C53D17 /* AppSettings.swift in Sources */,
 				CE07570D2F05900100C53D17 /* SettingsView.swift in Sources */,
+				CE0757102F08A00100C53D17 /* CloudBackupManager.swift in Sources */,
+				CE0757132F08A00300C53D17 /* RecentlyUsedFiltersManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -131,6 +131,9 @@ actor FilterStorage {
         userPresets.append(newPreset)
         try await persistToDisk()
 
+        // Trigger iCloud backup
+        Task { await CloudBackupManager.shared.backupNow() }
+
         return newPreset
     }
 
@@ -149,6 +152,9 @@ actor FilterStorage {
         userPresets[index] = updatedPreset
 
         try await persistToDisk()
+
+        // Trigger iCloud backup
+        Task { await CloudBackupManager.shared.backupNow() }
     }
 
     /// Delete a user preset
@@ -168,6 +174,9 @@ actor FilterStorage {
 
         userPresets.remove(at: index)
         try await persistToDisk()
+
+        // Trigger iCloud backup
+        Task { await CloudBackupManager.shared.backupNow() }
     }
 
     /// Get a preset by ID

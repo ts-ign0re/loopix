@@ -31,7 +31,20 @@ actor RecentlyUsedFiltersManager {
     // MARK: - Initialization
 
     init() {
-        loadFromStorage()
+        // Load synchronously during init (inline to avoid actor isolation issue)
+        if let data = UserDefaults.standard.data(forKey: Self.userDefaultsKey) {
+            do {
+                let storage = try JSONDecoder().decode(RecentFiltersStorage.self, from: data)
+                recentFilterIDs = storage.recentFilterIDs
+                favoriteFilterIDs = Set(storage.favoriteFilterIDs)
+                lastUsedTimestamps = storage.lastUsedTimestamps
+            } catch {
+                // Storage corrupted, start fresh
+                recentFilterIDs = []
+                favoriteFilterIDs = []
+                lastUsedTimestamps = [:]
+            }
+        }
     }
 
     // MARK: - Public Methods
@@ -99,10 +112,11 @@ actor RecentlyUsedFiltersManager {
     /// - Returns: True if now favorited, false if unfavorited
     @discardableResult
     func toggleFavorite(_ preset: FilterPreset) -> Bool {
+        let result: Bool
         if favoriteFilterIDs.contains(preset.id) {
             favoriteFilterIDs.remove(preset.id)
             saveToStorage()
-            return false
+            result = false
         } else {
             if favoriteFilterIDs.count >= Self.maxFavoriteItems {
                 // Remove oldest favorite if at limit
@@ -110,8 +124,13 @@ actor RecentlyUsedFiltersManager {
             }
             favoriteFilterIDs.insert(preset.id)
             saveToStorage()
-            return true
+            result = true
         }
+
+        // Trigger iCloud backup
+        Task { await CloudBackupManager.shared.backupNow() }
+
+        return result
     }
 
     /// Check if a preset is favorited
