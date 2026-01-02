@@ -398,11 +398,13 @@ actor FilterPreviewCache {
     }
 
     private func cacheKey(for preset: FilterPreset) -> String {
-        // Include CLUT path and intensity in key
+        // Use only stable components (hashValue changes between app launches!)
+        // - preset.id (UUID is stable)
+        // - clutPath (if any)
+        // - clutIntensity
         let clutPart = preset.clutPath ?? "noclut"
         let intensityPart = Int(preset.clutIntensity)
-        let paramHash = preset.parameters.hashValue
-        return "filter_\(preset.id.uuidString)_\(clutPart)_\(intensityPart)_\(paramHash)"
+        return "filter_\(preset.id.uuidString)_\(clutPart)_\(intensityPart)"
             .replacingOccurrences(of: "/", with: "_")
             .replacingOccurrences(of: " ", with: "_")
     }
@@ -486,11 +488,17 @@ extension FilterPreviewCache {
 
     /// Delete cached preview for a filter
     func deletePreview(for presetID: UUID) async {
-        let key = "filter_\(presetID.uuidString)"
-        memoryCache.removeObject(forKey: NSString(string: key))
-        // Remove disk cache file
-        let fileURL = diskCacheURL.appendingPathComponent("\(key).jpg")
-        try? FileManager.default.removeItem(at: fileURL)
+        let prefix = "filter_\(presetID.uuidString)_"
+
+        // Remove from disk cache - find all files matching the prefix
+        if let contents = try? FileManager.default.contentsOfDirectory(at: diskCacheURL, includingPropertiesForKeys: nil) {
+            for url in contents where url.lastPathComponent.hasPrefix(prefix) {
+                try? FileManager.default.removeItem(at: url)
+            }
+        }
+
+        // Note: NSCache doesn't support prefix removal, but items will be
+        // regenerated with correct key on next access
     }
 
     /// Regenerate preview for a filter

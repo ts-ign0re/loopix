@@ -5,10 +5,6 @@ import Photos
 @Observable
 final class AppCoordinator {
 
-    /// Whether to use the new VSCO-style EditorV2
-    @ObservationIgnored
-    @AppStorage("useEditorV2") var useEditorV2: Bool = false
-
     // MARK: - Navigation Destinations
 
     /// All possible navigation destinations in the app
@@ -165,29 +161,12 @@ struct GalleryViewPlaceholder: View {
     }
 }
 
-/// Placeholder for the editor view (supports both Editor and EditorV2)
+/// Placeholder for the editor view
 struct EditorViewPlaceholder: View {
     let photoId: String
-    @AppStorage("useEditorV2") private var useEditorV2: Bool = false
 
     var body: some View {
-        if useEditorV2 {
-            EditorV2View(viewModel: EditorV2ViewModel())
-        } else {
-            // Original editor placeholder
-            VStack(spacing: 16) {
-                Image(systemName: "slider.horizontal.3")
-                    .font(.system(size: 60))
-                    .foregroundStyle(.secondary)
-                Text("Editor")
-                    .font(.title)
-                    .fontWeight(.semibold)
-                Text("Editing photo: \(photoId)")
-                    .foregroundStyle(.secondary)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color(.systemGroupedBackground))
-        }
+        EditorV2View(viewModel: EditorV2ViewModel())
     }
 }
 

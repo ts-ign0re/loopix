@@ -96,7 +96,7 @@ final class FujiRecipeImporter {
         return FilterPreset(
             id: UUID(),
             name: recipe.name,
-            category: .film,
+            category: .fujiRecipes,
             source: .imported(sourceName: "Fuji Recipe"),
             parameters: parameters,
             metadata: FilterPreset.FilterMetadata(

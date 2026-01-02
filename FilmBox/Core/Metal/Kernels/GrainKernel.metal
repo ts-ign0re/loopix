@@ -85,34 +85,26 @@ float voronoiGrain(float2 p, float roughness) {
     return secondDist - minDist;
 }
 
-// Film-like noise combining organic simplex structure with gaussian detail
+// Per-pixel Gaussian film noise - uniform distribution without visible patterns
 float filmNoise(float2 p, float roughness, float seed) {
-    // Organic base from simplex - creates crystal-like structure
-    float organic = simplex2D(p * 0.8) * 0.5;
+    // Primary per-pixel Gaussian noise - each pixel is independent
+    float2 gaussian = gaussianRandom(p, seed);
+    float noise = gaussian.x;
 
-    // Add second layer of simplex at different scale for variation
-    organic += simplex2D(p * 1.7 + 100.0) * 0.3;
-
-    // Add gaussian detail for fine texture
-    float value = 0.0;
-    float amplitude = 1.0;
-    float totalAmp = 0.0;
-    float frequency = 1.0;
-    int octaves = int(mix(2.0, 4.0, roughness));
-
-    for (int i = 0; i < octaves; i++) {
-        float2 gaussian = gaussianRandom(p * frequency, seed + float(i) * 7.3);
-        value += amplitude * gaussian.x;
-        totalAmp += amplitude;
-        amplitude *= 0.5;
-        frequency *= 2.0;
+    // Add subtle second octave for texture variation (controlled by roughness)
+    if (roughness > 0.2) {
+        float2 detail = gaussianRandom(p * 2.0 + 50.0, seed + 7.3);
+        // Mix in detail proportional to roughness
+        noise = noise + detail.x * 0.25 * roughness;
     }
 
-    float detail = value / totalAmp;
+    // Optional third octave for very rough grain
+    if (roughness > 0.6) {
+        float2 fine = gaussianRandom(p * 3.5 + 100.0, seed + 13.7);
+        noise = noise + fine.x * 0.15 * (roughness - 0.6);
+    }
 
-    // Mix: 55% organic structure, 45% gaussian detail
-    // This gives film-like clumpy appearance rather than digital noise
-    return mix(organic, detail, 0.45);
+    return noise;
 }
 
 // Film grain kernel - simulates photographic film grain
@@ -135,8 +127,8 @@ extern "C" float4 grainKernel(coreimage::sampler src,
     // Get destination coordinates
     float2 coord = dest.coord();
 
-    // Calculate grain size factor - larger base size for visible film-like grain
-    float sizeScale = 0.7 / max(size, 0.5);
+    // Calculate grain size factor - higher frequency for uniform per-pixel grain
+    float sizeScale = 2.0 / max(size, 0.5);
 
     // Grain coordinates with optional temporal variation
     float2 grainCoord = coord * sizeScale;
@@ -156,20 +148,8 @@ extern "C" float4 grainKernel(coreimage::sampler src,
     float exposureResponse = pow(luminance, 0.7) * (1.0 - pow(luminance, 2.5));
     exposureResponse = max(exposureResponse, 0.15); // Minimum grain in deep shadows
 
-    // Add grain clustering using Voronoi for more organic look
-    // Enhanced clustering for visible crystal clumps like real film
-    float clusterNoise = voronoiGrain(grainCoord * 0.25, 0.9);
-    float clusterFactor = mix(0.5, 1.5, smoothstep(0.0, 0.5, clusterNoise));
-
-    // Generate main grain noise with Gaussian distribution
+    // Generate main grain noise with Gaussian distribution (per-pixel, no clustering)
     float grain = filmNoise(grainCoord, roughness, seed);
-
-    // Add fine detail layer for high-ISO look
-    float fineGrain = filmNoise(grainCoord * 2.5, roughness * 0.7, seed + 11.7) * 0.3;
-    grain = grain + fineGrain;
-
-    // Apply clustering
-    grain *= clusterFactor;
 
     // Scale grain by exposure response and amount
     // Increased intensity for strong, visible film-like grain

@@ -14,6 +14,7 @@ struct VSCOFilterCategoryBar: View {
         .portrait,
         .urban,
         .film,
+        .fujiRecipes,
         .bw,
         .vintage,
         .custom
@@ -87,6 +88,8 @@ extension FilterCategory {
             return "" // Shows star icon instead
         case .custom:
             return "my filters"
+        case .fujiRecipes:
+            return "fuji x"
         default:
             return rawValue.lowercased()
         }
