@@ -46,6 +46,8 @@ struct FujiRecipeFormView: View {
     @State private var clarity: Int = 0
 
     @State private var isCreating = false
+    @State private var showHelp = false
+    @State private var showNameRequired = false
 
     // MARK: - Callback
 
@@ -75,23 +77,141 @@ struct FujiRecipeFormView: View {
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .principal) {
-                    Text("/ fuji_recipe")
-                        .font(.system(size: 17, weight: .semibold, design: .monospaced))
-                        .foregroundStyle(.white)
+                    HStack(spacing: 8) {
+                        Text("/ fuji_recipe")
+                            .font(.system(size: 17, weight: .semibold, design: .monospaced))
+                            .foregroundStyle(.white)
+                        Button {
+                            showHelp = true
+                        } label: {
+                            Image(systemName: "questionmark.circle")
+                                .font(.system(size: 16))
+                                .foregroundStyle(.white.opacity(0.4))
+                        }
+                    }
                 }
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("cancel") {
+                    Button {
                         dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundStyle(.white.opacity(0.6))
                     }
-                    .font(.system(size: 15, weight: .medium, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.6))
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     createButton
                 }
             }
+            .sheet(isPresented: $showHelp) {
+                recipeHelpSheet
+            }
         }
         .preferredColorScheme(.dark)
+    }
+
+    // MARK: - Help Sheet
+
+    private var recipeHelpSheet: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            // Header
+            HStack {
+                Text("// fuji_recipe_help")
+                    .font(.system(size: 17, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(.white)
+                Spacer()
+                Button {
+                    showHelp = false
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundStyle(.white.opacity(0.6))
+                }
+            }
+            .padding(.top, 20)
+            .padding(.bottom, 8)
+
+            // Content
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    // Definition
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("fuji x recipes are custom jpeg settings for fujifilm cameras that replicate classic film stocks and unique color grades in-camera.")
+                            .font(.system(size: 14, design: .monospaced))
+                            .foregroundStyle(.white.opacity(0.9))
+                            .lineSpacing(4)
+
+                        Text("popularized by fujixweekly.com, recipes let photographers achieve film-like results without post-processing.")
+                            .font(.system(size: 12, design: .monospaced))
+                            .foregroundStyle(.white.opacity(0.5))
+                            .lineSpacing(3)
+                    }
+                    .padding(12)
+                    .background(Color.white.opacity(0.05))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+
+                    Text("enter values from your camera or a recipe you found online:")
+                        .font(.system(size: 13, design: .monospaced))
+                        .foregroundStyle(.white.opacity(0.7))
+
+                    VStack(alignment: .leading, spacing: 12) {
+                        helpItem(
+                            title: "film simulation",
+                            desc: "base look of the filter. classic chrome, velvia, acros, etc."
+                        )
+
+                        helpItem(
+                            title: "white balance shift",
+                            desc: "red/blue color shift. range: -9 to +9."
+                        )
+
+                        helpItem(
+                            title: "dynamic range",
+                            desc: "dr100 = standard, dr200/400 = more shadow detail."
+                        )
+
+                        helpItem(
+                            title: "highlight / shadow",
+                            desc: "tone curve adjustments. range: -2 to +4."
+                        )
+
+                        helpItem(
+                            title: "color",
+                            desc: "saturation level. range: -4 to +4."
+                        )
+
+                        helpItem(
+                            title: "grain effect",
+                            desc: "adds film grain. weak/strong + small/large."
+                        )
+
+                        helpItem(
+                            title: "color chrome",
+                            desc: "deepens saturated colors. off/weak/strong."
+                        )
+                    }
+                }
+            }
+
+            Spacer()
+        }
+        .padding(.horizontal, 20)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color(white: 0.12))
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
+    }
+
+    private func helpItem(title: String, desc: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(.system(size: 13, weight: .semibold, design: .monospaced))
+                .foregroundStyle(.yellow)
+            Text(desc)
+                .font(.system(size: 12, design: .monospaced))
+                .foregroundStyle(.white.opacity(0.7))
+                .lineSpacing(2)
+        }
     }
 
     // MARK: - Sections
@@ -236,19 +356,28 @@ struct FujiRecipeFormView: View {
 
     private var createButton: some View {
         Button {
-            Task {
-                await createFilter()
+            if name.trimmingCharacters(in: .whitespaces).isEmpty {
+                showNameRequired = true
+            } else {
+                Task {
+                    await createFilter()
+                }
             }
         } label: {
             if isCreating {
                 ApertureLoader(size: 20, color: .yellow)
             } else {
-                Text("create")
-                    .font(.system(size: 15, weight: .semibold, design: .monospaced))
-                    .foregroundStyle(name.isEmpty ? .white.opacity(0.3) : .yellow)
+                Image(systemName: "checkmark")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(name.trimmingCharacters(in: .whitespaces).isEmpty ? .white.opacity(0.3) : .yellow)
             }
         }
-        .disabled(name.isEmpty || isCreating)
+        .disabled(isCreating)
+        .alert("// name_required", isPresented: $showNameRequired) {
+            Button("ok", role: .cancel) {}
+        } message: {
+            Text("enter a name for your recipe")
+        }
     }
 
     // MARK: - Create Filter

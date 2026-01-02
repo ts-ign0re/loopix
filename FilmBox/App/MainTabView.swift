@@ -702,6 +702,16 @@ struct LibraryContentView: View {
             if !urls.isEmpty {
                 let activityVC = UIActivityViewController(
                     activityItems: urls, applicationActivities: nil)
+
+                // Clear selection after share sheet is dismissed
+                activityVC.completionWithItemsHandler = { _, completed, _, _ in
+                    if completed {
+                        Task { @MainActor in
+                            manager.clearSelection()
+                        }
+                    }
+                }
+
                 if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
                     let window = windowScene.windows.first,
                     let rootVC = window.rootViewController

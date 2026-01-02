@@ -75,7 +75,7 @@ struct VSCOFilterPreviewCell: View {
                     onLongPress?()
                 }
         )
-        .task {
+        .task(id: sourceImage) {
             await loadThumbnail()
         }
     }

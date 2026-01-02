@@ -250,8 +250,11 @@ actor EditedPhotoStorage {
             return 0
         }
 
+        // Collect all URLs first to avoid async iteration issues
+        let allURLs = enumerator.compactMap { $0 as? URL }
+
         var totalSize = 0
-        for case let fileURL as URL in enumerator {
+        for fileURL in allURLs {
             if let resourceValues = try? fileURL.resourceValues(forKeys: [.fileSizeKey]),
                let fileSize = resourceValues.fileSize {
                 totalSize += fileSize

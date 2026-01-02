@@ -12,6 +12,7 @@ struct SettingsView: View {
     @State private var settings = AppSettings.shared
     @State private var manager = ImportedPhotosManager.shared
     @State private var storageUsed: Int = 0
+    @State private var cacheSize: Int = 0
     @State private var showClearPhotosConfirmation = false
     @State private var showClearCacheConfirmation = false
     @State private var showCopiedToast = false
@@ -84,6 +85,21 @@ struct SettingsView: View {
             Analytics.shared.trackScreen(.settings)
 
             storageUsed = manager.calculateStorageUsed()
+
+            Task {
+                // Add EditedPhotos storage to total
+                let editedSize = await EditedPhotoStorage.shared.totalStorageUsed()
+
+                // Calculate cache sizes
+                let thumbnailCacheSize = await ThumbnailCache.shared.cacheSize()
+                let filterPreviewCacheSize = await FilterPreviewCache.shared.diskCacheSize()
+
+                await MainActor.run {
+                    storageUsed += editedSize
+                    cacheSize = thumbnailCacheSize + filterPreviewCacheSize
+                }
+            }
+
             Task {
                 backupInfo = await CloudBackupManager.shared.getBackupInfo()
             }
@@ -234,7 +250,7 @@ struct SettingsView: View {
                 let limitGB = settings.storageLimitGB
                 let percentage = min(usedGB / limitGB, 1.0)
 
-                Text("used: \(String(format: "%.1f", usedGB))gb / \(String(format: "%.0f", limitGB))gb")
+                Text("used: \(formatBytes(storageUsed)) / \(Int(limitGB))gb")
                     .font(.system(size: 13, weight: .medium, design: .monospaced))
                     .foregroundStyle(.white.opacity(0.8))
 
@@ -299,7 +315,7 @@ struct SettingsView: View {
                 clearButton(
                     title: "clear_cache()",
                     comment: "// removes temporary files",
-                    size: formatBytes(getCacheSize())
+                    size: formatBytes(cacheSize)
                 ) {
                     showClearCacheConfirmation = true
                 }
@@ -758,19 +774,25 @@ struct SettingsView: View {
     }
 
     private func clearCache() {
-        let cacheSize = getCacheSize()
+        let clearedSize = cacheSize
 
-        // Clear thumbnail cache
+        Task {
+            // Clear ThumbnailCache (disk + memory)
+            await ThumbnailCache.shared.clearCache()
+
+            // Clear FilterPreviewCache (disk + memory)
+            await FilterPreviewCache.shared.clearAllCaches()
+
+            await MainActor.run {
+                cacheSize = 0
+            }
+        }
+
+        // Clear memory cache in ImportedPhotosManager
         manager.clearThumbnailCache()
-        // TODO: Clear filter preview cache if available
 
         // Track cache clear
-        Analytics.shared.trackCacheClear(type: "cache", sizeCleared: cacheSize)
-    }
-
-    private func getCacheSize() -> Int {
-        // Estimate cache size (in a real implementation, calculate from cache directories)
-        return 50 * 1024 * 1024 // Placeholder: 50MB
+        Analytics.shared.trackCacheClear(type: "cache", sizeCleared: clearedSize)
     }
 
     private func formatBytes(_ bytes: Int) -> String {
