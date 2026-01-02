@@ -7,6 +7,7 @@ struct VSCOFiltersTabView: View {
     @State private var isLoadingFilters: Bool = false
     @State private var favoriteIDs: Set<UUID> = []
     @State private var starAnimationFilterID: UUID? = nil
+    @State private var showFujiRecipeForm: Bool = false
 
     var body: some View {
         ZStack {
@@ -31,6 +32,9 @@ struct VSCOFiltersTabView: View {
                     onFilterDoubleTap: { _ in },
                     onFilterLongPress: { filter in
                         toggleFavorite(filter)
+                    },
+                    onAddRecipeTap: {
+                        showFujiRecipeForm = true
                     }
                 )
             }
@@ -47,6 +51,13 @@ struct VSCOFiltersTabView: View {
         }
         .onChange(of: viewModel.selectedFilterCategory) { _, _ in
             // Filters are recalculated via filteredPresets
+        }
+        .sheet(isPresented: $showFujiRecipeForm) {
+            FujiRecipeFormView { newPreset in
+                // Add to filters and select it
+                filters.append(newPreset)
+                viewModel.selectFilter(newPreset)
+            }
         }
     }
 

@@ -11,26 +11,15 @@ struct VSCOFilterPreviewStrip: View {
     let onFilterTapWhenSelected: (FilterPreset?) -> Void
     let onFilterDoubleTap: (FilterPreset?) -> Void
     var onFilterLongPress: ((FilterPreset) -> Void)? = nil
+    var onAddRecipeTap: (() -> Void)? = nil
 
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack(spacing: VSCOFilterPreviewCell.spacing) {
-                    // Original (no filter) cell
-                    VSCOFilterPreviewCell(
-                        filter: nil,
-                        sourceImage: sourceImage,
-                        isSelected: selectedFilter == nil,
-                        isFavorite: false,
-                        onTap: {
-                            selectFilter(nil)
-                        },
-                        onDoubleTap: {
-                            onFilterDoubleTap(nil)
-                        },
-                        onLongPress: nil
-                    )
-                    .id("original")
+                    // Add recipe button (replaces original)
+                    addRecipeButton
+                        .id("addRecipe")
 
                     // Filter cells
                     ForEach(filters) { filter in
@@ -58,13 +47,42 @@ struct VSCOFilterPreviewStrip: View {
                 withAnimation(.easeInOut(duration: 0.2)) {
                     if let id = newValue {
                         proxy.scrollTo(id, anchor: .center)
-                    } else {
-                        proxy.scrollTo("original", anchor: .center)
                     }
                 }
             }
         }
         .frame(height: VSCOFilterPreviewCell.cellHeight + 8)
+    }
+
+    // MARK: - Add Recipe Button
+
+    private var addRecipeButton: some View {
+        Button {
+            onAddRecipeTap?()
+        } label: {
+            VStack(spacing: 4) {
+                // Plus icon in rounded rect
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Color.white.opacity(0.1))
+                    .frame(width: VSCOFilterPreviewCell.cellWidth, height: VSCOFilterPreviewCell.imageHeight)
+                    .overlay {
+                        Image(systemName: "plus")
+                            .font(.system(size: 24, weight: .medium))
+                            .foregroundColor(.yellow)
+                    }
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 4)
+                            .strokeBorder(Color.yellow.opacity(0.3), lineWidth: 1)
+                    )
+
+                // Label
+                Text("new")
+                    .font(.system(size: 10, weight: .medium, design: .monospaced))
+                    .foregroundColor(.yellow.opacity(0.8))
+            }
+            .frame(width: VSCOFilterPreviewCell.cellWidth)
+        }
+        .buttonStyle(.plain)
     }
 
     private func selectFilter(_ filter: FilterPreset?) {

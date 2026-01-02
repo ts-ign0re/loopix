@@ -49,7 +49,7 @@ struct ActionButtonsWithTitle: View {
 
             // Title in center
             Text(title)
-                .font(.system(size: 15, weight: .medium))
+                .font(.system(size: 15, weight: .medium, design: .monospaced))
                 .foregroundColor(.white)
 
             Spacer()

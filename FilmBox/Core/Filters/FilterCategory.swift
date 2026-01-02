@@ -4,6 +4,7 @@ import Foundation
 enum FilterCategory: String, Codable, CaseIterable, Sendable {
     case favorites = "favourites"
     case custom = "my"
+    case fujiRecipes = "fuji"
     case all = "filters"
     case cool = "cool"
     case warm = "warm"
@@ -14,11 +15,10 @@ enum FilterCategory: String, Codable, CaseIterable, Sendable {
     case bw = "b&w"
     case vintage = "vintage"
     case creative = "creative"
-    case fujiRecipes = "fuji"
 
     var displayName: String {
         switch self {
-        case .fujiRecipes: return "fuji x"
+        case .fujiRecipes: return "fuji recipes"
         default: return rawValue
         }
     }

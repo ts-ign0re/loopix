@@ -28,21 +28,21 @@ struct FujiRecipeFormView: View {
 
     @Environment(\.dismiss) private var dismiss
 
-    // MARK: - Form State (defaults: Savanna Chrome for testing)
+    // MARK: - Form State
 
-    @State private var name = "Savanna Chrome"
-    @State private var filmSimulation: FilmSimulationType = .classicChrome
-    @State private var grainEffect: GrainEffectOption = .strongSmall
-    @State private var colorChrome: ColorChromeData.ColorChromeLevel = .strong
-    @State private var colorChromeFxBlue: ColorChromeData.ColorChromeLevel = .weak
-    @State private var wbRedShift: Int = 2
-    @State private var wbBlueShift: Int = -3
+    @State private var name = ""
+    @State private var filmSimulation: FilmSimulationType = .classicNegative
+    @State private var grainEffect: GrainEffectOption = .off
+    @State private var colorChrome: ColorChromeData.ColorChromeLevel = .off
+    @State private var colorChromeFxBlue: ColorChromeData.ColorChromeLevel = .off
+    @State private var wbRedShift: Int = 0
+    @State private var wbBlueShift: Int = 0
     @State private var dynamicRange: DynamicRangeMode = .dr400
-    @State private var highlight: Float = -2
-    @State private var shadow: Float = -1.5
-    @State private var color: Int = -1
-    @State private var sharpness: Int = -1
-    @State private var noiseReduction: Int = -4
+    @State private var highlight: Float = 0
+    @State private var shadow: Float = 0
+    @State private var color: Int = 0
+    @State private var sharpness: Int = 0
+    @State private var noiseReduction: Int = 0
     @State private var clarity: Int = 0
 
     @State private var isCreating = false

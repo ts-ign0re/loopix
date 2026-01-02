@@ -389,14 +389,6 @@ struct FiltersManagementView: View {
                             }
                             .transition(.move(edge: .bottom).combined(with: .opacity))
 
-                            // Add new - always visible
-                            fabMenuItem(title: "add new", icon: "plus.circle") {
-                                filterToEdit = nil
-                                showFilterEditor = true
-                                isFabExpanded = false
-                            }
-                            .transition(.move(edge: .bottom).combined(with: .opacity))
-
                             // Duplicate - only when filter selected
                             if selectedFilter != nil {
                                 fabMenuItem(title: "duplicate", icon: "doc.on.doc") {

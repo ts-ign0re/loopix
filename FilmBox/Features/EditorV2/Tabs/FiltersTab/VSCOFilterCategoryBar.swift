@@ -8,16 +8,16 @@ struct VSCOFilterCategoryBar: View {
     /// Categories to display (VSCO-style order) - removed .all since we don't show "filters" label
     private let categories: [FilterCategory] = [
         .favorites,
+        .custom,
+        .fujiRecipes,
         .cool,
         .warm,
         .pro,
         .portrait,
         .urban,
         .film,
-        .fujiRecipes,
         .bw,
-        .vintage,
-        .custom
+        .vintage
     ]
 
     var body: some View {
@@ -89,7 +89,7 @@ extension FilterCategory {
         case .custom:
             return "my filters"
         case .fujiRecipes:
-            return "fuji x"
+            return "fuji recipes"
         default:
             return rawValue.lowercased()
         }
