@@ -781,54 +781,25 @@ final class EditorViewModel {
     // MARK: - Grain
 
     private func applyGrain(_ grain: GrainData, to image: CIImage) -> CIImage {
-        let extent = image.extent
+        // Use Metal kernel for realistic film grain
+        let amount = grain.amount / 100.0
+        let size = 0.5 + (1.0 - grain.size) * 3.5  // Invert: UI 0 → Metal 4.0, UI 1 → Metal 0.5
+        let roughness = grain.roughness
+        let monochromatic = grain.monochromatic
 
-        guard let noiseFilter = CIFilter(name: "CIRandomGenerator"),
-              let noiseImage = noiseFilter.outputImage else { return image }
-
-        let grainScale = CGFloat(3.0 + (grain.size * 7.0))
-        var grainNoise = noiseImage.transformed(by: CGAffineTransform(scaleX: grainScale, y: grainScale))
-        grainNoise = grainNoise.cropped(to: extent)
-
-        guard let grayscaleFilter = CIFilter(name: "CIColorMatrix") else { return image }
-        grayscaleFilter.setValue(grainNoise, forKey: kCIInputImageKey)
-        grayscaleFilter.setValue(CIVector(x: 0.33, y: 0.33, z: 0.33, w: 0), forKey: "inputRVector")
-        grayscaleFilter.setValue(CIVector(x: 0.33, y: 0.33, z: 0.33, w: 0), forKey: "inputGVector")
-        grayscaleFilter.setValue(CIVector(x: 0.33, y: 0.33, z: 0.33, w: 0), forKey: "inputBVector")
-        grayscaleFilter.setValue(CIVector(x: 0, y: 0, z: 0, w: 1), forKey: "inputAVector")
-        grayscaleFilter.setValue(CIVector(x: 0, y: 0, z: 0, w: 0), forKey: "inputBiasVector")
-
-        guard var grayNoise = grayscaleFilter.outputImage else { return image }
-
-        let blurRadius = 0.5 + (grain.size * 1.0)
-        if let blurFilter = CIFilter(name: "CIGaussianBlur") {
-            blurFilter.setValue(grayNoise, forKey: kCIInputImageKey)
-            blurFilter.setValue(blurRadius, forKey: kCIInputRadiusKey)
-            if let blurred = blurFilter.outputImage {
-                grayNoise = blurred.cropped(to: extent)
-            }
+        do {
+            return try MetalFilterLoader.shared.applyGrain(
+                to: image,
+                amount: amount,
+                size: size,
+                roughness: roughness,
+                monochromatic: monochromatic,
+                time: 0.0  // Static grain for photos
+            )
+        } catch {
+            // Fallback: return original image if Metal fails
+            return image
         }
-
-        let intensity = grain.amount / 100.0
-
-        guard let adjustFilter = CIFilter(name: "CIColorMatrix") else { return image }
-        adjustFilter.setValue(grayNoise, forKey: kCIInputImageKey)
-
-        let grainStrength = CGFloat(intensity * 0.4)
-        adjustFilter.setValue(CIVector(x: grainStrength, y: 0, z: 0, w: 0), forKey: "inputRVector")
-        adjustFilter.setValue(CIVector(x: 0, y: grainStrength, z: 0, w: 0), forKey: "inputGVector")
-        adjustFilter.setValue(CIVector(x: 0, y: 0, z: grainStrength, w: 0), forKey: "inputBVector")
-        adjustFilter.setValue(CIVector(x: 0, y: 0, z: 0, w: 1), forKey: "inputAVector")
-        let bias = CGFloat(0.5 - (grainStrength * 0.5))
-        adjustFilter.setValue(CIVector(x: bias, y: bias, z: bias, w: 0), forKey: "inputBiasVector")
-
-        guard let adjustedNoise = adjustFilter.outputImage else { return image }
-
-        guard let blendFilter = CIFilter(name: "CIOverlayBlendMode") else { return image }
-        blendFilter.setValue(adjustedNoise, forKey: kCIInputImageKey)
-        blendFilter.setValue(image, forKey: kCIInputBackgroundImageKey)
-
-        return blendFilter.outputImage ?? image
     }
 
     // MARK: - Bloom

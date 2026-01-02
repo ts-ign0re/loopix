@@ -8,24 +8,20 @@ struct ToolDetailView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Image preview with histogram
+            // Image preview with histogram - takes all available space
             VSCOImagePreview(
                 viewModel: viewModel,
                 showHistogram: true,
                 showIntensitySlider: false
             )
-            .frame(height: geometry.size.height * 0.55)
+            .frame(maxHeight: .infinity)
 
-            Spacer()
-
-            // Tool-specific content
+            // Tool-specific content - compact
             if isComplexTool {
                 complexToolSliders
             } else {
                 simpleToolSlider
             }
-
-            Spacer()
 
             // Bottom controls: X - Tool name - ✓
             HStack {
@@ -59,7 +55,7 @@ struct ToolDetailView: View {
                 }
             }
             .padding(.horizontal, 16)
-            .padding(.bottom, 24)
+            .padding(.bottom, 16)
         }
     }
 
@@ -92,7 +88,7 @@ struct ToolDetailView: View {
     /// Simple single slider for most tools
     @ViewBuilder
     private var simpleToolSlider: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 6) {
             // Value display
             Text(formattedValue)
                 .font(.system(size: 17, weight: .medium, design: .monospaced))
@@ -109,13 +105,13 @@ struct ToolDetailView: View {
                 style: sliderStyle
             )
         }
-        .padding(.vertical, 16)
+        .padding(.vertical, 8)
     }
 
     /// Multiple sliders for complex tools (Grain, Vignette, etc.)
     @ViewBuilder
     private var complexToolSliders: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: 16) {
             switch tool.parameterType {
             case .grain:
                 grainSliders
@@ -130,7 +126,7 @@ struct ToolDetailView: View {
             }
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 16)
+        .padding(.vertical, 8)
     }
 
     // MARK: - Complex Tool Sliders
@@ -325,7 +321,7 @@ struct LabeledSlider: View {
     let range: ClosedRange<Float>
 
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 4) {
             HStack {
                 Text(label)
                     .font(.system(size: 12, weight: .medium, design: .monospaced))

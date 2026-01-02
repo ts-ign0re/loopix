@@ -31,6 +31,32 @@ float hash(float2 p) {
     return fract((p3.x + p3.y) * p3.z);
 }
 
+// Simplex 2D noise for organic grain structure (like film crystals)
+float3 permute(float3 x) { return fmod(((x*34.0)+1.0)*x, 289.0); }
+
+float simplex2D(float2 v) {
+    const float4 C = float4(0.211324865405187, 0.366025403784439,
+                           -0.577350269189626, 0.024390243902439);
+    float2 i  = floor(v + dot(v, C.yy));
+    float2 x0 = v - i + dot(i, C.xx);
+    float2 i1 = (x0.x > x0.y) ? float2(1.0, 0.0) : float2(0.0, 1.0);
+    float4 x12 = x0.xyxy + C.xxzz;
+    x12.xy -= i1;
+    i = fmod(i, 289.0);
+    float3 p = permute(permute(i.y + float3(0.0, i1.y, 1.0)) + i.x + float3(0.0, i1.x, 1.0));
+    float3 m = max(0.5 - float3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
+    m = m*m; m = m*m;
+    float3 x = 2.0 * fract(p * C.www) - 1.0;
+    float3 h = abs(x) - 0.5;
+    float3 ox = floor(x + 0.5);
+    float3 a0 = x - ox;
+    m *= 1.79284291400159 - 0.85373472095314 * (a0*a0 + h*h);
+    float3 g;
+    g.x = a0.x * x0.x + h.x * x0.y;
+    g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+    return 130.0 * dot(m, g);
+}
+
 // Voronoi-based grain clustering (simulates silver halide crystal clumping)
 float voronoiGrain(float2 p, float roughness) {
     float2 i = floor(p);
@@ -59,25 +85,34 @@ float voronoiGrain(float2 p, float roughness) {
     return secondDist - minDist;
 }
 
-// Multi-octave noise with proper falloff
+// Film-like noise combining organic simplex structure with gaussian detail
 float filmNoise(float2 p, float roughness, float seed) {
+    // Organic base from simplex - creates crystal-like structure
+    float organic = simplex2D(p * 0.8) * 0.5;
+
+    // Add second layer of simplex at different scale for variation
+    organic += simplex2D(p * 1.7 + 100.0) * 0.3;
+
+    // Add gaussian detail for fine texture
     float value = 0.0;
     float amplitude = 1.0;
     float totalAmp = 0.0;
     float frequency = 1.0;
-
-    // More octaves for rougher grain
-    int octaves = int(mix(2.0, 5.0, roughness));
+    int octaves = int(mix(2.0, 4.0, roughness));
 
     for (int i = 0; i < octaves; i++) {
         float2 gaussian = gaussianRandom(p * frequency, seed + float(i) * 7.3);
         value += amplitude * gaussian.x;
         totalAmp += amplitude;
         amplitude *= 0.5;
-        frequency *= 2.1;
+        frequency *= 2.0;
     }
 
-    return value / totalAmp;
+    float detail = value / totalAmp;
+
+    // Mix: 55% organic structure, 45% gaussian detail
+    // This gives film-like clumpy appearance rather than digital noise
+    return mix(organic, detail, 0.45);
 }
 
 // Film grain kernel - simulates photographic film grain
@@ -100,8 +135,8 @@ extern "C" float4 grainKernel(coreimage::sampler src,
     // Get destination coordinates
     float2 coord = dest.coord();
 
-    // Calculate grain size factor
-    float sizeScale = 1.0 / max(size, 0.5);
+    // Calculate grain size factor - larger base size for visible film-like grain
+    float sizeScale = 0.7 / max(size, 0.5);
 
     // Grain coordinates with optional temporal variation
     float2 grainCoord = coord * sizeScale;
@@ -122,8 +157,9 @@ extern "C" float4 grainKernel(coreimage::sampler src,
     exposureResponse = max(exposureResponse, 0.15); // Minimum grain in deep shadows
 
     // Add grain clustering using Voronoi for more organic look
-    float clusterNoise = voronoiGrain(grainCoord * 0.3, 0.8);
-    float clusterFactor = mix(0.7, 1.3, clusterNoise);
+    // Enhanced clustering for visible crystal clumps like real film
+    float clusterNoise = voronoiGrain(grainCoord * 0.25, 0.9);
+    float clusterFactor = mix(0.5, 1.5, smoothstep(0.0, 0.5, clusterNoise));
 
     // Generate main grain noise with Gaussian distribution
     float grain = filmNoise(grainCoord, roughness, seed);
@@ -136,7 +172,8 @@ extern "C" float4 grainKernel(coreimage::sampler src,
     grain *= clusterFactor;
 
     // Scale grain by exposure response and amount
-    float grainIntensity = amount * 0.35 * exposureResponse;
+    // Increased intensity for strong, visible film-like grain
+    float grainIntensity = amount * 0.6 * exposureResponse;
 
     float3 grainColor;
     if (monochromatic > 0.5) {
@@ -156,10 +193,24 @@ extern "C" float4 grainKernel(coreimage::sampler src,
         grainColor *= 0.85;
     }
 
-    // Apply grain with proper blending
-    // Use overlay-style blending for more natural look in midtones
+    // Apply grain with soft-light blending for film-like response
+    // Soft-light preserves shadows and highlights better than additive
     float3 grainEffect = grainColor * grainIntensity;
-    float3 result = color.rgb + grainEffect;
+    float3 result;
+
+    // Soft-light blend: grain modulates the image like film density
+    for (int c = 0; c < 3; c++) {
+        float base = color[c];
+        float grain = grainEffect[c];
+
+        if (grain < 0.0) {
+            // Darken: multiply-like for negative grain
+            result[c] = base * (1.0 + grain * 1.5);
+        } else {
+            // Lighten: screen-like for positive grain
+            result[c] = base + grain * (1.0 - base) * 1.5;
+        }
+    }
 
     // Soft clamp to avoid harsh clipping
     result = clamp(result, 0.0, 1.0);

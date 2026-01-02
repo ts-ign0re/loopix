@@ -146,38 +146,6 @@ extension CGImage {
         return CGImageSourceCreateImageAtIndex(source, 0, nil)
     }
 
-    // MARK: - HEIC Encoding
-
-    /// Converts the CGImage to HEIC data
-    /// - Parameter quality: The compression quality (0.0 to 1.0)
-    /// - Returns: HEIC data, or nil if encoding fails
-    func toHEICData(quality: CGFloat = 0.85) -> Data? {
-        guard let mutableData = CFDataCreateMutable(nil, 0) else {
-            return nil
-        }
-
-        guard let destination = CGImageDestinationCreateWithData(
-            mutableData,
-            UTType.heic.identifier as CFString,
-            1,
-            nil
-        ) else {
-            return nil
-        }
-
-        let options: [CFString: Any] = [
-            kCGImageDestinationLossyCompressionQuality: quality
-        ]
-
-        CGImageDestinationAddImage(destination, self, options as CFDictionary)
-
-        guard CGImageDestinationFinalize(destination) else {
-            return nil
-        }
-
-        return mutableData as Data
-    }
-
     // MARK: - Generic Decoding
 
     /// Creates a CGImage from image data of any supported format

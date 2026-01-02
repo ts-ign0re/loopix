@@ -21,6 +21,16 @@ enum EditorV2Mode: Equatable, Sendable {
         }
     }
 
+    /// Whether the navigation bar (header) should be visible in this mode
+    var showNavigationBar: Bool {
+        switch self {
+        case .browse, .filterDetail:
+            return true
+        case .toolDetail:
+            return false
+        }
+    }
+
     /// Whether the histogram overlay should be visible
     var showHistogram: Bool {
         true // Always show histogram in VSCO style

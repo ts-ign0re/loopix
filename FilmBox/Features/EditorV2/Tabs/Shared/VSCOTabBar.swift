@@ -18,7 +18,8 @@ struct VSCOTabBar: View {
             }
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .padding(.top, 16)
+        .padding(.bottom, 12)
         .background(
             Color.black.opacity(0.95)
                 .ignoresSafeArea(edges: .bottom)

@@ -52,8 +52,8 @@ struct CropTabView: View {
             ZStack {
                 Color.black
 
-                // Image preview
-                if let image = viewModel.editor.currentImage {
+                // Image preview - use ORIGINAL image for crop, not currentImage (which has crop already applied)
+                if let image = viewModel.editor.originalImage {
                     GeometryReader { previewGeometry in
                         CropImagePreview(
                             image: image,
@@ -62,7 +62,8 @@ struct CropTabView: View {
                             selectedRatio: selectedRatio,
                             isDragging: $isDragging,
                             dragHandle: $dragHandle,
-                            previewSize: previewGeometry.size
+                            previewSize: previewGeometry.size,
+                            existingCropRect: viewModel.editor.currentParameters.cropRect
                         )
                     }
                 }
@@ -139,10 +140,7 @@ struct CropTabView: View {
     }
 
     private func cancelCrop() {
-        // Reset crop rect
-        var params = viewModel.editor.currentParameters
-        params.cropRect = nil
-        viewModel.editor.currentParameters = params
+        // Just go back without changing anything - keep existing crop if any
         viewModel.selectedTab = .filters
     }
 
@@ -150,7 +148,6 @@ struct CropTabView: View {
         // Validate rects have positive dimensions
         guard cropRect.width > 0, cropRect.height > 0,
               imageRect.width > 0, imageRect.height > 0 else {
-            viewModel.selectedTab = .filters
             return
         }
 
@@ -173,7 +170,6 @@ struct CropTabView: View {
         guard x.isFinite, y.isFinite, width.isFinite, height.isFinite,
               width > 0, height > 0 else {
             print("⚠️ Invalid crop rect calculated: x=\(x), y=\(y), w=\(width), h=\(height)")
-            viewModel.selectedTab = .filters
             return
         }
 
@@ -183,7 +179,6 @@ struct CropTabView: View {
         let clampedCropRect = imageCropRect.intersection(imageExtent)
         guard !clampedCropRect.isEmpty, clampedCropRect.width > 0, clampedCropRect.height > 0 else {
             print("⚠️ Crop rect outside image bounds")
-            viewModel.selectedTab = .filters
             return
         }
 
@@ -192,7 +187,7 @@ struct CropTabView: View {
         params.cropRect = clampedCropRect
         viewModel.editor.currentParameters = params
 
-        // Go back to filters tab
+        // Go to filters tab to show result
         viewModel.selectedTab = .filters
     }
 }
@@ -216,8 +211,11 @@ struct CropImagePreview: View {
     @Binding var isDragging: Bool
     @Binding var dragHandle: CropHandle
     let previewSize: CGSize
+    /// Existing crop rect from parameters (in image coordinates)
+    var existingCropRect: CGRect?
 
     @State private var initialCropRect: CGRect = .zero
+    @State private var hasInitialized: Bool = false
 
     /// Safe aspect ratio calculation
     private var imageAspectRatio: CGFloat {
@@ -275,20 +273,46 @@ struct CropImagePreview: View {
             }
             .onAppear {
                 imageRect = calculatedImageRect
-                if cropRect.isEmpty {
-                    cropRect = calculatedImageRect
-                }
+                initializeCropRect(imageRect: calculatedImageRect)
             }
             .onChange(of: geometry.size) { _, newSize in
                 let newRect = calculateImageRect(in: newSize)
                 imageRect = newRect
-                if cropRect.isEmpty {
-                    cropRect = newRect
+                if !hasInitialized {
+                    initializeCropRect(imageRect: newRect)
                 }
             }
         }
         .onChange(of: selectedRatio) { _, newRatio in
             adjustCropToRatio(newRatio)
+        }
+    }
+
+    /// Initialize crop rect from existing crop or full image
+    private func initializeCropRect(imageRect: CGRect) {
+        guard !hasInitialized else { return }
+        hasInitialized = true
+
+        if let existing = existingCropRect, !existing.isEmpty {
+            // Convert from image coordinates to view coordinates
+            let imageExtent = image.extent
+            guard imageExtent.width > 0, imageExtent.height > 0 else {
+                cropRect = imageRect
+                return
+            }
+
+            let scaleX = imageRect.width / imageExtent.width
+            let scaleY = imageRect.height / imageExtent.height
+
+            // Convert coordinates (note: CIImage Y is flipped)
+            let viewX = imageRect.minX + (existing.minX - imageExtent.minX) * scaleX
+            let viewY = imageRect.minY + (imageExtent.maxY - existing.maxY) * scaleY
+            let viewWidth = existing.width * scaleX
+            let viewHeight = existing.height * scaleY
+
+            cropRect = CGRect(x: viewX, y: viewY, width: viewWidth, height: viewHeight)
+        } else {
+            cropRect = imageRect
         }
     }
 

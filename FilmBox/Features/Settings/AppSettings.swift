@@ -53,7 +53,7 @@ final class AppSettings {
 
     // MARK: - Export Settings
 
-    var exportFormat: ExportFormat = .heic {
+    var exportFormat: ExportFormat = .jpeg {
         didSet { save() }
     }
 

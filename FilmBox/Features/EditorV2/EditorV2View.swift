@@ -26,8 +26,11 @@ struct EditorV2View: View {
                 Color.black.ignoresSafeArea()
 
                 VStack(spacing: 0) {
-                    // Navigation bar
-                    navigationBar
+                    // Navigation bar (hidden in tool detail mode and crop tab)
+                    if showNavigationBar {
+                        navigationBar
+                            .transition(.move(edge: .top).combined(with: .opacity))
+                    }
 
                     // Main content area
                     mainContent(geometry: geometry)
@@ -38,6 +41,8 @@ struct EditorV2View: View {
                             .transition(.move(edge: .bottom).combined(with: .opacity))
                     }
                 }
+                .animation(.easeInOut(duration: 0.25), value: viewModel.mode)
+                .animation(.easeInOut(duration: 0.25), value: viewModel.selectedTab)
             }
         }
         .preferredColorScheme(.dark)
@@ -51,6 +56,11 @@ struct EditorV2View: View {
     // MARK: - Navigation Bar
 
     @State private var showDiscardAlert = false
+
+    /// Whether to show navigation bar (hidden in tool detail, crop, and effects)
+    private var showNavigationBar: Bool {
+        viewModel.mode.showNavigationBar && viewModel.selectedTab != .crop && viewModel.selectedTab != .effects
+    }
 
     @ViewBuilder
     private var navigationBar: some View {

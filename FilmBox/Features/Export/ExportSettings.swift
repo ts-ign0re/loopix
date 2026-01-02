@@ -4,7 +4,6 @@ import Foundation
 
 /// Supported export image formats
 enum ExportFormat: String, CaseIterable, Codable, Sendable {
-    case heic = "HEIC"
     case jpeg = "JPEG"
     case png = "PNG"
     case webp = "WebP"
@@ -12,8 +11,7 @@ enum ExportFormat: String, CaseIterable, Codable, Sendable {
     /// Display name with recommendation hint
     var displayName: String {
         switch self {
-        case .heic: return "HEIC (Recommended)"
-        case .jpeg: return "JPEG"
+        case .jpeg: return "JPEG (Recommended)"
         case .png: return "PNG"
         case .webp: return "WebP"
         }
@@ -22,7 +20,6 @@ enum ExportFormat: String, CaseIterable, Codable, Sendable {
     /// File extension for the format
     var fileExtension: String {
         switch self {
-        case .heic: return "heic"
         case .jpeg: return "jpg"
         case .png: return "png"
         case .webp: return "webp"
@@ -32,7 +29,6 @@ enum ExportFormat: String, CaseIterable, Codable, Sendable {
     /// UTType identifier for the format
     var utType: String {
         switch self {
-        case .heic: return "public.heic"
         case .jpeg: return "public.jpeg"
         case .png: return "public.png"
         case .webp: return "org.webmproject.webp"
@@ -42,7 +38,7 @@ enum ExportFormat: String, CaseIterable, Codable, Sendable {
     /// Whether the format supports quality compression
     var supportsQuality: Bool {
         switch self {
-        case .heic, .jpeg, .webp: return true
+        case .jpeg, .webp: return true
         case .png: return false
         }
     }
@@ -116,7 +112,7 @@ struct ExportSettings: Codable, Sendable, Equatable {
     /// Output image format
     var format: ExportFormat
 
-    /// Quality level (0.0 to 1.0, only applies to HEIC/JPEG)
+    /// Quality level (0.0 to 1.0, applies to JPEG/WebP)
     var quality: Double
 
     /// Size/dimension option
@@ -144,8 +140,8 @@ struct ExportSettings: Codable, Sendable, Equatable {
 
     /// Default export settings
     static let `default` = ExportSettings(
-        format: .heic,
-        quality: 0.9,
+        format: .jpeg,
+        quality: 0.95,
         size: .original,
         preserveEXIF: true,
         includeLocation: true,
@@ -153,7 +149,7 @@ struct ExportSettings: Codable, Sendable, Equatable {
     )
 
     init(
-        format: ExportFormat = .heic,
+        format: ExportFormat = .jpeg,
         quality: Double = 0.9,
         size: ExportSize = .original,
         preserveEXIF: Bool = true,

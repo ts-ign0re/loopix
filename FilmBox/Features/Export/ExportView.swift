@@ -39,7 +39,7 @@ struct ExportView: View {
                 // Format section
                 formatSection
 
-                // Quality section (only for HEIC/JPEG)
+                // Quality section (only for JPEG/WebP)
                 if viewModel.settings.format.supportsQuality {
                     qualitySection
                 }
@@ -119,10 +119,8 @@ struct ExportView: View {
 
     private var formatFooterText: String {
         switch viewModel.settings.format {
-        case .heic:
-            return "HEIC offers the best quality-to-size ratio and supports HDR. Recommended for iOS devices."
         case .jpeg:
-            return "JPEG is widely compatible with all devices and platforms."
+            return "JPEG offers excellent compatibility with all devices and platforms. Recommended."
         case .png:
             return "PNG provides lossless compression. Best for graphics with transparency."
         case .webp:

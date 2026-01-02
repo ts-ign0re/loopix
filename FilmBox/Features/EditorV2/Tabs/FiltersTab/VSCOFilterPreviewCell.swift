@@ -29,16 +29,17 @@ struct VSCOFilterPreviewCell: View {
             thumbnailView
                 .frame(width: Self.cellWidth, height: Self.imageHeight)
                 .clipShape(RoundedRectangle(cornerRadius: 4))
-                .overlay(alignment: .bottomTrailing) {
+                .overlay {
                     // Edit icon when selected (indicates tap to edit)
                     if isSelected && !isOriginal {
-                        Image(systemName: "slider.horizontal.3")
-                            .font(.system(size: 10, weight: .semibold))
-                            .foregroundColor(.black)
-                            .padding(4)
-                            .background(Color.yellow)
-                            .clipShape(Circle())
-                            .padding(4)
+                        Circle()
+                            .fill(Color.black.opacity(0.5))
+                            .frame(width: 28, height: 28)
+                            .overlay {
+                                Image(systemName: "slider.horizontal.3")
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundColor(.yellow)
+                            }
                     }
                 }
 

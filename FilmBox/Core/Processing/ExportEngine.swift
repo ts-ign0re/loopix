@@ -608,19 +608,6 @@ actor ExportEngine {
         let outputData: Data
 
         switch format {
-        case .heic:
-            guard let data = ciContext.heifRepresentation(
-                of: image,
-                format: .RGBA8,
-                colorSpace: colorSpace,
-                options: [
-                    CIImageRepresentationOption(rawValue: kCGImageDestinationLossyCompressionQuality as String): quality
-                ]
-            ) else {
-                throw ExportError.encodingFailed(format: format)
-            }
-            outputData = data
-
         case .jpeg:
             guard let data = ciContext.jpegRepresentation(
                 of: image,

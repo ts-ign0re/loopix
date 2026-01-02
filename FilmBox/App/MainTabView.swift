@@ -450,17 +450,16 @@ struct LibraryContentView: View {
 
                     let context = CIContext()
                     let tempURL = FileManager.default.temporaryDirectory
-                        .appendingPathComponent("\(item.photo.id.uuidString).heic")
+                        .appendingPathComponent("\(item.photo.id.uuidString).jpg")
 
-                    if var heicData = context.heifRepresentation(
+                    if var jpegData = context.jpegRepresentation(
                         of: processedImage,
-                        format: .RGBA8,
                         colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!,
-                        options: [:]
+                        options: [kCGImageDestinationLossyCompressionQuality as CIImageRepresentationOption: 0.95]
                     ) {
                         // Add RedRoom iOS source metadata (strip all if security mode)
-                        heicData = addSourceMetadata(to: heicData, securityMode: securityMode) ?? heicData
-                        try? heicData.write(to: tempURL)
+                        jpegData = addSourceMetadata(to: jpegData, securityMode: securityMode) ?? jpegData
+                        try? jpegData.write(to: tempURL)
                         urls.append(tempURL)
                     }
                 }

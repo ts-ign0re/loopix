@@ -25,12 +25,12 @@ struct ImportedPhoto: Identifiable, Hashable, Codable {
 
     /// Local file name for the stored image
     var localFileName: String {
-        "\(id.uuidString).heic"
+        "\(id.uuidString).jpg"
     }
 
     /// Local file name for the thumbnail
     var thumbnailFileName: String {
-        "\(id.uuidString)_thumb.heic"
+        "\(id.uuidString)_thumb.jpg"
     }
 
     init(asset: PHAsset) {
@@ -195,13 +195,12 @@ final class ImportedPhotosManager {
         let context = CIContext()
         let thumbnailURL = thumbnailsDirectory.appendingPathComponent(photo.thumbnailFileName)
 
-        if let heicData = context.heifRepresentation(
+        if let jpegData = context.jpegRepresentation(
             of: scaledImage,
-            format: .RGBA8,
             colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!,
-            options: [kCGImageDestinationLossyCompressionQuality as CIImageRepresentationOption: 0.7]
+            options: [kCGImageDestinationLossyCompressionQuality as CIImageRepresentationOption: 0.85]
         ) {
-            try? heicData.write(to: thumbnailURL)
+            try? jpegData.write(to: thumbnailURL)
             print("✅ Saved thumbnail: \(photo.thumbnailFileName)")
         }
     }
@@ -451,13 +450,12 @@ final class ImportedPhotosManager {
         let context = CIContext()
         let thumbnailURL = thumbnailsDirectory.appendingPathComponent(photo.thumbnailFileName)
 
-        if let heicData = context.heifRepresentation(
+        if let jpegData = context.jpegRepresentation(
             of: scaledImage,
-            format: .RGBA8,
             colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!,
-            options: [kCGImageDestinationLossyCompressionQuality as CIImageRepresentationOption: 0.7]
+            options: [kCGImageDestinationLossyCompressionQuality as CIImageRepresentationOption: 0.85]
         ) {
-            try? heicData.write(to: thumbnailURL)
+            try? jpegData.write(to: thumbnailURL)
 
             // Increment thumbnail version to trigger UI refresh
             photos[index].thumbnailVersion += 1
