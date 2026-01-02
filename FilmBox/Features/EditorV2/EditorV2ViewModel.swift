@@ -233,8 +233,8 @@ final class EditorV2ViewModel {
     }
 
     /// Load a CIImage directly
-    func loadImage(_ image: CIImage) {
-        editor.loadImage(image)
+    func loadImage(_ image: CIImage, parameters: FilterParameters? = nil) {
+        editor.loadCIImage(image, initialParameters: parameters)
     }
 }
 

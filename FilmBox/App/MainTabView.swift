@@ -123,9 +123,10 @@ struct LibraryContentView: View {
             if let ciImage = manager.loadCIImage(for: photo) {
                 if useEditorV2 {
                     let viewModel = EditorV2ViewModel()
-                    EditorV2View(viewModel: viewModel)
+                    let initialParams = manager.getEditedParameters(for: photo.id)
+                    EditorV2View(viewModel: viewModel, photoID: photo.id)
                         .onAppear {
-                            viewModel.loadImage(ciImage)
+                            viewModel.loadImage(ciImage, parameters: initialParams)
                         }
                 } else {
                     EditorView(

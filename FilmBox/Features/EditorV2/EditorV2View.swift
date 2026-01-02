@@ -14,6 +14,9 @@ struct EditorV2View: View {
     /// Optional PHAsset to load on appear
     var asset: PHAsset?
 
+    /// Photo ID for saving edits back to ImportedPhotosManager
+    var photoID: UUID?
+
     /// State for save operation
     @State private var isSaving = false
     @State private var saveError: Error?
@@ -57,9 +60,9 @@ struct EditorV2View: View {
 
     @State private var showDiscardAlert = false
 
-    /// Whether to show navigation bar (hidden in tool detail, crop, and effects)
+    /// Whether to show navigation bar (hidden only in tool detail mode)
     private var showNavigationBar: Bool {
-        viewModel.mode.showNavigationBar && viewModel.selectedTab != .crop && viewModel.selectedTab != .effects
+        viewModel.mode.showNavigationBar
     }
 
     @ViewBuilder
@@ -116,41 +119,29 @@ struct EditorV2View: View {
 
     private func saveChanges() async {
         guard !isSaving else { return }
+        guard let photoID = photoID else {
+            // No photo ID - just dismiss (e.g., preview mode)
+            dismiss()
+            return
+        }
 
         isSaving = true
         defer { isSaving = false }
 
-        do {
-            // Get the processed image from the editor
-            let processedImage = try await viewModel.editor.saveChanges()
+        // Get current parameters from editor
+        let parameters = viewModel.editor.currentParameters
 
-            // Render to CGImage for saving
-            let ciContext = CIContext(options: [.useSoftwareRenderer: false])
-            guard let cgImage = ciContext.createCGImage(processedImage, from: processedImage.extent) else {
-                throw EditorError.exportFailed
-            }
+        // Save parameters to ImportedPhotosManager
+        ImportedPhotosManager.shared.updateEditedParameters(for: photoID, parameters: parameters)
 
-            // Convert to JPEG data
-            let uiImage = UIImage(cgImage: cgImage)
-            guard let jpegData = uiImage.jpegData(compressionQuality: 0.95) else {
-                throw EditorError.exportFailed
-            }
+        // Regenerate thumbnail with new parameters
+        await ImportedPhotosManager.shared.regenerateThumbnail(for: photoID)
 
-            // Save to Photos library
-            try await PHPhotoLibrary.shared().performChanges {
-                let request = PHAssetCreationRequest.forAsset()
-                request.addResource(with: .photo, data: jpegData, options: nil)
-            }
+        // Notify gallery to reload
+        NotificationCenter.default.post(name: .photoSavedFromEditor, object: nil)
 
-            // Notify gallery to reload
-            NotificationCenter.default.post(name: .photoSavedFromEditor, object: nil)
-
-            // Dismiss after successful save
-            dismiss()
-        } catch {
-            saveError = error
-            showSaveError = true
-        }
+        // Dismiss after successful save
+        dismiss()
     }
 
     // MARK: - Main Content
