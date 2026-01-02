@@ -310,11 +310,11 @@ actor ExportEngine {
             let creationRequest = PHAssetCreationRequest.forAsset()
             creationRequest.addResource(with: .photo, data: jpegData, options: nil)
 
-            // Copy metadata from original if NOT in security mode
+            // Always set current date so photo appears as latest in gallery
+            creationRequest.creationDate = Date()
+
+            // Copy location from original if NOT in security mode
             if !securityMode {
-                if let originalDate = asset.creationDate {
-                    creationRequest.creationDate = originalDate
-                }
                 if let location = asset.location {
                     creationRequest.location = location
                 }
@@ -914,10 +914,8 @@ extension ExportEngine {
             let creationRequest = PHAssetCreationRequest.forAsset()
             creationRequest.addResource(with: .photo, data: jpegData, options: nil)
 
-            // Only set creation date if NOT in security mode
-            if !securityMode {
-                creationRequest.creationDate = photo.importedAt
-            }
+            // Always set current date so photo appears as latest in gallery
+            creationRequest.creationDate = Date()
 
             localIdentifier = creationRequest.placeholderForCreatedAsset?.localIdentifier
         }
