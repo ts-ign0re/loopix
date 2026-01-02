@@ -120,10 +120,16 @@ struct EditorV2View: View {
                 throw EditorError.exportFailed
             }
 
+            // Convert to JPEG data
+            let uiImage = UIImage(cgImage: cgImage)
+            guard let jpegData = uiImage.jpegData(compressionQuality: 0.95) else {
+                throw EditorError.exportFailed
+            }
+
             // Save to Photos library
             try await PHPhotoLibrary.shared().performChanges {
                 let request = PHAssetCreationRequest.forAsset()
-                request.addResource(with: .photo, data: UIImage(cgImage: cgImage).jpegData(compressionQuality: 0.95)!, options: nil)
+                request.addResource(with: .photo, data: jpegData, options: nil)
             }
 
             // Notify gallery to reload
@@ -179,11 +185,12 @@ struct EditorV2View: View {
             VSCOFiltersTabView(viewModel: viewModel)
         case .crop:
             EmptyView() // Handled in browseContent
-        case .light, .color:
+        case .light, .effects:
             VSCOToolsTabView(
                 viewModel: viewModel,
                 category: mapTabToCategory(viewModel.selectedTab)
             )
+            .padding(.bottom, 16)
         }
     }
 
@@ -193,8 +200,8 @@ struct EditorV2View: View {
             return .all
         case .light:
             return .light
-        case .color:
-            return .color
+        case .effects:
+            return .effects
         }
     }
 }

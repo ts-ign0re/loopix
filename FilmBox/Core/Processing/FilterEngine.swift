@@ -302,9 +302,11 @@ actor FilterEngine {
 
         // Apply intensity blending if not 100%
         if intensity < 100 {
+            print("[FilterEngine] applyCLUT: blending at intensity \(intensity) (amount: \(intensity / 100.0))")
             return blendImages(base: image, overlay: croppedOutput, amount: intensity / 100.0)
         }
 
+        print("[FilterEngine] applyCLUT: returning full CLUT (intensity: \(intensity))")
         return croppedOutput
     }
 

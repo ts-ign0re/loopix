@@ -325,23 +325,74 @@ struct LabeledSlider: View {
     let range: ClosedRange<Float>
 
     var body: some View {
-        HStack(spacing: 16) {
-            Text(label)
-                .font(.system(size: 13, weight: .medium, design: .monospaced))
-                .foregroundColor(.white.opacity(0.7))
-                .frame(width: 80, alignment: .leading)
+        VStack(spacing: 8) {
+            HStack {
+                Text(label)
+                    .font(.system(size: 12, weight: .medium, design: .monospaced))
+                    .foregroundColor(.white.opacity(0.6))
 
-            FullScreenSlider(
+                Spacer()
+
+                Text(String(format: "%.0f", value))
+                    .font(.system(size: 12, weight: .medium, design: .monospaced))
+                    .foregroundColor(.white)
+            }
+
+            CompactSlider(
                 value: $value,
-                range: range,
-                defaultValue: range.lowerBound
+                range: range
             )
-
-            Text(String(format: "%.0f", value))
-                .font(.system(size: 13, weight: .medium, design: .monospaced))
-                .foregroundColor(.white)
-                .frame(width: 40, alignment: .trailing)
         }
+    }
+}
+
+/// Compact slider without internal padding for use in labeled rows
+struct CompactSlider: View {
+    @Binding var value: Float
+    let range: ClosedRange<Float>
+
+    @State private var isDragging: Bool = false
+
+    var body: some View {
+        GeometryReader { geometry in
+            let trackWidth = geometry.size.width
+
+            ZStack(alignment: .leading) {
+                // Track background
+                Capsule()
+                    .fill(Color.white.opacity(0.15))
+                    .frame(height: 4)
+
+                // Active fill
+                let currentNorm = CGFloat((value - range.lowerBound) / (range.upperBound - range.lowerBound))
+                Capsule()
+                    .fill(Color.white.opacity(0.6))
+                    .frame(width: currentNorm * trackWidth, height: 4)
+
+                // Thumb
+                Circle()
+                    .fill(isDragging ? Color.yellow : Color.white)
+                    .frame(width: 20, height: 20)
+                    .shadow(color: .black.opacity(0.3), radius: 2, y: 1)
+                    .offset(x: currentNorm * trackWidth - 10)
+            }
+            .frame(maxHeight: .infinity)
+            .contentShape(Rectangle())
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { gesture in
+                        isDragging = true
+                        let normalizedX = gesture.location.x / trackWidth
+                        let clamped = max(0, min(1, normalizedX))
+                        let rangeSize = range.upperBound - range.lowerBound
+                        value = range.lowerBound + Float(clamped) * rangeSize
+                    }
+                    .onEnded { _ in
+                        isDragging = false
+                    }
+            )
+        }
+        .frame(height: 28)
     }
 }
 

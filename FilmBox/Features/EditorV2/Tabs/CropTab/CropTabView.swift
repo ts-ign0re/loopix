@@ -7,6 +7,7 @@ enum V2CropAspectRatio: String, CaseIterable, Identifiable {
     case fourThree = "4:3"
     case threeTwo = "3:2"
     case sixteenNine = "16:9"
+    case nineSixteen = "9:16"
 
     var id: String { rawValue }
 
@@ -17,6 +18,7 @@ enum V2CropAspectRatio: String, CaseIterable, Identifiable {
         case .fourThree: return "rectangle"
         case .threeTwo: return "rectangle.portrait"
         case .sixteenNine: return "rectangle.ratio.16.to.9"
+        case .nineSixteen: return "rectangle.ratio.9.to.16"
         }
     }
 
@@ -28,6 +30,7 @@ enum V2CropAspectRatio: String, CaseIterable, Identifiable {
         case .fourThree: return 4.0 / 3.0
         case .threeTwo: return 3.0 / 2.0
         case .sixteenNine: return 16.0 / 9.0
+        case .nineSixteen: return 9.0 / 16.0
         }
     }
 }
@@ -193,34 +196,72 @@ struct CropImagePreview: View {
 
     @State private var initialCropRect: CGRect = .zero
 
-    var body: some View {
-        ZStack {
-            // Image
-            MetalImageViewWrapper(image: image)
-                .aspectRatio(contentMode: .fit)
-                .background(
-                    GeometryReader { geo in
-                        Color.clear.preference(
-                            key: ImageRectPreferenceKey.self,
-                            value: geo.frame(in: .named("cropContainer"))
-                        )
-                    }
-                )
-
-            // Crop overlay
-            CropOverlayView(
-                cropRect: $cropRect,
-                imageRect: imageRect,
-                isDragging: $isDragging,
-                dragHandle: $dragHandle,
-                selectedRatio: selectedRatio
-            )
+    /// Safe aspect ratio calculation
+    private var imageAspectRatio: CGFloat {
+        let extent = image.extent
+        guard extent.height > 0, extent.width > 0,
+              extent.width.isFinite, extent.height.isFinite else {
+            return 1.0
         }
-        .coordinateSpace(name: "cropContainer")
-        .onPreferenceChange(ImageRectPreferenceKey.self) { rect in
-            imageRect = rect
-            if cropRect.isEmpty {
-                cropRect = rect
+        return extent.width / extent.height
+    }
+
+    /// Calculate image rect based on container size and aspect ratio (aspect-fit)
+    private func calculateImageRect(in containerSize: CGSize) -> CGRect {
+        guard containerSize.width > 0, containerSize.height > 0 else {
+            return .zero
+        }
+
+        let containerRatio = containerSize.width / containerSize.height
+        var imageWidth: CGFloat
+        var imageHeight: CGFloat
+
+        if imageAspectRatio > containerRatio {
+            // Image is wider - fit to width
+            imageWidth = containerSize.width
+            imageHeight = containerSize.width / imageAspectRatio
+        } else {
+            // Image is taller - fit to height
+            imageHeight = containerSize.height
+            imageWidth = containerSize.height * imageAspectRatio
+        }
+
+        let x = (containerSize.width - imageWidth) / 2
+        let y = (containerSize.height - imageHeight) / 2
+
+        return CGRect(x: x, y: y, width: imageWidth, height: imageHeight)
+    }
+
+    var body: some View {
+        GeometryReader { geometry in
+            let calculatedImageRect = calculateImageRect(in: geometry.size)
+
+            ZStack {
+                // Image
+                MetalImageViewWrapper(image: image)
+                    .aspectRatio(imageAspectRatio, contentMode: .fit)
+
+                // Crop overlay
+                CropOverlayView(
+                    cropRect: $cropRect,
+                    imageRect: calculatedImageRect,
+                    isDragging: $isDragging,
+                    dragHandle: $dragHandle,
+                    selectedRatio: selectedRatio
+                )
+            }
+            .onAppear {
+                imageRect = calculatedImageRect
+                if cropRect.isEmpty {
+                    cropRect = calculatedImageRect
+                }
+            }
+            .onChange(of: geometry.size) { _, newSize in
+                let newRect = calculateImageRect(in: newSize)
+                imageRect = newRect
+                if cropRect.isEmpty {
+                    cropRect = newRect
+                }
             }
         }
         .onChange(of: selectedRatio) { _, newRatio in
@@ -231,43 +272,35 @@ struct CropImagePreview: View {
     private func adjustCropToRatio(_ ratio: V2CropAspectRatio) {
         guard !imageRect.isEmpty else { return }
 
-        if let targetRatio = ratio.ratio {
-            // Calculate new crop rect with the target ratio
-            let currentCenter = CGPoint(
-                x: cropRect.midX,
-                y: cropRect.midY
-            )
-
-            var newWidth = cropRect.width
-            var newHeight = cropRect.height
-
-            if newWidth / newHeight > targetRatio {
-                // Too wide, constrain width
-                newWidth = newHeight * targetRatio
-            } else {
-                // Too tall, constrain height
-                newHeight = newWidth / targetRatio
-            }
-
-            // Ensure it fits within image bounds
-            newWidth = min(newWidth, imageRect.width)
-            newHeight = min(newHeight, imageRect.height)
-
-            // Re-constrain to ratio after fitting
-            if newWidth / newHeight > targetRatio {
-                newWidth = newHeight * targetRatio
-            } else {
-                newHeight = newWidth / targetRatio
-            }
-
+        // For free ratio, reset to full image
+        guard let targetRatio = ratio.ratio else {
             withAnimation(.easeInOut(duration: 0.2)) {
-                cropRect = CGRect(
-                    x: currentCenter.x - newWidth / 2,
-                    y: currentCenter.y - newHeight / 2,
-                    width: newWidth,
-                    height: newHeight
-                ).constrainedTo(imageRect)
+                cropRect = imageRect
             }
+            return
+        }
+
+        // Calculate maximum crop size that fits imageRect with target ratio
+        let imageRatio = imageRect.width / imageRect.height
+        var newWidth: CGFloat
+        var newHeight: CGFloat
+
+        if targetRatio > imageRatio {
+            // Target is wider - fit to image width
+            newWidth = imageRect.width
+            newHeight = newWidth / targetRatio
+        } else {
+            // Target is taller - fit to image height
+            newHeight = imageRect.height
+            newWidth = newHeight * targetRatio
+        }
+
+        // Center in image
+        let x = imageRect.midX - newWidth / 2
+        let y = imageRect.midY - newHeight / 2
+
+        withAnimation(.easeInOut(duration: 0.2)) {
+            cropRect = CGRect(x: x, y: y, width: newWidth, height: newHeight)
         }
     }
 }
@@ -285,35 +318,53 @@ struct CropOverlayView: View {
     private let cornerIndicatorSize: CGFloat = 24
     private let edgeWidth: CGFloat = 3
 
+    /// Initial crop rect at drag start (for proper translation calculation)
+    @State private var dragStartCropRect: CGRect = .zero
+
+    /// Whether cropRect is valid for rendering
+    private var isValidCropRect: Bool {
+        cropRect.width > 0 && cropRect.height > 0 &&
+        cropRect.width.isFinite && cropRect.height.isFinite
+    }
+
     var body: some View {
         ZStack {
             // Dimming overlay (outside crop area)
             dimmingOverlay
 
-            // Crop border
-            Rectangle()
-                .stroke(Color.white, lineWidth: 2)
-                .frame(width: cropRect.width, height: cropRect.height)
-                .position(x: cropRect.midX, y: cropRect.midY)
+            // Only render crop UI elements if cropRect is valid
+            if isValidCropRect {
+                // Crop border
+                Rectangle()
+                    .stroke(Color.white, lineWidth: 2)
+                    .frame(width: cropRect.width, height: cropRect.height)
+                    .position(x: cropRect.midX, y: cropRect.midY)
 
-            // Grid lines (rule of thirds)
-            gridLines
+                // Grid lines (rule of thirds)
+                gridLines
 
-            // Corner handles
-            cornerHandles
+                // Corner handles (visual)
+                cornerHandles
 
-            // Drag gesture for moving the entire crop area
-            movementHandle
+                // Corner drag handles (invisible, for gestures)
+                cornerDragHandles
+
+                // Drag gesture for moving the entire crop area
+                movementHandle
+            }
         }
     }
 
     private var dimmingOverlay: some View {
-        GeometryReader { _ in
+        GeometryReader { geometry in
             Path { path in
-                // Full overlay
-                path.addRect(CGRect(origin: .zero, size: CGSize(width: 10000, height: 10000)))
-                // Cut out crop area
-                path.addRect(cropRect)
+                // Full overlay using actual geometry
+                let fullRect = CGRect(origin: .zero, size: geometry.size)
+                path.addRect(fullRect)
+                // Cut out crop area (only if valid)
+                if cropRect.width > 0, cropRect.height > 0 {
+                    path.addRect(cropRect)
+                }
             }
             .fill(Color.black.opacity(0.6), style: FillStyle(eoFill: true))
         }
@@ -340,75 +391,97 @@ struct CropOverlayView: View {
     }
 
     private var cornerHandles: some View {
+        let length: CGFloat = 20
+        let width: CGFloat = 3
+
+        return Canvas { context, _ in
+            // Top-left
+            context.fill(
+                Path(CGRect(x: cropRect.minX, y: cropRect.minY, width: length, height: width)),
+                with: .color(.white)
+            )
+            context.fill(
+                Path(CGRect(x: cropRect.minX, y: cropRect.minY, width: width, height: length)),
+                with: .color(.white)
+            )
+
+            // Top-right
+            context.fill(
+                Path(CGRect(x: cropRect.maxX - length, y: cropRect.minY, width: length, height: width)),
+                with: .color(.white)
+            )
+            context.fill(
+                Path(CGRect(x: cropRect.maxX - width, y: cropRect.minY, width: width, height: length)),
+                with: .color(.white)
+            )
+
+            // Bottom-left
+            context.fill(
+                Path(CGRect(x: cropRect.minX, y: cropRect.maxY - width, width: length, height: width)),
+                with: .color(.white)
+            )
+            context.fill(
+                Path(CGRect(x: cropRect.minX, y: cropRect.maxY - length, width: width, height: length)),
+                with: .color(.white)
+            )
+
+            // Bottom-right
+            context.fill(
+                Path(CGRect(x: cropRect.maxX - length, y: cropRect.maxY - width, width: length, height: width)),
+                with: .color(.white)
+            )
+            context.fill(
+                Path(CGRect(x: cropRect.maxX - width, y: cropRect.maxY - length, width: width, height: length)),
+                with: .color(.white)
+            )
+        }
+        .allowsHitTesting(false)
+    }
+
+    /// Invisible drag handles at corners
+    private var cornerDragHandles: some View {
         Group {
-            // Top-left corner
-            cornerIndicator(position: CGPoint(x: cropRect.minX, y: cropRect.minY), handle: .topLeft)
-
-            // Top-right corner
-            cornerIndicator(position: CGPoint(x: cropRect.maxX, y: cropRect.minY), handle: .topRight)
-
-            // Bottom-left corner
-            cornerIndicator(position: CGPoint(x: cropRect.minX, y: cropRect.maxY), handle: .bottomLeft)
-
-            // Bottom-right corner
-            cornerIndicator(position: CGPoint(x: cropRect.maxX, y: cropRect.maxY), handle: .bottomRight)
+            cornerDragHandle(at: CGPoint(x: cropRect.minX, y: cropRect.minY), handle: .topLeft)
+            cornerDragHandle(at: CGPoint(x: cropRect.maxX, y: cropRect.minY), handle: .topRight)
+            cornerDragHandle(at: CGPoint(x: cropRect.minX, y: cropRect.maxY), handle: .bottomLeft)
+            cornerDragHandle(at: CGPoint(x: cropRect.maxX, y: cropRect.maxY), handle: .bottomRight)
         }
     }
 
-    @ViewBuilder
-    private func cornerIndicator(position: CGPoint, handle: CropHandle) -> some View {
-        let isTopLeft = handle == .topLeft
-        let isTopRight = handle == .topRight
-        let isBottomLeft = handle == .bottomLeft
-
-        ZStack {
-            // L-shaped corner indicator
-            Path { path in
-                let length: CGFloat = 20
-                let width: CGFloat = 3
-
-                if isTopLeft {
-                    path.addRect(CGRect(x: 0, y: 0, width: length, height: width))
-                    path.addRect(CGRect(x: 0, y: 0, width: width, height: length))
-                } else if isTopRight {
-                    path.addRect(CGRect(x: -length, y: 0, width: length, height: width))
-                    path.addRect(CGRect(x: -width, y: 0, width: width, height: length))
-                } else if isBottomLeft {
-                    path.addRect(CGRect(x: 0, y: -width, width: length, height: width))
-                    path.addRect(CGRect(x: 0, y: -length, width: width, height: length))
-                } else {
-                    // Bottom-right
-                    path.addRect(CGRect(x: -length, y: -width, width: length, height: width))
-                    path.addRect(CGRect(x: -width, y: -length, width: width, height: length))
-                }
-            }
-            .fill(Color.white)
-        }
-        .position(position)
-        .gesture(
-            DragGesture()
-                .onChanged { value in
-                    isDragging = true
-                    dragHandle = handle
-                    updateCropRect(for: handle, translation: value.translation)
-                }
-                .onEnded { _ in
-                    isDragging = false
-                    dragHandle = .none
-                }
-        )
-        .contentShape(Rectangle().size(CGSize(width: 44, height: 44)))
+    private func cornerDragHandle(at position: CGPoint, handle: CropHandle) -> some View {
+        Color.clear
+            .frame(width: 44, height: 44)
+            .contentShape(Rectangle())
+            .position(position)
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { value in
+                        if !isDragging {
+                            // Save initial rect at drag start
+                            dragStartCropRect = cropRect
+                        }
+                        isDragging = true
+                        dragHandle = handle
+                        updateCropRect(for: handle, translation: value.translation)
+                    }
+                    .onEnded { _ in
+                        isDragging = false
+                        dragHandle = .none
+                    }
+            )
     }
 
     private var movementHandle: some View {
-        Rectangle()
-            .fill(Color.clear)
-            .frame(width: cropRect.width - handleSize * 2, height: cropRect.height - handleSize * 2)
-            .position(x: cropRect.midX, y: cropRect.midY)
+        Color.clear
+            .frame(width: max(10, cropRect.width - 60), height: max(10, cropRect.height - 60))
             .contentShape(Rectangle())
+            .position(x: cropRect.midX, y: cropRect.midY)
             .gesture(
-                DragGesture()
+                DragGesture(minimumDistance: 0)
                     .onChanged { value in
+                        if !isDragging {
+                            dragStartCropRect = cropRect
+                        }
                         isDragging = true
                         dragHandle = .center
                         moveCropRect(by: value.translation)
@@ -421,7 +494,7 @@ struct CropOverlayView: View {
     }
 
     private func updateCropRect(for handle: CropHandle, translation: CGSize) {
-        var newRect = cropRect
+        var newRect = dragStartCropRect
         let minSize: CGFloat = 50
 
         switch handle {
@@ -448,13 +521,13 @@ struct CropOverlayView: View {
         // Enforce minimum size
         if newRect.width < minSize {
             if handle == .topLeft || handle == .bottomLeft {
-                newRect.origin.x = cropRect.maxX - minSize
+                newRect.origin.x = dragStartCropRect.maxX - minSize
             }
             newRect.size.width = minSize
         }
         if newRect.height < minSize {
             if handle == .topLeft || handle == .topRight {
-                newRect.origin.y = cropRect.maxY - minSize
+                newRect.origin.y = dragStartCropRect.maxY - minSize
             }
             newRect.size.height = minSize
         }
@@ -474,7 +547,7 @@ struct CropOverlayView: View {
     }
 
     private func moveCropRect(by translation: CGSize) {
-        var newRect = cropRect
+        var newRect = dragStartCropRect
         newRect.origin.x += translation.width
         newRect.origin.y += translation.height
 

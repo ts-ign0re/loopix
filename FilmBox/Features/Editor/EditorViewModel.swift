@@ -67,6 +67,7 @@ final class EditorViewModel {
 
     /// Update filter intensity without triggering preset didSet loop
     func setFilterIntensity(_ intensity: Float) {
+        print("[EditorViewModel] setFilterIntensity: \(intensity), preset: \(selectedPreset?.name ?? "nil"), clutPath: \(selectedPreset?.clutPath ?? "nil")")
         filterIntensity = intensity
         schedulePreviewUpdate()
     }
@@ -470,9 +471,22 @@ final class EditorViewModel {
         // Scale down image for preview based on quality setting
         let previewImage = scaleForPreview(original)
 
+        var processed = previewImage
+
+        // Apply CLUT from selected preset if present
+        if let preset = selectedPreset, let clutPath = preset.clutPath {
+            print("[EditorViewModel] updatePreview: applying CLUT '\(clutPath)' at intensity \(filterIntensity)")
+            processed = await FilterEngine.shared.applyCLUT(
+                at: clutPath,
+                to: processed,
+                intensity: filterIntensity
+            )
+        } else {
+            print("[EditorViewModel] updatePreview: no CLUT (preset: \(selectedPreset?.name ?? "nil"), clutPath: \(selectedPreset?.clutPath ?? "nil"))")
+        }
+
         // Apply filters using the filter pipeline
-        // This would integrate with your Metal-based filter processing
-        let processed = await applyFilters(to: previewImage, parameters: currentParameters)
+        processed = await applyFilters(to: processed, parameters: currentParameters)
 
         currentImage = processed
     }
@@ -885,8 +899,19 @@ final class EditorViewModel {
         isProcessing = true
         defer { isProcessing = false }
 
+        var processed = original
+
+        // Apply CLUT from selected preset if present
+        if let preset = selectedPreset, let clutPath = preset.clutPath {
+            processed = await FilterEngine.shared.applyCLUT(
+                at: clutPath,
+                to: processed,
+                intensity: filterIntensity
+            )
+        }
+
         // Apply full quality filters
-        let finalImage = await applyFilters(to: original, parameters: currentParameters)
+        let finalImage = await applyFilters(to: processed, parameters: currentParameters)
 
         return finalImage
     }

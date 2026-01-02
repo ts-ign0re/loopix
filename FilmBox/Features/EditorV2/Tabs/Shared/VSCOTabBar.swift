@@ -37,7 +37,7 @@ struct VSCOTabBarItem: View {
             VStack(spacing: 4) {
                 Image(systemName: tab.iconName)
                     .font(.system(size: 22))
-                    .foregroundColor(isSelected ? .white : .gray)
+                    .foregroundColor(isSelected ? .yellow : .gray)
             }
             .frame(maxWidth: .infinity)
             .contentShape(Rectangle())

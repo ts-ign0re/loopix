@@ -7,6 +7,7 @@ struct VSCOFilterPreviewStrip: View {
     let filters: [FilterPreset]
     @Binding var selectedFilter: FilterPreset?
     let sourceImage: CIImage?
+    let onFilterTapWhenSelected: (FilterPreset?) -> Void
     let onFilterDoubleTap: (FilterPreset?) -> Void
 
     var body: some View {
@@ -59,8 +60,13 @@ struct VSCOFilterPreviewStrip: View {
     }
 
     private func selectFilter(_ filter: FilterPreset?) {
-        withAnimation(.easeInOut(duration: 0.15)) {
-            selectedFilter = filter
+        // Check BEFORE setting binding - if already selected, open detail view
+        if filter?.id == selectedFilter?.id {
+            onFilterTapWhenSelected(filter)
+        } else {
+            withAnimation(.easeInOut(duration: 0.15)) {
+                selectedFilter = filter
+            }
         }
     }
 }
@@ -73,6 +79,7 @@ struct VSCOFilterPreviewStrip: View {
             filters: [],
             selectedFilter: .constant(nil),
             sourceImage: nil,
+            onFilterTapWhenSelected: { _ in },
             onFilterDoubleTap: { _ in }
         )
     }

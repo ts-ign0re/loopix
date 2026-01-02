@@ -25,10 +25,22 @@ struct VSCOFilterPreviewCell: View {
 
     var body: some View {
         VStack(spacing: 4) {
-            // Thumbnail image
+            // Thumbnail image with edit indicator
             thumbnailView
                 .frame(width: Self.cellWidth, height: Self.imageHeight)
                 .clipShape(RoundedRectangle(cornerRadius: 4))
+                .overlay(alignment: .bottomTrailing) {
+                    // Edit icon when selected (indicates tap to edit)
+                    if isSelected && !isOriginal {
+                        Image(systemName: "slider.horizontal.3")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundColor(.black)
+                            .padding(4)
+                            .background(Color.yellow)
+                            .clipShape(Circle())
+                            .padding(4)
+                    }
+                }
 
             // Filter name
             Text(displayName)

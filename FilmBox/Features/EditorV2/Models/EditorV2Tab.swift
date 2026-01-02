@@ -6,7 +6,7 @@ enum EditorV2Tab: String, CaseIterable, Identifiable, Sendable {
     case filters
     case light
     case crop
-    case color
+    case effects
 
     var id: String { rawValue }
 
@@ -19,8 +19,8 @@ enum EditorV2Tab: String, CaseIterable, Identifiable, Sendable {
             return "sun.max"
         case .crop:
             return "crop"
-        case .color:
-            return "drop"
+        case .effects:
+            return "sparkles"
         }
     }
 
@@ -33,8 +33,8 @@ enum EditorV2Tab: String, CaseIterable, Identifiable, Sendable {
             return "Light"
         case .crop:
             return "Crop"
-        case .color:
-            return "Color"
+        case .effects:
+            return "Effects"
         }
     }
 }

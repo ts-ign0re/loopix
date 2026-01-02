@@ -125,6 +125,9 @@ class MetalImageUIView: UIView {
 
     override func layoutSubviews() {
         super.layoutSubviews()
+        // Guard against zero/negative dimensions
+        guard bounds.width > 0, bounds.height > 0 else { return }
+
         metalLayer?.drawableSize = CGSize(
             width: bounds.width * contentScaleFactor,
             height: bounds.height * contentScaleFactor
@@ -139,11 +142,17 @@ class MetalImageUIView: UIView {
     private func renderImage() {
         guard let image = image,
               let metalLayer = metalLayer,
-              let drawable = metalLayer.nextDrawable(),
-              let commandBuffer = commandQueue?.makeCommandBuffer(),
-              let ciContext = ciContext else { return }
+              let ciContext = ciContext,
+              let commandQueue = commandQueue else { return }
 
         let drawableSize = metalLayer.drawableSize
+
+        // Guard against invalid dimensions
+        guard drawableSize.width > 0, drawableSize.height > 0 else { return }
+
+        guard let drawable = metalLayer.nextDrawable(),
+              let commandBuffer = commandQueue.makeCommandBuffer() else { return }
+
         let bounds = CGRect(origin: .zero, size: drawableSize)
 
         // Calculate aspect-fit transform

@@ -16,16 +16,14 @@ struct VSCOFiltersTabView: View {
                 filters: filteredPresets,
                 selectedFilter: Binding(
                     get: { viewModel.editor.selectedPreset },
-                    set: { newFilter in
-                        // If tapping on already selected filter, open detail view
-                        if newFilter?.id == viewModel.editor.selectedPreset?.id && newFilter != nil {
-                            viewModel.enterFilterDetailMode()
-                        } else {
-                            viewModel.selectFilter(newFilter)
-                        }
-                    }
+                    set: { viewModel.selectFilter($0) }
                 ),
                 sourceImage: viewModel.editor.originalImage,
+                onFilterTapWhenSelected: { filter in
+                    if filter != nil {
+                        viewModel.enterFilterDetailMode()
+                    }
+                },
                 onFilterDoubleTap: { _ in }
             )
         }
