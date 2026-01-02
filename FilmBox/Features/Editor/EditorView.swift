@@ -6,11 +6,11 @@ import Photos
 
 /// Categories for grouping adjust tools
 enum AdjustCategory: String, CaseIterable, Sendable {
-    case exposure = "Exposure"
-    case highlights = "Light"
-    case levels = "Levels"
-    case whiteBalance = "Color"
-    case saturation = "Tone"
+    case exposure = "exposure"
+    case highlights = "light"
+    case levels = "levels"
+    case whiteBalance = "color"
+    case saturation = "tone"
 
     var displayName: String { rawValue }
 }
@@ -19,13 +19,13 @@ enum AdjustCategory: String, CaseIterable, Sendable {
 
 /// Categories for grouping effect tools
 enum EffectCategory: String, CaseIterable, Sendable {
-    case clarity = "Clarity"
-    case sharpen = "Sharpen"
-    case grain = "Grain"
-    case fade = "Fade"
-    case vignette = "Vignette"
-    case bloom = "Bloom"
-    case halation = "Halation"
+    case clarity = "clarity"
+    case sharpen = "sharpen"
+    case grain = "grain"
+    case fade = "fade"
+    case vignette = "vignette"
+    case bloom = "bloom"
+    case halation = "halation"
 
     var displayName: String { rawValue }
 
@@ -396,8 +396,6 @@ struct EditorView: View {
                 effectsToolPanel
             case .crop:
                 cropToolPanel
-            case .presets:
-                presetsToolPanel
             }
         }
         .frame(height: 200)
@@ -451,8 +449,8 @@ struct EditorView: View {
             // Intensity slider (shown when a filter is selected)
             if viewModel.selectedPreset != nil && viewModel.selectedPreset?.id != FilterPreset.original.id {
                 HStack(spacing: 12) {
-                    Text("Intensity")
-                        .font(.caption)
+                    Text("intensity")
+                        .font(.system(.caption, design: .monospaced))
                         .foregroundStyle(.white.opacity(0.6))
 
                     Slider(value: Binding(
@@ -467,9 +465,8 @@ struct EditorView: View {
                     .tint(.yellow)
 
                     Text("\(Int(filterIntensity))%")
-                        .font(.caption)
+                        .font(.system(.caption, design: .monospaced))
                         .foregroundStyle(.white.opacity(0.8))
-                        .monospacedDigit()
                         .frame(width: 40, alignment: .trailing)
                 }
                 .padding(.horizontal, 16)
@@ -718,7 +715,7 @@ struct EditorView: View {
             }
         } label: {
             Text(category.displayName)
-                .font(.subheadline.weight(adjustCategory == category ? .semibold : .regular))
+                .font(.system(.subheadline, design: .monospaced).weight(adjustCategory == category ? .semibold : .regular))
                 .foregroundStyle(adjustCategory == category ? .yellow : .white.opacity(0.6))
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
@@ -866,7 +863,7 @@ struct EditorView: View {
             }
         } label: {
             Text(category.displayName)
-                .font(.subheadline.weight(effectCategory == category ? .semibold : .regular))
+                .font(.system(.subheadline, design: .monospaced).weight(effectCategory == category ? .semibold : .regular))
                 .foregroundStyle(effectCategory == category ? .yellow : .white.opacity(0.6))
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
@@ -1227,37 +1224,6 @@ struct EditorView: View {
         )
         viewModel.currentParameters.cropRect = imageRect
         viewModel.schedulePreviewUpdatePublic()
-    }
-
-    private var presetsToolPanel: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            LazyHStack(spacing: 12) {
-                // Preset thumbnails would go here
-                ForEach(0..<10, id: \.self) { index in
-                    presetItem(index: index)
-                }
-            }
-            .padding(.horizontal, 16)
-        }
-        .frame(maxHeight: .infinity)
-    }
-
-    private func presetItem(index: Int) -> some View {
-        VStack(spacing: 8) {
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color.white.opacity(0.1))
-                .frame(width: 70, height: 70)
-                .overlay {
-                    Text("P\(index + 1)")
-                        .font(.headline)
-                        .foregroundStyle(.white.opacity(0.6))
-                }
-
-            Text("Preset \(index + 1)")
-                .font(.caption2)
-                .foregroundStyle(.white.opacity(0.7))
-                .lineLimit(1)
-        }
     }
 
     // MARK: - Tab Bar Section

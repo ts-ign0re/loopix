@@ -93,8 +93,8 @@ struct ToolSlider: View {
     private var headerRow: some View {
         HStack {
             // Parameter label
-            Text(label)
-                .font(.subheadline)
+            Text(label.lowercased())
+                .font(.system(.subheadline, design: .monospaced))
                 .fontWeight(.medium)
                 .foregroundStyle(.white.opacity(0.9))
 

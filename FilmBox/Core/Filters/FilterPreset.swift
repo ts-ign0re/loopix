@@ -2,7 +2,7 @@ import Foundation
 
 /// A complete filter preset with metadata
 struct FilterPreset: Codable, Identifiable, Hashable, Sendable {
-    let id: UUID
+    var id: UUID
     var name: String
     var category: FilterCategory
     var source: FilterSource

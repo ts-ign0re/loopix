@@ -203,22 +203,29 @@ struct LibraryContentView: View {
     // MARK: - FAB Menu Overlay
 
     private var fabMenuOverlay: some View {
-        VStack {
-            Spacer()
-            HStack(alignment: .bottom) {
-                // Left side - Action tabs (when photos selected)
-                if hasSelection {
-                    actionTabsView
-                        .transition(.move(edge: .leading).combined(with: .opacity))
+        ZStack(alignment: .bottom) {
+            // Left side - Action tabs (when photos selected)
+            if hasSelection {
+                VStack {
+                    Spacer()
+                    HStack {
+                        actionTabsView
+                        Spacer()
+                    }
+                    .padding(.leading, 20)
+                    .padding(.bottom, 28)
                 }
+                .transition(.move(edge: .leading).combined(with: .opacity))
+            }
 
+            // Right side - Navigation FAB
+            VStack {
                 Spacer()
-
-                // Right side - Navigation FAB
-                VStack(alignment: .trailing, spacing: 8) {
-                    // Expanded menu items - navigation only
-                    if isFabExpanded {
-                        VStack(alignment: .trailing, spacing: 8) {
+                HStack {
+                    Spacer()
+                    VStack(alignment: .trailing, spacing: 8) {
+                        // Expanded menu items - navigation only
+                        if isFabExpanded {
                             fabMenuItem(title: "import", icon: "plus") {
                                 isFabExpanded = false
                                 // Check storage limit before importing
@@ -242,30 +249,30 @@ struct LibraryContentView: View {
                             }
                             .transition(.move(edge: .bottom).combined(with: .opacity))
                         }
-                    }
 
-                    // Main FAB button - Yellow with navigation icon
-                    Button {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                            isFabExpanded.toggle()
-                        }
-                    } label: {
-                        Circle()
-                            .fill(Color.yellow)
-                            .frame(width: 56, height: 56)
-                            .shadow(color: .yellow.opacity(0.4), radius: 8, y: 2)
-                            .overlay {
-                                Image(systemName: isFabExpanded ? "xmark" : "line.3.horizontal")
-                                    .font(.system(size: 20, weight: .semibold))
-                                    .foregroundStyle(.black)
-                                    .rotationEffect(.degrees(isFabExpanded ? 90 : 0))
+                        // Main FAB button - Yellow with navigation icon
+                        Button {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                isFabExpanded.toggle()
                             }
+                        } label: {
+                            Circle()
+                                .fill(Color.yellow)
+                                .frame(width: 56, height: 56)
+                                .shadow(color: .yellow.opacity(0.4), radius: 8, y: 2)
+                                .overlay {
+                                    Image(systemName: isFabExpanded ? "xmark" : "line.3.horizontal")
+                                        .font(.system(size: 20, weight: .semibold))
+                                        .foregroundStyle(.black)
+                                        .rotationEffect(.degrees(isFabExpanded ? 90 : 0))
+                                }
+                        }
+                        .buttonStyle(.plain)
+                        .contentShape(Circle())
                     }
-                    .buttonStyle(.plain)
-                    .contentShape(Circle())
+                    .padding(.trailing, 20)
+                    .padding(.bottom, 28)
                 }
-                .padding(.trailing, 20)
-                .padding(.bottom, 28)
             }
         }
         .animation(.spring(response: 0.3, dampingFraction: 0.8), value: hasSelection)
@@ -318,8 +325,6 @@ struct LibraryContentView: View {
                         .stroke(Color.white.opacity(0.2), lineWidth: 0.5)
                 )
         )
-        .padding(.leading, 20)
-        .padding(.bottom, 28)
     }
 
     private func actionTab(title: String, action: @escaping () -> Void) -> some View {
@@ -467,6 +472,78 @@ struct LibraryContentView: View {
                     topVC.present(activityVC, animated: true)
                 }
             }
+        }
+    }
+}
+
+// MARK: - Home Photo Cell
+
+struct HomePhotoCell: View {
+    let photo: ImportedPhoto
+    let isSelected: Bool
+    let isSelectionMode: Bool
+    let targetSize: CGSize
+    let onTap: () -> Void
+
+    @State private var thumbnail: UIImage?
+
+    var body: some View {
+        ZStack {
+            // Thumbnail
+            if let thumbnail {
+                Image(uiImage: thumbnail)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: targetSize.width, height: targetSize.height)
+                    .clipped()
+            } else {
+                Rectangle()
+                    .fill(Color(white: 0.9).opacity(0.08))
+                    .frame(width: targetSize.width, height: targetSize.height)
+            }
+
+            // Selection overlay
+            if isSelected {
+                Color.black.opacity(0.4)
+
+                // Selection border
+                Rectangle()
+                    .stroke(Color.yellow, lineWidth: 3)
+
+                // Square checkmark badge
+                VStack {
+                    HStack {
+                        Spacer()
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(Color.yellow)
+                                .frame(width: 22, height: 22)
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 12, weight: .bold, design: .monospaced))
+                                .foregroundStyle(.black)
+                        }
+                        .padding(6)
+                    }
+                    Spacer()
+                }
+            }
+        }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            onTap()
+        }
+        .task(id: photo.thumbnailVersion) {
+            await loadThumbnail()
+        }
+    }
+
+    private func loadThumbnail() async {
+        // Load thumbnail - manager handles caching
+        let thumb = await MainActor.run {
+            ImportedPhotosManager.shared.loadThumbnail(for: photo)
+        }
+        if let thumb {
+            self.thumbnail = thumb
         }
     }
 }

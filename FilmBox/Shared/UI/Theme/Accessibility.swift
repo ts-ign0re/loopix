@@ -3,7 +3,7 @@ import SwiftUI
 // MARK: - Accessibility Configuration
 
 /// Accessibility utilities and configurations for FilmBox
-enum Accessibility {
+enum A11y {
 
     // MARK: - Semantic Labels
 
@@ -41,6 +41,16 @@ enum Accessibility {
         static let selectPhoto = String(localized: "Select photo", comment: "Select photo action")
         static let photoSelected = String(localized: "Selected", comment: "Photo is selected")
         static let photoCount = String(localized: "%d photos", comment: "Number of photos")
+
+        // Home Actions
+        static let edit = String(localized: "Edit", comment: "Edit photo button")
+        static let delete = String(localized: "Delete", comment: "Delete photo button")
+        static let importPhotos = String(localized: "Import photos", comment: "Import photos button")
+        static let filters = String(localized: "Manage filters", comment: "Filters management button")
+
+        // FAB
+        static let menuOpen = String(localized: "Open menu", comment: "Open floating menu")
+        static let menuClose = String(localized: "Close menu", comment: "Close floating menu")
     }
 
     // MARK: - Hints
@@ -126,12 +136,12 @@ extension View {
         label: String,
         value: Float,
         range: ClosedRange<Float>,
-        formatter: (Float) -> String = Accessibility.ValueFormat.percentage
+        formatter: (Float) -> String = A11y.ValueFormat.percentage
     ) -> some View {
         self
             .accessibilityLabel(label)
             .accessibilityValue(formatter(value))
-            .accessibilityHint(Accessibility.Hints.sliderAdjust)
+            .accessibilityHint(A11y.Hints.sliderAdjust)
             .accessibilityAdjustableAction { direction in
                 // This allows VoiceOver users to increment/decrement
             }
@@ -154,7 +164,7 @@ extension View {
         self
             .accessibilityLabel(label)
             .accessibilityAddTraits(isSelected ? [.isSelected, .isButton] : .isButton)
-            .accessibilityHint(isSelected ? "" : Accessibility.Hints.tapToSelect)
+            .accessibilityHint(isSelected ? "" : A11y.Hints.tapToSelect)
     }
 
     /// Add accessibility for a tab item
@@ -315,7 +325,7 @@ private struct AccessibilityFocusOnAppearModifier: ViewModifier {
                 label: "Exposure",
                 value: 50,
                 range: -100...100,
-                formatter: { Accessibility.ValueFormat.percentage($0) }
+                formatter: { A11y.ValueFormat.percentage($0) }
             )
 
         HStack {

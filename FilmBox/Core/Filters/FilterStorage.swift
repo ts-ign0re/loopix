@@ -103,6 +103,12 @@ actor FilterStorage {
             )
         }
 
+        // If ID already exists, use update instead
+        if userPresets.contains(where: { $0.id == newPreset.id }) {
+            try await update(newPreset)
+            return newPreset
+        }
+
         // Check for duplicate names and append number if needed
         let existingNames = Set(userPresets.map { $0.name })
         if existingNames.contains(newPreset.name) {
@@ -343,7 +349,23 @@ actor FilterStorage {
         }
 
         let data = try Data(contentsOf: userPresetsFileURL)
-        userPresets = try decoder.decode([FilterPreset].self, from: data)
+        let loadedPresets = try decoder.decode([FilterPreset].self, from: data)
+
+        // Remove duplicates by ID, keeping the most recent (last) one
+        var seenIDs = Set<UUID>()
+        var uniquePresets: [FilterPreset] = []
+        for preset in loadedPresets.reversed() {
+            if !seenIDs.contains(preset.id) {
+                seenIDs.insert(preset.id)
+                uniquePresets.append(preset)
+            }
+        }
+        userPresets = uniquePresets.reversed()
+
+        // If duplicates were removed, persist the cleaned data
+        if userPresets.count != loadedPresets.count {
+            try await persistToDisk()
+        }
     }
 
     /// Persist user presets to disk

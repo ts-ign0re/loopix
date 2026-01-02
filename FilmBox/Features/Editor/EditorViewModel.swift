@@ -8,11 +8,10 @@ import Photos
 
 /// Available tabs in the editor interface
 enum EditorTab: String, CaseIterable, Identifiable, Sendable {
-    case filters = "Filters"
-    case adjust = "Adjust"
-    case effects = "Effects"
-    case crop = "Crop"
-    case presets = "Presets"
+    case filters = "filters"
+    case adjust = "adjust"
+    case effects = "effects"
+    case crop = "crop"
 
     var id: String { rawValue }
 
@@ -22,7 +21,6 @@ enum EditorTab: String, CaseIterable, Identifiable, Sendable {
         case .adjust: return "slider.horizontal.3"
         case .effects: return "sparkles"
         case .crop: return "crop"
-        case .presets: return "square.stack.3d.up"
         }
     }
 }

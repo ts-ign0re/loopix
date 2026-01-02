@@ -2,18 +2,18 @@ import Foundation
 
 /// Filter categories for organizing presets in the UI
 enum FilterCategory: String, Codable, CaseIterable, Sendable {
-    case favorites = "★"
-    case custom = "MY"
-    case all = "FILTERS"
-    case cool = "COOL"
-    case warm = "WARM"
-    case pro = "PRO"
-    case portrait = "PORTRAIT"
-    case urban = "URBAN"
-    case film = "FILM"
-    case bw = "B&W"
-    case vintage = "VINTAGE"
-    case creative = "CREATIVE"
+    case favorites = "favourites"
+    case custom = "my"
+    case all = "filters"
+    case cool = "cool"
+    case warm = "warm"
+    case pro = "pro"
+    case portrait = "portrait"
+    case urban = "urban"
+    case film = "film"
+    case bw = "b&w"
+    case vintage = "vintage"
+    case creative = "creative"
 
     var displayName: String { rawValue }
 

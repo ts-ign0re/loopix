@@ -174,21 +174,24 @@ struct FiltersManagementView: View {
 
     private func categoryChip(_ category: FilterCategory) -> some View {
         let isSelected = selectedCategory == category
-        let isFavorites = category == .favorites
 
         return Button {
             withAnimation(.easeInOut(duration: 0.2)) {
                 selectedCategory = category
             }
         } label: {
-            HStack(spacing: 4) {
-                if isFavorites {
+            HStack(spacing: 6) {
+                if category == .favorites {
                     Image(systemName: "star.fill")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(.system(size: 11))
                         .foregroundStyle(isSelected ? .black : .yellow)
+                } else if category == .custom {
+                    Image(systemName: "person.fill")
+                        .font(.system(size: 11))
+                        .foregroundStyle(isSelected ? .black : .white.opacity(0.7))
                 }
                 Text(category.displayName)
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.system(size: 13, weight: .medium, design: .monospaced))
             }
             .foregroundStyle(isSelected ? .black : .white.opacity(0.7))
             .padding(.horizontal, 12)
@@ -1088,7 +1091,7 @@ struct FilterEditorView: View {
     // MARK: - Save
 
     private func saveFilter() {
-        let newFilter = FilterPreset(
+        let savedFilter = FilterPreset(
             id: filter?.id ?? UUID(),
             name: filterName,
             category: .custom,
@@ -1098,9 +1101,19 @@ struct FilterEditorView: View {
         )
 
         Task {
-            try? await FilterStorage.shared.save(newFilter)
-            onSave(newFilter)
-            dismiss()
+            do {
+                if isNewFilter {
+                    // New filter - save
+                    try await FilterStorage.shared.save(savedFilter)
+                } else {
+                    // Existing filter - update
+                    try await FilterStorage.shared.update(savedFilter)
+                }
+                onSave(savedFilter)
+                dismiss()
+            } catch {
+                print("Failed to save filter: \(error)")
+            }
         }
     }
 }

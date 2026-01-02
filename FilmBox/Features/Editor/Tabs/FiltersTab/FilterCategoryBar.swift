@@ -53,33 +53,31 @@ private struct CategoryPill: View {
     let isSelected: Bool
     let namespace: Namespace.ID
 
-    private var isFavorites: Bool {
-        category == .favorites
-    }
-
     var body: some View {
-        Group {
-            if isFavorites {
-                // Star icon for favorites
-                Image(systemName: category.iconName)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(isSelected ? .white : .yellow)
-            } else {
-                Text(category.displayName)
-                    .font(.system(size: 12, weight: isSelected ? .semibold : .medium, design: .monospaced))
-                    .foregroundStyle(isSelected ? .white : .primary)
+        HStack(spacing: 6) {
+            if category == .favorites {
+                Image(systemName: "star.fill")
+                    .font(.system(size: 11))
+                    .foregroundStyle(isSelected ? .black : .yellow)
+            } else if category == .custom {
+                Image(systemName: "person.fill")
+                    .font(.system(size: 11))
+                    .foregroundStyle(isSelected ? .black : .white.opacity(0.7))
             }
+            Text(category.displayName)
+                .font(.system(size: 13, weight: .medium, design: .monospaced))
         }
-        .padding(.horizontal, isFavorites ? 10 : 14)
+        .foregroundStyle(isSelected ? .black : .white.opacity(0.7))
+        .padding(.horizontal, 12)
         .padding(.vertical, 8)
         .background {
             if isSelected {
                 Capsule()
-                    .fill(isFavorites ? Color.yellow : Color.accentColor)
+                    .fill(Color.yellow)
                     .matchedGeometryEffect(id: "categoryBackground", in: namespace)
             } else {
                 Capsule()
-                    .fill(Color(.systemGray5))
+                    .fill(Color.white.opacity(0.1))
             }
         }
         .contentShape(Capsule())

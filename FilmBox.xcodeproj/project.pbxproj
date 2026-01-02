@@ -44,7 +44,6 @@
 		CE0756E32F05603A00C53D17 /* ImagePreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0756E22F05603900C53D17 /* ImagePreview.swift */; };
 		CE0756E52F05604700C53D17 /* ToolSlider.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0756E42F05604700C53D17 /* ToolSlider.swift */; };
 		CE0756E72F05606000C53D17 /* HistogramView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0756E62F05606000C53D17 /* HistogramView.swift */; };
-		CE0756F02F05700000C53D17 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0756EF2F05700000C53D17 /* HomeView.swift */; };
 		CE0756F22F05700100C53D17 /* PhotoPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0756F12F05700100C53D17 /* PhotoPickerView.swift */; };
 		CE0756F42F05700200C53D17 /* ImportedPhotosManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0756F32F05700200C53D17 /* ImportedPhotosManager.swift */; };
 		CE0756F82F05800000C53D17 /* FiltersManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0756F72F05800000C53D17 /* FiltersManagementView.swift */; };
@@ -107,7 +106,6 @@
 		CE0756E22F05603900C53D17 /* ImagePreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePreview.swift; sourceTree = "<group>"; };
 		CE0756E42F05604700C53D17 /* ToolSlider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolSlider.swift; sourceTree = "<group>"; };
 		CE0756E62F05606000C53D17 /* HistogramView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistogramView.swift; sourceTree = "<group>"; };
-		CE0756EF2F05700000C53D17 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		CE0756F12F05700100C53D17 /* PhotoPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoPickerView.swift; sourceTree = "<group>"; };
 		CE0756F32F05700200C53D17 /* ImportedPhotosManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportedPhotosManager.swift; sourceTree = "<group>"; };
 		CE0756F72F05800000C53D17 /* FiltersManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FiltersManagementView.swift; sourceTree = "<group>"; };
@@ -352,7 +350,6 @@
 		CE0756EE2F05700000C53D17 /* Home */ = {
 			isa = PBXGroup;
 			children = (
-				CE0756EF2F05700000C53D17 /* HomeView.swift */,
 				CE0756F12F05700100C53D17 /* PhotoPickerView.swift */,
 			);
 			path = Home;
@@ -540,7 +537,6 @@
 				A1000001229E000100000081 /* CIImage+Extensions.swift in Sources */,
 				A1000001229E000100000090 /* Theme.swift in Sources */,
 				A1000001229E0001000000A0 /* PhotoLibraryManager.swift in Sources */,
-				CE0756F02F05700000C53D17 /* HomeView.swift in Sources */,
 				CE0756F22F05700100C53D17 /* PhotoPickerView.swift in Sources */,
 				CE0756F42F05700200C53D17 /* ImportedPhotosManager.swift in Sources */,
 				CE0756F82F05800000C53D17 /* FiltersManagementView.swift in Sources */,
