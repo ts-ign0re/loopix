@@ -643,9 +643,23 @@ struct LibraryContentView: View {
             for item in photos {
                 if let ciImage = ImportedPhotosManager.shared.loadCIImage(for: item.photo) {
                     var processedImage = ciImage
-                    if let params = item.parameters {
-                        processedImage = await FilterEngine.shared.apply(params, to: ciImage)
-                        hasToolEdits = true
+
+                    // Apply filter preset (CLUT) if selected
+                    if let presetID = item.snapshot?.selectedPresetID {
+                        let allPresets = await FilterStorage.shared.allPresets
+                        if var preset = allPresets.first(where: { $0.id == presetID }) {
+                            // Apply preset with intensity
+                            let intensity = item.snapshot?.filterIntensity ?? 100
+                            preset.clutIntensity = intensity
+                            processedImage = await FilterEngine.shared.apply(preset, to: processedImage)
+                            hasFilter = true
+                        }
+                    }
+
+                    // Apply additional parameters (exposure, contrast, crop, etc.)
+                    if let params = item.snapshot?.parameters {
+                        processedImage = await FilterEngine.shared.apply(params, to: processedImage)
+                        hasToolEdits = params.hasAdjustments
                     }
 
                     let context = CIContext()

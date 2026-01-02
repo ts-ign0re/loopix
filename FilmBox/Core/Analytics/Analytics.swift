@@ -65,9 +65,10 @@ final class Analytics {
         // Set visitor ID for user tracking
         tracker?.forcedVisitorId = getOrCreateVisitorId()
 
-        #if DEBUG
-        tracker?.isOptedOut = true // Disable in debug builds
-        #endif
+        // Analytics enabled in all builds
+        // #if DEBUG
+        // tracker?.isOptedOut = true // Disable in debug builds
+        // #endif
     }
 
     // MARK: - Visitor ID Management

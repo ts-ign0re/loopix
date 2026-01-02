@@ -657,11 +657,11 @@ final class ImportedPhotosManager {
         return result
     }
 
-    /// Get selected photos for local export
-    func getSelectedPhotosForLocalExport() -> [(photo: ImportedPhoto, parameters: FilterParameters?)] {
+    /// Get selected photos for local export with full edit snapshot
+    func getSelectedPhotosForLocalExport() -> [(photo: ImportedPhoto, snapshot: EditSnapshot?)] {
         let selectedPhotos = photos.filter { selectedPhotoIDs.contains($0.id) }
         return selectedPhotos.map { photo in
-            (photo: photo, parameters: getEditedParameters(for: photo.id))
+            (photo: photo, snapshot: getEditSnapshot(for: photo.id))
         }
     }
 
