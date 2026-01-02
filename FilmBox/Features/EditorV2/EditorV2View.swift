@@ -60,9 +60,9 @@ struct EditorV2View: View {
 
     @State private var showDiscardAlert = false
 
-    /// Whether to show navigation bar (hidden only in tool detail mode)
+    /// Whether to show navigation bar (hidden in tool detail mode and crop tab)
     private var showNavigationBar: Bool {
-        viewModel.mode.showNavigationBar
+        viewModel.mode.showNavigationBar && viewModel.selectedTab != .crop
     }
 
     @ViewBuilder
