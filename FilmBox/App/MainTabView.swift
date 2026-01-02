@@ -5,8 +5,8 @@
 //  Main tab navigation with Fitness-style tab bar
 //
 
-import SwiftUI
 import ImageIO
+import SwiftUI
 
 // MARK: - App Tab
 
@@ -145,7 +145,9 @@ struct LibraryContentView: View {
         } message: {
             let usedGB = Double(manager.calculateStorageUsed()) / 1024 / 1024 / 1024
             let limitGB = AppSettings.shared.storageLimitGB
-            Text("storage is full (\(String(format: "%.1f", usedGB))gb / \(String(format: "%.0f", limitGB))gb)\nfree up space to import new photos")
+            Text(
+                "storage is full (\(String(format: "%.1f", usedGB))gb / \(String(format: "%.0f", limitGB))gb)\nfree up space to import new photos"
+            )
         }
     }
 
@@ -162,7 +164,7 @@ struct LibraryContentView: View {
                     .font(.system(size: 16, weight: .medium, design: .monospaced))
                     .foregroundStyle(.white.opacity(0.6))
 
-                Text("tap [import] to add files")
+                Text("tap [button] to add files")
                     .font(.system(size: 12, weight: .regular, design: .monospaced))
                     .foregroundStyle(.white.opacity(0.4))
             }
@@ -176,7 +178,8 @@ struct LibraryContentView: View {
         GeometryReader { geometry in
             let width = geometry.size.width
             // Guard against invalid dimensions
-            let itemWidth = width > 0 ? (width - spacing * CGFloat(columns - 1)) / CGFloat(columns) : 100
+            let itemWidth =
+                width > 0 ? (width - spacing * CGFloat(columns - 1)) / CGFloat(columns) : 100
             let itemSize = CGSize(width: max(itemWidth, 1), height: max(itemWidth, 1))
 
             ScrollView {
@@ -309,7 +312,8 @@ struct LibraryContentView: View {
                 // Edit button - highlighted with text label
                 Button {
                     if let selectedID = manager.selectedPhotoIDs.first,
-                       let photo = manager.photos.first(where: { $0.id == selectedID }) {
+                        let photo = manager.photos.first(where: { $0.id == selectedID })
+                    {
                         photoToEdit = photo
                     }
                 } label: {
@@ -384,10 +388,13 @@ struct LibraryContentView: View {
             if showMoreMenu {
                 floatingMoreMenu
                     .offset(x: 0, y: -52)
-                    .transition(.asymmetric(
-                        insertion: .scale(scale: 0.8, anchor: .bottomTrailing).combined(with: .opacity),
-                        removal: .scale(scale: 0.8, anchor: .bottomTrailing).combined(with: .opacity)
-                    ))
+                    .transition(
+                        .asymmetric(
+                            insertion: .scale(scale: 0.8, anchor: .bottomTrailing).combined(
+                                with: .opacity),
+                            removal: .scale(scale: 0.8, anchor: .bottomTrailing).combined(
+                                with: .opacity)
+                        ))
             }
         }
     }
@@ -481,7 +488,8 @@ struct LibraryContentView: View {
         .buttonStyle(.plain)
     }
 
-    private func fabMenuItem(title: String, icon: String, action: @escaping () -> Void) -> some View {
+    private func fabMenuItem(title: String, icon: String, action: @escaping () -> Void) -> some View
+    {
         Button(action: action) {
             HStack(spacing: 10) {
                 Text(title)
@@ -517,17 +525,20 @@ struct LibraryContentView: View {
     /// When securityMode is true, strips ALL identifying metadata
     private func addSourceMetadata(to data: Data, securityMode: Bool = false) -> Data? {
         guard let source = CGImageSourceCreateWithData(data as CFData, nil),
-              let utType = CGImageSourceGetType(source) else {
+            let utType = CGImageSourceGetType(source)
+        else {
             return nil
         }
 
         let mutableData = NSMutableData()
-        guard let destination = CGImageDestinationCreateWithData(
-            mutableData,
-            utType,
-            1,
-            nil
-        ) else {
+        guard
+            let destination = CGImageDestinationCreateWithData(
+                mutableData,
+                utType,
+                1,
+                nil
+            )
+        else {
             return nil
         }
 
@@ -539,7 +550,7 @@ struct LibraryContentView: View {
             let protectedTiffDict: [String: Any] = [
                 kCGImagePropertyTIFFSoftware as String: "Protected by Loopix iOS",
                 kCGImagePropertyTIFFMake as String: "Loopix",
-                kCGImagePropertyTIFFModel as String: "Protected"
+                kCGImagePropertyTIFFModel as String: "Protected",
             ]
             let cleanMetadata: [String: Any] = [
                 kCGImagePropertyTIFFDictionary as String: protectedTiffDict
@@ -550,7 +561,7 @@ struct LibraryContentView: View {
             let loopixTiffDict: [String: Any] = [
                 kCGImagePropertyTIFFSoftware as String: "Loopix iOS",
                 kCGImagePropertyTIFFMake as String: "Loopix",
-                kCGImagePropertyTIFFModel as String: "iOS"
+                kCGImagePropertyTIFFModel as String: "iOS",
             ]
             let metadata: [String: Any] = [
                 kCGImagePropertyTIFFDictionary as String: loopixTiffDict
@@ -598,10 +609,14 @@ struct LibraryContentView: View {
                     if var jpegData = context.jpegRepresentation(
                         of: processedImage,
                         colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!,
-                        options: [kCGImageDestinationLossyCompressionQuality as CIImageRepresentationOption: 0.95]
+                        options: [
+                            kCGImageDestinationLossyCompressionQuality
+                                as CIImageRepresentationOption: 0.95
+                        ]
                     ) {
                         // Add Loopix iOS source metadata (strip all if security mode)
-                        jpegData = addSourceMetadata(to: jpegData, securityMode: securityMode) ?? jpegData
+                        jpegData =
+                            addSourceMetadata(to: jpegData, securityMode: securityMode) ?? jpegData
                         try? jpegData.write(to: tempURL)
                         urls.append(tempURL)
                     }
@@ -628,10 +643,12 @@ struct LibraryContentView: View {
             )
 
             if !urls.isEmpty {
-                let activityVC = UIActivityViewController(activityItems: urls, applicationActivities: nil)
+                let activityVC = UIActivityViewController(
+                    activityItems: urls, applicationActivities: nil)
                 if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                   let window = windowScene.windows.first,
-                   let rootVC = window.rootViewController {
+                    let window = windowScene.windows.first,
+                    let rootVC = window.rootViewController
+                {
                     // Find the topmost presented controller
                     var topVC = rootVC
                     while let presented = topVC.presentedViewController {
