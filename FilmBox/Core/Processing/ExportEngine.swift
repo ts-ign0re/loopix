@@ -300,7 +300,7 @@ actor ExportEngine {
         // Check security mode
         let securityMode = await MainActor.run { AppSettings.shared.securityMode }
 
-        // Add RedRoom iOS as source in EXIF (strip all metadata if security mode)
+        // Add Loopix iOS as source in EXIF (strip all metadata if security mode)
         jpegData = addSourceMetadata(to: jpegData, securityMode: securityMode) ?? jpegData
 
         // Save to Photos Library
@@ -326,6 +326,9 @@ actor ExportEngine {
         guard let identifier = localIdentifier else {
             throw ExportError.writeFailed(URL(fileURLWithPath: "Photos Library"))
         }
+
+        // Add to Loopix album
+        try? await PhotoLibraryManager.shared.addAssetsToLoopixAlbum(localIdentifiers: [identifier])
 
         return identifier
     }
@@ -588,20 +591,25 @@ actor ExportEngine {
             }
         }
 
-        // In security mode: only RedRoom iOS tag, nothing else
-        // Normal mode: add RedRoom iOS to existing metadata
+        // In security mode: only "Protected by Loopix iOS" tag, nothing else
+        // Normal mode: add Loopix iOS to existing metadata
         if securityMode {
+            let protectedTiffDict: [String: Any] = [
+                kCGImagePropertyTIFFSoftware as String: "Protected by Loopix iOS",
+                kCGImagePropertyTIFFMake as String: "Loopix",
+                kCGImagePropertyTIFFModel as String: "Protected"
+            ]
             metadata = [
-                kCGImagePropertyTIFFDictionary as String: [
-                    kCGImagePropertyTIFFSoftware as String: "RedRoom iOS"
-                ]
+                kCGImagePropertyTIFFDictionary as String: protectedTiffDict
             ]
         } else {
             if metadata == nil {
                 metadata = [:]
             }
             var tiffDict = metadata?[kCGImagePropertyTIFFDictionary as String] as? [String: Any] ?? [:]
-            tiffDict[kCGImagePropertyTIFFSoftware as String] = "RedRoom iOS"
+            tiffDict[kCGImagePropertyTIFFSoftware as String] = "Loopix iOS"
+            tiffDict[kCGImagePropertyTIFFMake as String] = "Loopix"
+            tiffDict[kCGImagePropertyTIFFModel as String] = "iOS"
             metadata?[kCGImagePropertyTIFFDictionary as String] = tiffDict
         }
 
@@ -674,7 +682,7 @@ actor ExportEngine {
             }
         }
 
-        // Always embed metadata (at minimum includes RedRoom iOS source)
+        // Always embed metadata (at minimum includes Loopix iOS source)
         if let metadata = metadata, !metadata.isEmpty {
             return embedMetadata(metadata, in: outputData, format: format) ?? outputData
         }
@@ -708,7 +716,7 @@ actor ExportEngine {
         return mutableData as Data
     }
 
-    /// Add RedRoom iOS source metadata to image data
+    /// Add Loopix iOS source metadata to image data
     /// When securityMode is true, strips ALL identifying metadata
     private nonisolated func addSourceMetadata(to data: Data, securityMode: Bool = false) -> Data? {
         guard let source = CGImageSourceCreateWithData(data as CFData, nil),
@@ -727,26 +735,30 @@ actor ExportEngine {
         }
 
         if securityMode {
-            // Security mode: strip ALL metadata, only keep RedRoom iOS tag
-            // Create clean image with minimal metadata
+            // Security mode: strip ALL metadata, only keep "Protected by Loopix iOS"
             guard let cgImage = CGImageSourceCreateImageAtIndex(source, 0, nil) else {
                 return nil
             }
 
-            // Only include RedRoom iOS software tag - nothing else
+            let protectedTiffDict: [String: Any] = [
+                kCGImagePropertyTIFFSoftware as String: "Protected by Loopix iOS",
+                kCGImagePropertyTIFFMake as String: "Loopix",
+                kCGImagePropertyTIFFModel as String: "Protected"
+            ]
             let cleanMetadata: [String: Any] = [
-                kCGImagePropertyTIFFDictionary as String: [
-                    kCGImagePropertyTIFFSoftware as String: "RedRoom iOS"
-                ]
+                kCGImagePropertyTIFFDictionary as String: protectedTiffDict
             ]
 
             CGImageDestinationAddImage(destination, cgImage, cleanMetadata as CFDictionary)
         } else {
-            // Normal mode: preserve existing metadata, add RedRoom iOS
+            // Normal mode: preserve existing metadata, add Loopix iOS
+            let loopixTiffDict: [String: Any] = [
+                kCGImagePropertyTIFFSoftware as String: "Loopix iOS",
+                kCGImagePropertyTIFFMake as String: "Loopix",
+                kCGImagePropertyTIFFModel as String: "iOS"
+            ]
             let metadata: [String: Any] = [
-                kCGImagePropertyTIFFDictionary as String: [
-                    kCGImagePropertyTIFFSoftware as String: "RedRoom iOS"
-                ]
+                kCGImagePropertyTIFFDictionary as String: loopixTiffDict
             ]
             CGImageDestinationAddImageFromSource(destination, source, 0, metadata as CFDictionary)
         }
@@ -892,7 +904,7 @@ extension ExportEngine {
         // Check security mode
         let securityMode = AppSettings.shared.securityMode
 
-        // Add RedRoom iOS as source in EXIF (strip all metadata if security mode)
+        // Add Loopix iOS as source in EXIF (strip all metadata if security mode)
         jpegData = addSourceMetadata(to: jpegData, securityMode: securityMode) ?? jpegData
 
         // Save to Photos Library
@@ -913,6 +925,9 @@ extension ExportEngine {
         guard let identifier = localIdentifier else {
             throw ExportError.writeFailed(URL(fileURLWithPath: "Photos Library"))
         }
+
+        // Add to Loopix album
+        try? await PhotoLibraryManager.shared.addAssetsToLoopixAlbum(localIdentifiers: [identifier])
 
         return identifier
     }

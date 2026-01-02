@@ -186,7 +186,7 @@ struct SettingsView: View {
                 Divider()
                     .background(Color.white.opacity(0.1))
 
-                Text("the only metadata preserved is 'RedRoom iOS' as the software tag.")
+                Text("the only metadata preserved is 'Protected by Loopix iOS' as the software tag.")
                     .font(.system(size: 12, design: .monospaced))
                     .foregroundStyle(.yellow.opacity(0.8))
                     .lineSpacing(3)
@@ -510,7 +510,7 @@ struct SettingsView: View {
                             metadataItem("thumbnails / previews")
                         }
 
-                        Text("// only 'RedRoom iOS' tag preserved")
+                        Text("// only 'Protected by Loopix iOS' tag preserved")
                             .font(.system(size: 11, design: .monospaced))
                             .foregroundStyle(.yellow.opacity(0.6))
                             .padding(.top, 4)

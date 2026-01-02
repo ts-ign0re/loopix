@@ -463,8 +463,11 @@ final class EditorViewModel {
         // Scale down image for preview based on quality setting
         let previewImage = scaleForPreview(original)
 
-        // Apply two-layer filter pipeline
-        let processed = await applyFilterPipeline(to: previewImage)
+        // Calculate scale factor for cropRect adjustment
+        let scaleFactor = previewImage.extent.width / original.extent.width
+
+        // Apply two-layer filter pipeline with scale factor for cropRect
+        let processed = await applyFilterPipeline(to: previewImage, cropScaleFactor: scaleFactor)
 
         currentImage = processed
     }
@@ -474,7 +477,8 @@ final class EditorViewModel {
     /// Apply filter pipeline: Filter Layer + User Adjustments (DRY - used by both preview and save)
     /// - Layer 1: Filter Effect (selectedPreset + filterIntensity)
     /// - Layer 2: User Adjustments (currentParameters - independent of filter)
-    private func applyFilterPipeline(to image: CIImage) async -> CIImage {
+    /// - cropScaleFactor: Scale factor to apply to cropRect (1.0 for full resolution, < 1.0 for preview)
+    private func applyFilterPipeline(to image: CIImage, cropScaleFactor: CGFloat = 1.0) async -> CIImage {
         var processed = image
 
         // === LAYER 1: Filter Effect ===
@@ -490,7 +494,7 @@ final class EditorViewModel {
             } else {
                 // Parameter-based filter: interpolate preset parameters by intensity
                 let filterParams = preset.parameters(at: filterIntensity)
-                processed = await applyFilters(to: processed, parameters: filterParams)
+                processed = await applyFilters(to: processed, parameters: filterParams, cropScaleFactor: cropScaleFactor)
             }
         }
 
@@ -498,7 +502,7 @@ final class EditorViewModel {
         // Apply user's manual adjustments on top of filter (if any)
         // These are independent of filter selection - always start from .identity
         if currentParameters != .identity {
-            processed = await applyFilters(to: processed, parameters: currentParameters)
+            processed = await applyFilters(to: processed, parameters: currentParameters, cropScaleFactor: cropScaleFactor)
         }
 
         return processed
@@ -518,7 +522,8 @@ final class EditorViewModel {
     }
 
     /// Apply filter parameters to an image
-    private func applyFilters(to image: CIImage, parameters: FilterParameters) async -> CIImage {
+    /// - cropScaleFactor: Scale factor to apply to cropRect (1.0 for full resolution, < 1.0 for preview)
+    private func applyFilters(to image: CIImage, parameters: FilterParameters, cropScaleFactor: CGFloat = 1.0) async -> CIImage {
         var output = image
 
         // === GEOMETRY TRANSFORMS ===
@@ -559,11 +564,18 @@ final class EditorViewModel {
             }
         }
 
-        // Apply crop rect if set
-        if let cropRect = parameters.cropRect {
-            output = output.cropped(to: cropRect)
+        // Apply crop rect if set (scaled for preview)
+        if let originalCropRect = parameters.cropRect {
+            // Scale cropRect from original image coordinates to current image coordinates
+            let scaledCropRect = CGRect(
+                x: originalCropRect.origin.x * cropScaleFactor,
+                y: originalCropRect.origin.y * cropScaleFactor,
+                width: originalCropRect.width * cropScaleFactor,
+                height: originalCropRect.height * cropScaleFactor
+            )
+            output = output.cropped(to: scaledCropRect)
             // Translate to origin
-            let translateTransform = CGAffineTransform(translationX: -cropRect.origin.x, y: -cropRect.origin.y)
+            let translateTransform = CGAffineTransform(translationX: -scaledCropRect.origin.x, y: -scaledCropRect.origin.y)
             output = output.transformed(by: translateTransform)
         }
 

@@ -9,24 +9,12 @@ struct FilterDetailView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Image preview with histogram and intensity slider
-            ZStack(alignment: .trailing) {
-                VSCOImagePreview(
-                    viewModel: viewModel,
-                    showHistogram: true,
-                    showIntensitySlider: false
-                )
-
-                // Vertical intensity slider on right edge
-                VerticalIntensitySlider(
-                    value: Binding(
-                        get: { viewModel.editor.filterIntensity },
-                        set: { viewModel.setFilterIntensity($0) }
-                    ),
-                    range: 0...100
-                )
-                .padding(.trailing, 8)
-            }
+            // Image preview with histogram
+            VSCOImagePreview(
+                viewModel: viewModel,
+                showHistogram: true,
+                showIntensitySlider: false
+            )
             .frame(height: geometry.size.height * 0.55)
 
             Spacer()

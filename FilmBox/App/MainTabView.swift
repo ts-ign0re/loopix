@@ -385,7 +385,7 @@ struct LibraryContentView: View {
         }
     }
 
-    /// Add RedRoom iOS source metadata to image data
+    /// Add Loopix iOS source metadata to image data
     /// When securityMode is true, strips ALL identifying metadata
     private func addSourceMetadata(to data: Data, securityMode: Bool = false) -> Data? {
         guard let source = CGImageSourceCreateWithData(data as CFData, nil),
@@ -404,22 +404,28 @@ struct LibraryContentView: View {
         }
 
         if securityMode {
-            // Security mode: strip ALL metadata, only keep RedRoom iOS
+            // Security mode: strip ALL metadata, only keep "Protected by Loopix iOS"
             guard let cgImage = CGImageSourceCreateImageAtIndex(source, 0, nil) else {
                 return nil
             }
+            let protectedTiffDict: [String: Any] = [
+                kCGImagePropertyTIFFSoftware as String: "Protected by Loopix iOS",
+                kCGImagePropertyTIFFMake as String: "Loopix",
+                kCGImagePropertyTIFFModel as String: "Protected"
+            ]
             let cleanMetadata: [String: Any] = [
-                kCGImagePropertyTIFFDictionary as String: [
-                    kCGImagePropertyTIFFSoftware as String: "RedRoom iOS"
-                ]
+                kCGImagePropertyTIFFDictionary as String: protectedTiffDict
             ]
             CGImageDestinationAddImage(destination, cgImage, cleanMetadata as CFDictionary)
         } else {
-            // Normal mode: preserve metadata, add RedRoom iOS
+            // Normal mode: preserve metadata, add Loopix iOS
+            let loopixTiffDict: [String: Any] = [
+                kCGImagePropertyTIFFSoftware as String: "Loopix iOS",
+                kCGImagePropertyTIFFMake as String: "Loopix",
+                kCGImagePropertyTIFFModel as String: "iOS"
+            ]
             let metadata: [String: Any] = [
-                kCGImagePropertyTIFFDictionary as String: [
-                    kCGImagePropertyTIFFSoftware as String: "RedRoom iOS"
-                ]
+                kCGImagePropertyTIFFDictionary as String: loopixTiffDict
             ]
             CGImageDestinationAddImageFromSource(destination, source, 0, metadata as CFDictionary)
         }
@@ -458,7 +464,7 @@ struct LibraryContentView: View {
                         colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!,
                         options: [kCGImageDestinationLossyCompressionQuality as CIImageRepresentationOption: 0.95]
                     ) {
-                        // Add RedRoom iOS source metadata (strip all if security mode)
+                        // Add Loopix iOS source metadata (strip all if security mode)
                         jpegData = addSourceMetadata(to: jpegData, securityMode: securityMode) ?? jpegData
                         try? jpegData.write(to: tempURL)
                         urls.append(tempURL)

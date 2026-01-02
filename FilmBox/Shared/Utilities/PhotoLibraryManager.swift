@@ -302,6 +302,67 @@ actor PhotoLibraryManager {
         imageManager.stopCachingImagesForAllAssets()
     }
 
+    // MARK: - Album Management
+
+    /// Album name for exported photos
+    private static let loopixAlbumName = "Loopix"
+
+    /// Gets or creates the Loopix album
+    /// - Returns: The PHAssetCollection for the Loopix album
+    func getOrCreateLoopixAlbum() async throws -> PHAssetCollection {
+        try await ensureAuthorization()
+
+        // Check if album already exists
+        let fetchOptions = PHFetchOptions()
+        fetchOptions.predicate = NSPredicate(format: "title == %@", Self.loopixAlbumName)
+        let existingAlbums = PHAssetCollection.fetchAssetCollections(
+            with: .album,
+            subtype: .any,
+            options: fetchOptions
+        )
+
+        if let existingAlbum = existingAlbums.firstObject {
+            return existingAlbum
+        }
+
+        // Create new album
+        var albumPlaceholder: PHObjectPlaceholder?
+        try await PHPhotoLibrary.shared().performChanges {
+            let createRequest = PHAssetCollectionChangeRequest.creationRequestForAssetCollection(withTitle: Self.loopixAlbumName)
+            albumPlaceholder = createRequest.placeholderForCreatedAssetCollection
+        }
+
+        guard let placeholder = albumPlaceholder else {
+            throw PhotoLibraryError.fetchFailed
+        }
+
+        // Fetch the created album
+        let createdAlbums = PHAssetCollection.fetchAssetCollections(
+            withLocalIdentifiers: [placeholder.localIdentifier],
+            options: nil
+        )
+
+        guard let album = createdAlbums.firstObject else {
+            throw PhotoLibraryError.fetchFailed
+        }
+
+        return album
+    }
+
+    /// Adds assets to the Loopix album
+    /// - Parameter localIdentifiers: The local identifiers of the assets to add
+    func addAssetsToLoopixAlbum(localIdentifiers: [String]) async throws {
+        let album = try await getOrCreateLoopixAlbum()
+
+        let assets = PHAsset.fetchAssets(withLocalIdentifiers: localIdentifiers, options: nil)
+        guard assets.count > 0 else { return }
+
+        try await PHPhotoLibrary.shared().performChanges {
+            guard let albumChangeRequest = PHAssetCollectionChangeRequest(for: album) else { return }
+            albumChangeRequest.addAssets(assets)
+        }
+    }
+
     // MARK: - Photo Library Changes
 
     /// Registers an observer for photo library changes

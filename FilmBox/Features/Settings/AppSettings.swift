@@ -75,7 +75,7 @@ final class AppSettings {
     // MARK: - Security Settings
 
     /// When enabled, strips all identifying metadata from exports (GPS, dates, device info, etc.)
-    /// Only keeps "RedRoom iOS" as software tag
+    /// Only keeps "Protected by Loopix iOS" as software tag
     var securityMode: Bool = false {
         didSet { save() }
     }
