@@ -29,6 +29,9 @@ struct FiltersManagementView: View {
     /// Show filter editor sheet
     @State private var showFilterEditor = false
 
+    /// Show Fuji recipe form
+    @State private var showFujiRecipeForm = false
+
     /// Filter being edited (nil for new filter)
     @State private var filterToEdit: FilterPreset?
 
@@ -157,6 +160,13 @@ struct FiltersManagementView: View {
                     }
                 }
             )
+        }
+        .sheet(isPresented: $showFujiRecipeForm) {
+            FujiRecipeFormView { newPreset in
+                Task {
+                    await handleFilterSaved(newPreset)
+                }
+            }
         }
     }
 
@@ -372,6 +382,13 @@ struct FiltersManagementView: View {
                     // Expanded menu items
                     if isFabExpanded {
                         VStack(alignment: .trailing, spacing: 8) {
+                            // Fuji recipe - always visible
+                            fabMenuItem(title: "fuji recipe", icon: "camera.aperture") {
+                                showFujiRecipeForm = true
+                                isFabExpanded = false
+                            }
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
+
                             // Add new - always visible
                             fabMenuItem(title: "add new", icon: "plus.circle") {
                                 filterToEdit = nil

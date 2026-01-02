@@ -45,6 +45,7 @@
 		CE0757102F08A00100C53D17 /* CloudBackupManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0757112F08A00100C53D17 /* CloudBackupManager.swift */; };
 		CE0757132F08A00300C53D17 /* RecentlyUsedFiltersManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0757142F08A00300C53D17 /* RecentlyUsedFiltersManager.swift */; };
 		APERT00100000000000000001 /* ApertureLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = APERT00000000000000000001 /* ApertureLoader.swift */; };
+		FUJIR00100000000000000001 /* FujiRecipeFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FUJIR00000000000000000001 /* FujiRecipeFormView.swift */; };
 		CE6526192F079245008466F6 /* Icon.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE6526182F079245008466F6 /* Icon.jpg */; };
 		CE6526352F07936C008466F6 /* ToolCategoryBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE65262D2F07936C008466F6 /* ToolCategoryBar.swift */; };
 		CE6526362F07936C008466F6 /* VSCOFiltersTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE6526292F07936C008466F6 /* VSCOFiltersTabView.swift */; };
@@ -133,6 +134,7 @@
 		CE0757112F08A00100C53D17 /* CloudBackupManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudBackupManager.swift; sourceTree = "<group>"; };
 		CE0757142F08A00300C53D17 /* RecentlyUsedFiltersManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecentlyUsedFiltersManager.swift; sourceTree = "<group>"; };
 		APERT00000000000000000001 /* ApertureLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApertureLoader.swift; sourceTree = "<group>"; };
+		FUJIR00000000000000000001 /* FujiRecipeFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FujiRecipeFormView.swift; sourceTree = "<group>"; };
 		CE6526182F079245008466F6 /* Icon.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = Icon.jpg; sourceTree = "<group>"; };
 		CE65261A2F07936C008466F6 /* ActionButtons.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionButtons.swift; sourceTree = "<group>"; };
 		CE65261B2F07936C008466F6 /* HistogramOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistogramOverlay.swift; sourceTree = "<group>"; };
@@ -399,6 +401,7 @@
 			isa = PBXGroup;
 			children = (
 				CE0756F72F05800000C53D17 /* FiltersManagementView.swift */,
+				FUJIR00000000000000000001 /* FujiRecipeFormView.swift */,
 			);
 			path = Filters;
 			sourceTree = "<group>";
@@ -669,6 +672,7 @@
 				CE0756F22F05700100C53D17 /* PhotoPickerView.swift in Sources */,
 				CE0756F42F05700200C53D17 /* ImportedPhotosManager.swift in Sources */,
 				CE0756F82F05800000C53D17 /* FiltersManagementView.swift in Sources */,
+				FUJIR00100000000000000001 /* FujiRecipeFormView.swift in Sources */,
 				CE0756F92F05800100C53D17 /* FilterStorage.swift in Sources */,
 				CE0756FC2F05800200C53D17 /* FujiRecipeImporter.swift in Sources */,
 				CE0756FD2F05800300C53D17 /* FilterPreviewCache.swift in Sources */,

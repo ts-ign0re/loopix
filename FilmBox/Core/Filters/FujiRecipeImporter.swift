@@ -87,6 +87,77 @@ final class FujiRecipeImporter {
         return try importRecipes(from: url)
     }
 
+    // MARK: - Public Builder (for UI form)
+
+    /// Build FilterParameters from individual Fuji recipe values
+    /// Used by FujiRecipeFormView to create filters with same quality as JSON imports
+    static func buildParameters(
+        filmSimulation: FilmSimulationType,
+        grainEffect: String,
+        colorChrome: ColorChromeData.ColorChromeLevel,
+        colorChromeFxBlue: ColorChromeData.ColorChromeLevel,
+        wbRedShift: Int,
+        wbBlueShift: Int,
+        dynamicRange: DynamicRangeMode,
+        highlight: Float,
+        shadow: Float,
+        color: Int,
+        sharpness: Int,
+        noiseReduction: Int,
+        clarity: Int
+    ) -> FilterParameters {
+        var params = FilterParameters()
+
+        // Film Simulation
+        params.filmSimulation = filmSimulation
+
+        // Grain Effect
+        params.grain = parseGrainEffect(grainEffect)
+
+        // Color Chrome
+        params.colorChrome = ColorChromeData(
+            effect: colorChrome,
+            fxBlue: colorChromeFxBlue
+        )
+
+        // White Balance Shift
+        params.whiteBalanceShift = WhiteBalanceShift(
+            redShift: wbRedShift,
+            blueShift: wbBlueShift
+        )
+
+        // Dynamic Range
+        params.dynamicRange = dynamicRange
+
+        // Highlight/Shadow (Fuji -2...+4 scale, convert to app -100...+100)
+        params.highlights = clamp(highlight * 25, min: -100, max: 100)
+        params.shadows = clamp(shadow * 25, min: -100, max: 100)
+
+        // Color (Fuji -4...+4 → saturation + vibrance)
+        let colorBoost = Float(color) * 12.5
+        params.saturation = clamp(colorBoost, min: -100, max: 100)
+        params.vibrance = clamp(colorBoost * 0.3, min: -100, max: 100)
+
+        // Clarity (Fuji -5...+5 → App -100...+100)
+        params.clarity = Float(clarity) * 20
+
+        // Sharpness (Fuji -4...+4)
+        if sharpness < 0 {
+            params.sharpness = 0
+            params.clarity += Float(sharpness) * 10
+        } else {
+            params.sharpness = clamp(Float(sharpness) * 12.5, min: 0, max: 100)
+        }
+
+        // Final clamp for clarity
+        params.clarity = clamp(params.clarity, min: -100, max: 100)
+
+        // Noise Reduction (Fuji -4...+4 → App -100...+100)
+        params.noiseReduction = clamp(Float(noiseReduction) * 25, min: -100, max: 100)
+
+        return params
+    }
+
     // MARK: - Conversion
 
     /// Convert a Fuji recipe to a FilterPreset
@@ -210,17 +281,17 @@ final class FujiRecipeImporter {
 
         guard components.count >= 1 else { return .none }
 
-        // Parse strength
+        // Parse strength (Fuji grain is subtle, not aggressive)
         let amount: Float
         switch components[0] {
         case "off", "none":
             return .none
         case "weak":
-            amount = 25
+            amount = 4
         case "strong":
-            amount = 60
+            amount = 9
         default:
-            amount = 40
+            amount = 6
         }
 
         // Parse size
