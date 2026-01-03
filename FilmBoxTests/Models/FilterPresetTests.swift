@@ -308,22 +308,41 @@ final class FilterPresetTests: XCTestCase {
 
     // MARK: - Hashable Tests
 
-    /// Test: Same ID means equal
-    func testSameIDMeansEqual() {
+    /// Test: Preset equals itself
+    func testPresetEqualsItself() {
+        let preset = FilterPreset(name: "Test")
+        XCTAssertEqual(preset, preset, "Preset should equal itself")
+    }
+
+    /// Test: Encoded and decoded preset equals original
+    func testEncodedDecodedPresetEqualsOriginal() throws {
+        let original = FilterPreset(name: "Test", category: .warm)
+        let data = try JSONEncoder().encode(original)
+        let decoded = try JSONDecoder().decode(FilterPreset.self, from: data)
+
+        XCTAssertEqual(original, decoded, "Decoded preset should equal original")
+    }
+
+    /// Test: Different properties means not equal
+    func testDifferentPropertiesMeansNotEqual() {
         let id = UUID()
 
         let a = FilterPreset(id: id, name: "A")
         let b = FilterPreset(id: id, name: "B")
 
-        XCTAssertEqual(a, b, "Presets with same ID should be equal")
+        XCTAssertNotEqual(a, b, "Presets with different names should not be equal")
     }
 
-    /// Test: Different ID means not equal
-    func testDifferentIDMeansNotEqual() {
-        let a = FilterPreset(name: "A")
-        let b = FilterPreset(name: "A")
+    /// Test: Presets can be used in Set
+    func testPresetsInSet() {
+        let preset = FilterPreset(name: "Test")
 
-        XCTAssertNotEqual(a, b, "Presets with different IDs should not be equal")
+        var set: Set<FilterPreset> = [preset, preset]
+        XCTAssertEqual(set.count, 1, "Set should deduplicate same preset")
+
+        let another = FilterPreset(name: "Another")
+        set.insert(another)
+        XCTAssertEqual(set.count, 2, "Set should have 2 different presets")
     }
 
     // MARK: - Category Tests

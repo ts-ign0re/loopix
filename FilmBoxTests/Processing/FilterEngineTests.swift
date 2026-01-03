@@ -448,15 +448,12 @@ final class FilterEngineTests: XCTestCase {
         params.contrast = 20
         params.saturation = 10
 
-        measure {
-            let expectation = XCTestExpectation(description: "Apply filters")
-
-            Task {
-                _ = await self.engine.apply(params, to: largeImage)
-                expectation.fulfill()
-            }
-
-            wait(for: [expectation], timeout: 5.0)
+        // Simple timing test without measure block for Swift 6 compatibility
+        let start = CFAbsoluteTimeGetCurrent()
+        for _ in 0..<5 {
+            _ = await engine.apply(params, to: largeImage)
         }
+        let elapsed = CFAbsoluteTimeGetCurrent() - start
+        XCTAssertLessThan(elapsed, 10.0, "5 filter applications should complete within 10 seconds")
     }
 }

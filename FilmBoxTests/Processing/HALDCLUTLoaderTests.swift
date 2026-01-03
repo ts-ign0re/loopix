@@ -161,8 +161,10 @@ final class HALDCLUTLoaderTests: XCTestCase {
         let output = filter.outputImage
 
         XCTAssertNotNil(output, "CLUT filter should produce output")
-        XCTAssertEqual(output?.extent.width, testImage.extent.width, accuracy: 1)
-        XCTAssertEqual(output?.extent.height, testImage.extent.height, accuracy: 1)
+        if let output = output {
+            XCTAssertEqual(output.extent.width, testImage.extent.width, accuracy: 1)
+            XCTAssertEqual(output.extent.height, testImage.extent.height, accuracy: 1)
+        }
     }
 
     /// Test: CLUT changes colors
