@@ -17,7 +17,7 @@ private static let siteID = "2"
 | Setting | Value | Description |
 |---------|-------|-------------|
 | `dispatchInterval` | 30 sec | Auto-dispatch queued events |
-| `contentBase` | `https://app.filmbox.io` | Base URL for event context |
+| `contentBase` | `https://loopix.app` | Base URL for event context |
 | `isOptedOut` | `false` | Must be explicitly set (persisted in UserDefaults) |
 | `forcedVisitorId` | 16-char hex | Persisted visitor ID for cross-session tracking |
 

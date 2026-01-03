@@ -62,7 +62,7 @@ final class Analytics {
         tracker = MatomoTracker(siteId: Self.siteID, baseURL: Self.matomoURL)
 
         // Set content base URL for event context
-        tracker?.contentBase = URL(string: "https://app.filmbox.io")
+        tracker?.contentBase = URL(string: "https://loopix.app")
 
         // Log level: use .verbose for debugging, .warning for production
         #if DEBUG
