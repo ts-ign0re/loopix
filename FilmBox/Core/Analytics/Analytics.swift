@@ -60,15 +60,25 @@ final class Analytics {
 
     private func setupTracker() {
         tracker = MatomoTracker(siteId: Self.siteID, baseURL: Self.matomoURL)
+
+        // Set content base URL for event context
+        tracker?.contentBase = URL(string: "https://app.filmbox.io")
+
+        // Log level: use .verbose for debugging, .warning for production
+        #if DEBUG
+        tracker?.logger = DefaultLogger(minLevel: .verbose)
+        #else
         tracker?.logger = DefaultLogger(minLevel: .warning)
+        #endif
+
+        // Auto-dispatch every 30 seconds
+        tracker?.dispatchInterval = 30
+
+        // Ensure tracking is enabled (isOptedOut is persisted in UserDefaults)
+        tracker?.isOptedOut = false
 
         // Set visitor ID for user tracking
         tracker?.forcedVisitorId = getOrCreateVisitorId()
-
-        // Analytics enabled in all builds
-        // #if DEBUG
-        // tracker?.isOptedOut = true // Disable in debug builds
-        // #endif
     }
 
     // MARK: - Visitor ID Management
@@ -241,14 +251,10 @@ extension Analytics {
         guard isEnabled else { return }
         sessionStartTime = Date()
 
-        tracker?.track(
-            eventWithCategory: Category.app.rawValue,
-            action: Action.launch.rawValue,
-            name: "app_launch",
-            value: nil
-        )
+        // Track app launch as screen view
+        tracker?.track(view: ["app_launch"])
 
-        // Track app version
+        // Track app version as event
         if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String,
            let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String {
             tracker?.track(
@@ -258,6 +264,9 @@ extension Analytics {
                 value: nil
             )
         }
+
+        // Dispatch immediately on launch
+        dispatch()
     }
 
     /// Track app going to background
