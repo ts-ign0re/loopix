@@ -127,11 +127,18 @@ extern "C" float4 grainKernel(coreimage::sampler src,
     // Get destination coordinates
     float2 coord = dest.coord();
 
-    // Calculate grain size factor - higher frequency for uniform per-pixel grain
+    // Calculate grain size factor - controls grain cell size
+    // Larger size = smaller sizeScale = larger grain cells
     float sizeScale = 2.0 / max(size, 0.5);
 
-    // Grain coordinates with optional temporal variation
-    float2 grainCoord = coord * sizeScale;
+    // Grain coordinates - quantize to create discrete grain cells
+    // This ensures adjacent pixels within the same cell share the same noise value,
+    // producing consistent grain appearance across different image resolutions
+    float2 scaledCoord = coord * sizeScale;
+    float2 grainCoord = floor(scaledCoord);
+
+    // Use fractional part for smooth blending at cell edges
+    float2 cellFract = fract(scaledCoord);
     float seed = time * 17.3;
 
     // Calculate luminance for exposure-dependent response
@@ -148,8 +155,19 @@ extern "C" float4 grainKernel(coreimage::sampler src,
     float exposureResponse = pow(luminance, 0.7) * (1.0 - pow(luminance, 2.5));
     exposureResponse = max(exposureResponse, 0.15); // Minimum grain in deep shadows
 
-    // Generate main grain noise with Gaussian distribution (per-pixel, no clustering)
-    float grain = filmNoise(grainCoord, roughness, seed);
+    // Generate grain with bilinear interpolation between cells for smooth appearance
+    // Sample four corners of the current cell
+    float grain00 = filmNoise(grainCoord, roughness, seed);
+    float grain10 = filmNoise(grainCoord + float2(1.0, 0.0), roughness, seed);
+    float grain01 = filmNoise(grainCoord + float2(0.0, 1.0), roughness, seed);
+    float grain11 = filmNoise(grainCoord + float2(1.0, 1.0), roughness, seed);
+
+    // Smooth interpolation weights using smoothstep for organic edges
+    float2 blend = smoothstep(0.0, 1.0, cellFract);
+
+    // Bilinear interpolation for smooth grain transitions
+    float grain = mix(mix(grain00, grain10, blend.x),
+                      mix(grain01, grain11, blend.x), blend.y);
 
     // Scale grain by exposure response and amount
     // Increased intensity for strong, visible film-like grain
@@ -162,9 +180,34 @@ extern "C" float4 grainKernel(coreimage::sampler src,
     } else {
         // Chromatic grain - color film has different grain per layer
         // Red-sensitive layer is usually coarsest, blue is finest
-        float grainR = filmNoise(grainCoord * 0.9, roughness, seed);
-        float grainG = filmNoise(grainCoord * 1.0, roughness * 0.9, seed + 5.7);
-        float grainB = filmNoise(grainCoord * 1.1, roughness * 0.8, seed + 11.3);
+        // Use scaled grain coordinates with different offsets per channel
+
+        // Red channel (slightly coarser)
+        float2 coordR = grainCoord * 0.9;
+        float grainR00 = filmNoise(coordR, roughness, seed);
+        float grainR10 = filmNoise(coordR + float2(1.0, 0.0), roughness, seed);
+        float grainR01 = filmNoise(coordR + float2(0.0, 1.0), roughness, seed);
+        float grainR11 = filmNoise(coordR + float2(1.0, 1.0), roughness, seed);
+        float grainR = mix(mix(grainR00, grainR10, blend.x),
+                          mix(grainR01, grainR11, blend.x), blend.y);
+
+        // Green channel
+        float2 coordG = grainCoord * 1.0;
+        float grainG00 = filmNoise(coordG, roughness * 0.9, seed + 5.7);
+        float grainG10 = filmNoise(coordG + float2(1.0, 0.0), roughness * 0.9, seed + 5.7);
+        float grainG01 = filmNoise(coordG + float2(0.0, 1.0), roughness * 0.9, seed + 5.7);
+        float grainG11 = filmNoise(coordG + float2(1.0, 1.0), roughness * 0.9, seed + 5.7);
+        float grainG = mix(mix(grainG00, grainG10, blend.x),
+                          mix(grainG01, grainG11, blend.x), blend.y);
+
+        // Blue channel (finest)
+        float2 coordB = grainCoord * 1.1;
+        float grainB00 = filmNoise(coordB, roughness * 0.8, seed + 11.3);
+        float grainB10 = filmNoise(coordB + float2(1.0, 0.0), roughness * 0.8, seed + 11.3);
+        float grainB01 = filmNoise(coordB + float2(0.0, 1.0), roughness * 0.8, seed + 11.3);
+        float grainB11 = filmNoise(coordB + float2(1.0, 1.0), roughness * 0.8, seed + 11.3);
+        float grainB = mix(mix(grainB00, grainB10, blend.x),
+                          mix(grainB01, grainB11, blend.x), blend.y);
 
         // Subtle color shifts in chromatic grain
         grainColor = float3(grainR, grainG, grainB);

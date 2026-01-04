@@ -492,7 +492,7 @@ final class ImportedPhotosManager {
     // MARK: - Copy/Paste Edits
 
     /// Copy edits from selected photo (requires single selection with edits)
-    /// Excludes cropRect from copied edits
+    /// Excludes cropRect and blur effects from copied edits (position-specific)
     func copyEditsFromSelected() -> Bool {
         guard selectedCount == 1,
               let photoID = selectedPhotoIDs.first,
@@ -501,14 +501,18 @@ final class ImportedPhotosManager {
             if let photoID = selectedPhotoIDs.first,
                var params = getEditedParameters(for: photoID) {
                 params.cropRect = nil
+                params.radialBlur = .none  // Position-specific, don't copy
+                params.linearBlur = .none  // Position-specific, don't copy
                 copiedEdits = EditSnapshot(parameters: params)
                 copiedFromPhotoID = photoID
                 return true
             }
             return false
         }
-        // Exclude crop from copy - each photo keeps its own crop
+        // Exclude crop and blur from copy - each photo has its own composition
         snapshot.parameters.cropRect = nil
+        snapshot.parameters.radialBlur = .none  // Position-specific, don't copy
+        snapshot.parameters.linearBlur = .none  // Position-specific, don't copy
         copiedEdits = snapshot
         copiedFromPhotoID = photoID
         return true

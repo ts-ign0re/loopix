@@ -698,11 +698,6 @@ final class EditorViewModel {
             output = applyVignette(parameters.vignette, to: output)
         }
 
-        // Apply grain
-        if parameters.grain.isActive {
-            output = applyGrain(parameters.grain, to: output)
-        }
-
         // Apply bloom
         if parameters.bloom.isActive {
             output = applyBloom(parameters.bloom, to: output)
@@ -711,6 +706,11 @@ final class EditorViewModel {
         // Apply halation
         if parameters.halation.isActive {
             output = applyHalation(parameters.halation, to: output)
+        }
+
+        // Apply grain LAST - film grain sits on top of all effects
+        if parameters.grain.isActive {
+            output = applyGrain(parameters.grain, to: output)
         }
 
         // Ensure filters didn't change dimensions
@@ -1046,8 +1046,20 @@ final class EditorViewModel {
 
     private func applyGrain(_ grain: GrainData, to image: CIImage) -> CIImage {
         // Use Metal kernel for realistic film grain
+
+        // Scale grain relative to reference preview size for consistent look across resolutions
+        let imageSize = min(image.extent.width, image.extent.height)
+        let referenceSize: CGFloat = 1024  // Medium preview resolution as reference
+        let scaleFactor = Float(imageSize / referenceSize)
+
+        // Scale size linearly - essential for grain to look the same size relative to image
+        let baseSize = 0.5 + (1.0 - grain.size) * 3.5  // Invert: UI 0 → Metal 4.0, UI 1 → Metal 0.5
+        let size = baseSize * scaleFactor
+
+        // Don't boost amount - it causes lifted shadows and muddy look
         let amount = grain.amount / 100.0
-        let size = 0.5 + (1.0 - grain.size) * 3.5  // Invert: UI 0 → Metal 4.0, UI 1 → Metal 0.5
+
+        // Keep roughness as-is
         let roughness = grain.roughness
         let monochromatic = grain.monochromatic
 

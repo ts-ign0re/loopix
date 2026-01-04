@@ -268,9 +268,9 @@ actor FilterEngine {
             result = applyFade(to: result, amount: parameters.fade)
         }
 
-        // 13. Grain
-        if parameters.grain.isActive {
-            result = applyGrain(to: result, data: parameters.grain)
+        // 13. Vignette
+        if parameters.vignette.isActive {
+            result = applyVignette(to: result, data: parameters.vignette)
         }
 
         // 14. Bloom
@@ -283,9 +283,9 @@ actor FilterEngine {
             result = applyHalation(to: result, data: parameters.halation)
         }
 
-        // 16. Vignette
-        if parameters.vignette.isActive {
-            result = applyVignette(to: result, data: parameters.vignette)
+        // 16. Grain - LAST, film grain sits on top of all effects
+        if parameters.grain.isActive {
+            result = applyGrain(to: result, data: parameters.grain)
         }
 
         return result
@@ -517,9 +517,9 @@ actor FilterEngine {
             result = applyFade(to: result, amount: params.fade)
         }
 
-        // 8. Grain
-        if params.grain.isActive {
-            result = applyGrain(to: result, data: params.grain)
+        // 8. Vignette
+        if params.vignette.isActive {
+            result = applyVignette(to: result, data: params.vignette)
         }
 
         // 9. Bloom
@@ -532,9 +532,9 @@ actor FilterEngine {
             result = applyHalation(to: result, data: params.halation)
         }
 
-        // 11. Vignette (always last)
-        if params.vignette.isActive {
-            result = applyVignette(to: result, data: params.vignette)
+        // 11. Grain - LAST, film grain sits on top of all effects
+        if params.grain.isActive {
+            result = applyGrain(to: result, data: params.grain)
         }
 
         return result
@@ -1277,8 +1277,19 @@ actor FilterEngine {
     /// - `roughness`: 0...1 (UI) → 0...1 (Metal) - grain texture variation
     /// - `monochromatic`: direct pass-through
     private func applyGrain(to image: CIImage, data: GrainData) -> CIImage {
+        // Scale grain relative to reference preview size for consistent look across resolutions
+        let imageSize = min(image.extent.width, image.extent.height)
+        let referenceSize: CGFloat = 1024  // Medium preview resolution as reference
+        let scaleFactor = Float(imageSize / referenceSize)
+
+        // Scale size linearly - essential for grain to look the same size relative to image
+        let baseSize = 0.5 + (1.0 - data.size) * 3.5  // Invert: UI 0 → Metal 4.0, UI 1 → Metal 0.5
+        let size = baseSize * scaleFactor
+
+        // Don't boost amount - it causes lifted shadows and muddy look
         let amount = data.amount / 100.0
-        let size = 0.5 + (1.0 - data.size) * 3.5  // Invert: UI 0 → Metal 4.0, UI 1 → Metal 0.5
+
+        // Keep roughness as-is
         let roughness = data.roughness
         let monochromatic = data.monochromatic
 

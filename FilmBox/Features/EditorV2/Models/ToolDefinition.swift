@@ -144,7 +144,7 @@ extension ToolDefinition {
         case .color:
             return [.saturation, .vibrance, .temperature, .tint, .skinTone]
         case .effects:
-            return [.radialBlur, .linearBlur, .sharpen, .clarity, .bloom, .halation, .grain, .vignette, .fade]
+            return [.radialBlur, .linearBlur, .grain, .sharpen, .clarity, .bloom, .halation, .vignette, .fade]
         }
     }
 
