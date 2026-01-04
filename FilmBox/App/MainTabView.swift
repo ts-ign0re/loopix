@@ -6,6 +6,7 @@
 //
 
 import ImageIO
+import Metal
 import Photos
 import SwiftUI
 
@@ -660,7 +661,16 @@ struct LibraryContentView: View {
                         hasToolEdits = params.hasAdjustments
                     }
 
-                    let context = CIContext()
+                    // Use Metal-backed CIContext to properly render Metal kernel effects (grain, etc.)
+                    let context: CIContext
+                    if let metalDevice = MTLCreateSystemDefaultDevice() {
+                        context = CIContext(mtlDevice: metalDevice, options: [
+                            .workingColorSpace: CGColorSpace(name: CGColorSpace.linearSRGB)!,
+                            .outputColorSpace: CGColorSpace(name: CGColorSpace.sRGB)!
+                        ])
+                    } else {
+                        context = CIContext()
+                    }
                     let tempURL = FileManager.default.temporaryDirectory
                         .appendingPathComponent("\(item.photo.id.uuidString).\(format.fileExtension)")
 

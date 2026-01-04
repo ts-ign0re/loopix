@@ -59,7 +59,12 @@ final class EditorViewModel {
     var selectedPreset: FilterPreset? {
         didSet {
             if let preset = selectedPreset {
-                filterIntensity = preset.clutIntensity
+                // B&W filters always use 100% intensity for proper desaturation
+                if preset.category == .bw {
+                    filterIntensity = 100
+                } else {
+                    filterIntensity = preset.clutIntensity
+                }
                 // DON'T modify currentParameters - filter is a separate layer
                 schedulePreviewUpdate()
             } else {
