@@ -43,6 +43,7 @@
 		CE0756F52F05700300C53D17 /* EditedPhotoStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0756F62F05700300C53D17 /* EditedPhotoStorage.swift */; };
 		CE0756F82F05800000C53D17 /* FiltersManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0756F72F05800000C53D17 /* FiltersManagementView.swift */; };
 		QRCODE00000000000000001 /* RecipeQRCodeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = QRCODE00000000000000000 /* RecipeQRCodeView.swift */; };
+		SEC0000000000000000001 /* RecipeCrypto.swift in Sources */ = {isa = PBXBuildFile; fileRef = SEC0000000000000000000 /* RecipeCrypto.swift */; };
 		CE0756F92F05800100C53D17 /* FilterStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0756FA2F05800100C53D17 /* FilterStorage.swift */; };
 		CE0756FC2F05800200C53D17 /* FujiRecipeImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0756FB2F05800200C53D17 /* FujiRecipeImporter.swift */; };
 		CE0756FD2F05800300C53D17 /* FilterPreviewCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0756FF2F05800300C53D17 /* FilterPreviewCache.swift */; };
@@ -157,6 +158,7 @@
 		CE0756F62F05700300C53D17 /* EditedPhotoStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditedPhotoStorage.swift; sourceTree = "<group>"; };
 		CE0756F72F05800000C53D17 /* FiltersManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FiltersManagementView.swift; sourceTree = "<group>"; };
 		QRCODE00000000000000000 /* RecipeQRCodeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipeQRCodeView.swift; sourceTree = "<group>"; };
+		SEC0000000000000000000 /* RecipeCrypto.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipeCrypto.swift; sourceTree = "<group>"; };
 		CE0756FA2F05800100C53D17 /* FilterStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterStorage.swift; sourceTree = "<group>"; };
 		CE0756FB2F05800200C53D17 /* FujiRecipeImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FujiRecipeImporter.swift; sourceTree = "<group>"; };
 		CE0756FF2F05800300C53D17 /* FilterPreviewCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterPreviewCache.swift; sourceTree = "<group>"; };
@@ -272,6 +274,7 @@
 				A1000001229E000000001011 /* Filters */,
 				A1000001229E000000001020 /* Metal */,
 				A1000001229E000000001040 /* Processing */,
+				SEC0000000000000000010 /* Security */,
 				CE0757122F08A00200C53D17 /* Storage */,
 			);
 			path = Core;
@@ -482,6 +485,14 @@
 				CE0757112F08A00100C53D17 /* CloudBackupManager.swift */,
 			);
 			path = Storage;
+			sourceTree = "<group>";
+		};
+		SEC0000000000000000010 /* Security */ = {
+			isa = PBXGroup;
+			children = (
+				SEC0000000000000000000 /* RecipeCrypto.swift */,
+			);
+			path = Security;
 			sourceTree = "<group>";
 		};
 		CE65261F2F07936C008466F6 /* Components */ = {
@@ -763,6 +774,7 @@
 				CE0756F82F05800000C53D17 /* FiltersManagementView.swift in Sources */,
 				FUJIR00100000000000000001 /* FujiRecipeFormView.swift in Sources */,
 				QRCODE00000000000000001 /* RecipeQRCodeView.swift in Sources */,
+				SEC0000000000000000001 /* RecipeCrypto.swift in Sources */,
 				CE0756F92F05800100C53D17 /* FilterStorage.swift in Sources */,
 				CE0756FC2F05800200C53D17 /* FujiRecipeImporter.swift in Sources */,
 				CE0756FD2F05800300C53D17 /* FilterPreviewCache.swift in Sources */,

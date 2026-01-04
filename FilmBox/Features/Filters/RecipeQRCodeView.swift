@@ -51,25 +51,45 @@ struct RecipeQRCodeView: View {
                         .foregroundStyle(.white.opacity(0.5))
                         .multilineTextAlignment(.center)
 
-                    // Share button
+                    // Action buttons
                     if let qrImage {
-                        Button {
-                            shareQRCode(qrImage)
-                        } label: {
-                            HStack(spacing: 8) {
-                                Image(systemName: "square.and.arrow.up")
-                                Text("share")
+                        HStack(spacing: 16) {
+                            Button {
+                                saveToGallery(qrImage)
+                            } label: {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "square.and.arrow.down")
+                                    Text("save")
+                                }
+                                .font(.system(size: 16, weight: .medium, design: .monospaced))
+                                .foregroundStyle(.yellow)
+                                .padding(.horizontal, 24)
+                                .padding(.vertical, 12)
+                                .background(
+                                    Capsule()
+                                        .stroke(Color.yellow, lineWidth: 1.5)
+                                )
                             }
-                            .font(.system(size: 16, weight: .medium, design: .monospaced))
-                            .foregroundStyle(.black)
-                            .padding(.horizontal, 24)
-                            .padding(.vertical, 12)
-                            .background(
-                                Capsule()
-                                    .fill(Color.yellow)
-                            )
+                            .buttonStyle(.plain)
+
+                            Button {
+                                shareQRCode(qrImage)
+                            } label: {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "square.and.arrow.up")
+                                    Text("share")
+                                }
+                                .font(.system(size: 16, weight: .medium, design: .monospaced))
+                                .foregroundStyle(.black)
+                                .padding(.horizontal, 24)
+                                .padding(.vertical, 12)
+                                .background(
+                                    Capsule()
+                                        .fill(Color.yellow)
+                                )
+                            }
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
                     }
                 }
                 .padding(32)
@@ -108,8 +128,8 @@ struct RecipeQRCodeView: View {
         // Create compact recipe data for QR
         let recipeData = RecipeQRData(from: filter)
 
-        guard let jsonData = try? JSONEncoder().encode(recipeData),
-              let jsonString = String(data: jsonData, encoding: .utf8) else {
+        // Encrypt the recipe data - only Loopix can read it
+        guard let encryptedString = RecipeCrypto.shared.encrypt(recipeData) else {
             isGenerating = false
             return
         }
@@ -117,7 +137,7 @@ struct RecipeQRCodeView: View {
         // Generate QR code
         let context = CIContext()
         let filter = CIFilter.qrCodeGenerator()
-        filter.message = Data(jsonString.utf8)
+        filter.message = Data(encryptedString.utf8)
         filter.correctionLevel = "H" // High error correction for logo overlay
 
         guard let outputImage = filter.outputImage else {
@@ -209,7 +229,12 @@ struct RecipeQRCodeView: View {
         iosText.draw(in: iosRect, withAttributes: iosAttrs)
     }
 
-    // MARK: - Share
+    // MARK: - Save & Share
+
+    private func saveToGallery(_ image: UIImage) {
+        UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+    }
 
     private func shareQRCode(_ image: UIImage) {
         let activityVC = UIActivityViewController(
@@ -847,6 +872,18 @@ struct RecipeScannerView: View {
     // MARK: - Process Scanned Code
 
     private func processScannedCode(_ code: String) {
+        // Try encrypted format first (new secure format)
+        if RecipeCrypto.shared.isEncryptedRecipe(code) {
+            guard let recipeData = RecipeCrypto.shared.decrypt(code) else {
+                errorMessage = "Invalid or tampered recipe code"
+                showError = true
+                return
+            }
+            finalizeImport(recipeData)
+            return
+        }
+
+        // Fallback to legacy unencrypted format for backwards compatibility
         guard let data = code.data(using: .utf8) else {
             errorMessage = "Could not read QR code data"
             showError = true
@@ -855,29 +892,33 @@ struct RecipeScannerView: View {
 
         do {
             let recipeData = try JSONDecoder().decode(RecipeQRData.self, from: data)
-            var preset = recipeData.toFilterPreset()
-
-            // Check for duplicate name and add date suffix if needed
-            if existingNames.contains(preset.name) {
-                let dateFormatter = DateFormatter()
-                dateFormatter.dateFormat = "dd-MM-yy"
-                let dateString = dateFormatter.string(from: Date())
-                preset = FilterPreset(
-                    id: preset.id,
-                    name: "\(preset.name) \(dateString)",
-                    category: preset.category,
-                    source: preset.source,
-                    parameters: preset.parameters,
-                    metadata: preset.metadata
-                )
-            }
-
-            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-            importedRecipe = preset
+            finalizeImport(recipeData)
         } catch {
             errorMessage = "This QR code is not a valid Loopix recipe"
             showError = true
         }
+    }
+
+    private func finalizeImport(_ recipeData: RecipeQRData) {
+        var preset = recipeData.toFilterPreset()
+
+        // Check for duplicate name and add date suffix if needed
+        if existingNames.contains(preset.name) {
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "dd-MM-yy"
+            let dateString = dateFormatter.string(from: Date())
+            preset = FilterPreset(
+                id: preset.id,
+                name: "\(preset.name) \(dateString)",
+                category: preset.category,
+                source: preset.source,
+                parameters: preset.parameters,
+                metadata: preset.metadata
+            )
+        }
+
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        importedRecipe = preset
     }
 
     // MARK: - Process Selected Photo
