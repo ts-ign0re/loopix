@@ -53,12 +53,8 @@ extern "C" float4 bokehKernel(coreimage::sampler src,
     float2 coord = src.coord();
     float2 texelSize = 1.0 / src.size();
 
-    // Sample mask at same relative position as source pixel
-    // coord is in source pixel space, normalize to 0-1 then sample mask
-    float2 normalizedCoord = coord / src.size();
-    float2 maskCoord = normalizedCoord * mask.size();
-    // Mask: black (0) = sharp center, white (1) = blur edges
-    float blurAmount = mask.sample(maskCoord).r;
+    // Mask has same extent as source - sample directly with source coord
+    float blurAmount = mask.sample(coord).r;
 
     // If no blur needed, return original
     if (blurAmount < 0.001) {
@@ -163,11 +159,8 @@ extern "C" float4 bokehKernelFast(coreimage::sampler src,
     float2 coord = src.coord();
     float2 texelSize = 1.0 / src.size();
 
-    // Sample mask at same relative position as source pixel
-    float2 normalizedCoord = coord / src.size();
-    float2 maskCoord = normalizedCoord * mask.size();
-    // Mask: black (0) = sharp, white (1) = blur
-    float blurAmount = mask.sample(maskCoord).r;
+    // Mask has same extent as source - sample directly with source coord
+    float blurAmount = mask.sample(coord).r;
 
     // If no blur needed, return original
     if (blurAmount < 0.001) {
