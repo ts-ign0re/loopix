@@ -19,6 +19,8 @@ enum AdjustCategory: String, CaseIterable, Sendable {
 
 /// Categories for grouping effect tools
 enum EffectCategory: String, CaseIterable, Sendable {
+    case radialBlur = "radial"
+    case linearBlur = "linear"
     case clarity = "clarity"
     case sharpen = "sharpen"
     case grain = "grain"
@@ -31,6 +33,8 @@ enum EffectCategory: String, CaseIterable, Sendable {
 
     var iconName: String {
         switch self {
+        case .radialBlur: return "circle.dashed"
+        case .linearBlur: return "line.horizontal.3"
         case .clarity: return "circle.hexagongrid"
         case .sharpen: return "triangle"
         case .grain: return "circle.dotted"
@@ -867,6 +871,62 @@ struct EditorView: View {
     @ViewBuilder
     private func effectSlidersForCategory(_ category: EffectCategory) -> some View {
         switch category {
+        case .radialBlur:
+            ToolSlider(
+                label: "Amount",
+                value: Binding(
+                    get: { viewModel.currentParameters.radialBlur.amount },
+                    set: { viewModel.updateParameter(\.radialBlur.amount, value: $0) }
+                ),
+                range: 0...100,
+                defaultValue: 0
+            )
+            ToolSlider(
+                label: "Radius",
+                value: Binding(
+                    get: { viewModel.currentParameters.radialBlur.radius },
+                    set: { viewModel.updateParameter(\.radialBlur.radius, value: $0) }
+                ),
+                range: 0...1,
+                defaultValue: 0.3
+            )
+            ToolSlider(
+                label: "Bokeh",
+                value: Binding(
+                    get: { viewModel.currentParameters.radialBlur.bokehIntensity },
+                    set: { viewModel.updateParameter(\.radialBlur.bokehIntensity, value: $0) }
+                ),
+                range: 0...1,
+                defaultValue: 0.5
+            )
+        case .linearBlur:
+            ToolSlider(
+                label: "Amount",
+                value: Binding(
+                    get: { viewModel.currentParameters.linearBlur.amount },
+                    set: { viewModel.updateParameter(\.linearBlur.amount, value: $0) }
+                ),
+                range: 0...100,
+                defaultValue: 0
+            )
+            ToolSlider(
+                label: "Position",
+                value: Binding(
+                    get: { viewModel.currentParameters.linearBlur.position },
+                    set: { viewModel.updateParameter(\.linearBlur.position, value: $0) }
+                ),
+                range: 0...1,
+                defaultValue: 0.5
+            )
+            ToolSlider(
+                label: "Bokeh",
+                value: Binding(
+                    get: { viewModel.currentParameters.linearBlur.bokehIntensity },
+                    set: { viewModel.updateParameter(\.linearBlur.bokehIntensity, value: $0) }
+                ),
+                range: 0...1,
+                defaultValue: 0.5
+            )
         case .clarity:
             ToolSlider(
                 label: "Amount",

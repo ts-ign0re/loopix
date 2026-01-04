@@ -706,6 +706,7 @@
 				"$(SRCROOT)/FilmBox/Core/Metal/Kernels/HalationKernel.metal",
 				"$(SRCROOT)/FilmBox/Core/Metal/Kernels/BloomKernel.metal",
 				"$(SRCROOT)/FilmBox/Core/Metal/Kernels/VignetteKernel.metal",
+				"$(SRCROOT)/FilmBox/Core/Metal/Kernels/BokehKernel.metal",
 			);
 			name = "Compile CIKernel Metal Shaders";
 			outputFileListPaths = (
@@ -715,7 +716,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# Compile Metal shaders with -fcikernel for Core Image\nset -e\n\nKERNELS_DIR=\"${SRCROOT}/FilmBox/Core/Metal/Kernels\"\nOUTPUT_DIR=\"${BUILT_PRODUCTS_DIR}/${PRODUCT_NAME}.app\"\n\nmkdir -p \"${OUTPUT_DIR}\"\n\n# Compile all Metal files directly to metallib with -fcikernel\nxcrun metal -fcikernel \\\n    \"${KERNELS_DIR}/GrainKernel.metal\" \\\n    \"${KERNELS_DIR}/BloomKernel.metal\" \\\n    \"${KERNELS_DIR}/HalationKernel.metal\" \\\n    \"${KERNELS_DIR}/VignetteKernel.metal\" \\\n    -o \"${OUTPUT_DIR}/CIKernels.metallib\" 2>&1 || echo \"Warning: CIKernels compilation failed, effects will use fallback\"\n";
+			shellScript = "# Compile Metal shaders with -fcikernel for Core Image\nset -e\n\nKERNELS_DIR=\"${SRCROOT}/FilmBox/Core/Metal/Kernels\"\nOUTPUT_DIR=\"${BUILT_PRODUCTS_DIR}/${PRODUCT_NAME}.app\"\n\nmkdir -p \"${OUTPUT_DIR}\"\n\n# Compile all Metal files directly to metallib with -fcikernel\nxcrun metal -fcikernel \\\n    \"${KERNELS_DIR}/GrainKernel.metal\" \\\n    \"${KERNELS_DIR}/BloomKernel.metal\" \\\n    \"${KERNELS_DIR}/HalationKernel.metal\" \\\n    \"${KERNELS_DIR}/VignetteKernel.metal\" \\\n    \"${KERNELS_DIR}/BokehKernel.metal\" \\\n    -o \"${OUTPUT_DIR}/CIKernels.metallib\" 2>&1 || echo \"Warning: CIKernels compilation failed, effects will use fallback\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

@@ -208,6 +208,8 @@ enum L10n {
         static let fade = "tool.fade".localized
         static let bloom = "tool.bloom".localized
         static let halation = "tool.halation".localized
+        static let radialBlur = "tool.radial_blur".localized
+        static let linearBlur = "tool.linear_blur".localized
     }
 
     // MARK: - Filters Management

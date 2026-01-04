@@ -172,6 +172,8 @@
 "tool.fade" = "Fade";
 "tool.bloom" = "Bloom";
 "tool.halation" = "Halation";
+"tool.radial_blur" = "Radial";
+"tool.linear_blur" = "Linear";
 
 // MARK: - Filters Management
 "filters.title" = "// filters";

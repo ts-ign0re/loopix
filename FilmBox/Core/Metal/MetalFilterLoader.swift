@@ -86,6 +86,13 @@ final class MetalFilterLoader: @unchecked Sendable {
         static let vignetteExposure = "vignetteExposureKernel"
         static let vignetteColored = "vignetteColoredKernel"
         static let vignetteOptical = "vignetteOpticalKernel"
+
+        // Bokeh kernels
+        static let bokeh = "bokehKernel"
+        static let bokehFast = "bokehKernelFast"
+        static let radialMask = "radialMaskKernel"
+        static let linearMask = "linearMaskKernel"
+        static let bokehComposite = "bokehCompositeKernel"
     }
 
     // MARK: - Initialization
@@ -239,6 +246,8 @@ final class MetalFilterLoader: @unchecked Sendable {
             return "BloomKernel"
         case let name where name.contains("vignette"):
             return "VignetteKernel"
+        case let name where name.contains("bokeh") || name.contains("Mask"):
+            return "BokehKernel"
         default:
             return functionName
         }
@@ -355,6 +364,101 @@ final class MetalFilterLoader: @unchecked Sendable {
         )
     }
 
+    // MARK: - Bokeh Methods
+
+    /// Applies optical bokeh blur effect
+    /// - Parameters:
+    ///   - image: Source image
+    ///   - mask: Blur mask (grayscale, 0 = sharp, 1 = fully blurred)
+    ///   - maxRadius: Maximum blur radius in pixels
+    ///   - highlightThreshold: Brightness threshold for bokeh ball effect (0.0 - 1.0)
+    ///   - highlightBoost: Amount to boost bright highlights (1.0 - 3.0)
+    ///   - apertureBlades: 0 = circular, 6 = hexagonal
+    ///   - fast: Use fast preview mode (fewer samples)
+    func applyBokeh(to image: CIImage,
+                    mask: CIImage,
+                    maxRadius: Float = 30.0,
+                    highlightThreshold: Float = 0.7,
+                    highlightBoost: Float = 1.5,
+                    apertureBlades: Float = 0.0,
+                    fast: Bool = false) throws -> CIImage {
+        let kernelName = fast ? KernelName.bokehFast : KernelName.bokeh
+        let kernel = try loadKernel(named: kernelName)
+
+        let extent = image.extent
+        let imageSampler = CISampler(image: image)
+        let maskSampler = CISampler(image: mask)
+
+        let parameters: [Any]
+        if fast {
+            parameters = [imageSampler, maskSampler, maxRadius]
+        } else {
+            parameters = [imageSampler, maskSampler, maxRadius, highlightThreshold, highlightBoost, apertureBlades]
+        }
+
+        guard let output = kernel.apply(extent: extent, roiCallback: { _, rect in
+            // Expand ROI by max radius to include blurred pixels from outside the rect
+            return rect.insetBy(dx: CGFloat(-maxRadius), dy: CGFloat(-maxRadius))
+        }, arguments: parameters) else {
+            throw MetalFilterError.kernelCompilationFailed("Bokeh kernel application returned nil")
+        }
+
+        return output
+    }
+
+    /// Generates a radial blur mask for bokeh effect
+    /// - Parameters:
+    ///   - size: Size of the mask image
+    ///   - centerX: Focus center X in normalized coordinates (0-1)
+    ///   - centerY: Focus center Y in normalized coordinates (0-1)
+    ///   - innerRadius: Radius of sharp focus area (0-1 of diagonal)
+    ///   - outerRadius: Where blur reaches maximum (0-1)
+    ///   - falloff: Transition curve (1.0 = linear, 2.0 = quadratic)
+    func generateRadialMask(size: CGSize,
+                            centerX: Float,
+                            centerY: Float,
+                            innerRadius: Float = 0.1,
+                            outerRadius: Float = 0.5,
+                            falloff: Float = 1.0) throws -> CIImage {
+        let kernel = try loadKernel(named: KernelName.radialMask)
+
+        // Create a placeholder image for the kernel
+        let extent = CGRect(origin: .zero, size: size)
+        let placeholder = CIImage(color: .white).cropped(to: extent)
+        let sampler = CISampler(image: placeholder)
+
+        guard let output = kernel.apply(extent: extent, roiCallback: { _, rect in rect },
+                                         arguments: [sampler, centerX, centerY, innerRadius, outerRadius, falloff]) else {
+            throw MetalFilterError.kernelCompilationFailed("Radial mask kernel returned nil")
+        }
+
+        return output
+    }
+
+    /// Generates a linear blur mask for tilt-shift effect
+    /// - Parameters:
+    ///   - size: Size of the mask image
+    ///   - position: Y position of focus band (0-1)
+    ///   - focusWidth: Width of in-focus band (0-1)
+    ///   - falloff: Transition softness
+    func generateLinearMask(size: CGSize,
+                            position: Float = 0.5,
+                            focusWidth: Float = 0.2,
+                            falloff: Float = 1.0) throws -> CIImage {
+        let kernel = try loadKernel(named: KernelName.linearMask)
+
+        let extent = CGRect(origin: .zero, size: size)
+        let placeholder = CIImage(color: .white).cropped(to: extent)
+        let sampler = CISampler(image: placeholder)
+
+        guard let output = kernel.apply(extent: extent, roiCallback: { _, rect in rect },
+                                         arguments: [sampler, position, focusWidth, falloff]) else {
+            throw MetalFilterError.kernelCompilationFailed("Linear mask kernel returned nil")
+        }
+
+        return output
+    }
+
     // MARK: - Rendering
 
     /// Renders a CIImage to a CGImage
@@ -383,7 +487,11 @@ final class MetalFilterLoader: @unchecked Sendable {
             KernelName.grain,
             KernelName.halation,
             KernelName.bloom,
-            KernelName.vignette
+            KernelName.vignette,
+            KernelName.bokeh,
+            KernelName.bokehFast,
+            KernelName.radialMask,
+            KernelName.linearMask
         ]
 
         DispatchQueue.global(qos: .utility).async {

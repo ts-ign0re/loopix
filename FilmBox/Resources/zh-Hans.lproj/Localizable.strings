@@ -172,6 +172,8 @@
 "tool.fade" = "褪色";
 "tool.bloom" = "光晕";
 "tool.halation" = "光晕溢出";
+"tool.radial_blur" = "径向";
+"tool.linear_blur" = "线性";
 
 // MARK: - Filters Management
 "filters.title" = "// 滤镜";

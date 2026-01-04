@@ -113,6 +113,10 @@ struct ToolDetailView: View {
     private var complexToolSliders: some View {
         VStack(spacing: 16) {
             switch tool.parameterType {
+            case .radialBlur:
+                radialBlurSliders
+            case .linearBlur:
+                linearBlurSliders
             case .grain:
                 grainSliders
             case .vignette:
@@ -130,6 +134,90 @@ struct ToolDetailView: View {
     }
 
     // MARK: - Complex Tool Sliders
+
+    @ViewBuilder
+    private var radialBlurSliders: some View {
+        LabeledSlider(
+            label: "amount",
+            value: Binding(
+                get: { viewModel.editor.currentParameters.radialBlur.amount },
+                set: { value in
+                    var params = viewModel.editor.currentParameters
+                    params.radialBlur.amount = value
+                    viewModel.editor.currentParameters = params
+                }
+            ),
+            range: 0...100
+        )
+
+        LabeledSlider(
+            label: "radius",
+            value: Binding(
+                get: { viewModel.editor.currentParameters.radialBlur.radius * 100 },
+                set: { value in
+                    var params = viewModel.editor.currentParameters
+                    params.radialBlur.radius = value / 100
+                    viewModel.editor.currentParameters = params
+                }
+            ),
+            range: 0...100
+        )
+
+        LabeledSlider(
+            label: "bokeh",
+            value: Binding(
+                get: { viewModel.editor.currentParameters.radialBlur.bokehIntensity * 100 },
+                set: { value in
+                    var params = viewModel.editor.currentParameters
+                    params.radialBlur.bokehIntensity = value / 100
+                    viewModel.editor.currentParameters = params
+                }
+            ),
+            range: 0...100
+        )
+    }
+
+    @ViewBuilder
+    private var linearBlurSliders: some View {
+        LabeledSlider(
+            label: "amount",
+            value: Binding(
+                get: { viewModel.editor.currentParameters.linearBlur.amount },
+                set: { value in
+                    var params = viewModel.editor.currentParameters
+                    params.linearBlur.amount = value
+                    viewModel.editor.currentParameters = params
+                }
+            ),
+            range: 0...100
+        )
+
+        LabeledSlider(
+            label: "position",
+            value: Binding(
+                get: { viewModel.editor.currentParameters.linearBlur.position * 100 },
+                set: { value in
+                    var params = viewModel.editor.currentParameters
+                    params.linearBlur.position = value / 100
+                    viewModel.editor.currentParameters = params
+                }
+            ),
+            range: 0...100
+        )
+
+        LabeledSlider(
+            label: "bokeh",
+            value: Binding(
+                get: { viewModel.editor.currentParameters.linearBlur.bokehIntensity * 100 },
+                set: { value in
+                    var params = viewModel.editor.currentParameters
+                    params.linearBlur.bokehIntensity = value / 100
+                    viewModel.editor.currentParameters = params
+                }
+            ),
+            range: 0...100
+        )
+    }
 
     @ViewBuilder
     private var grainSliders: some View {

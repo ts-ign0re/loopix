@@ -33,6 +33,8 @@ struct ToolDefinition: Identifiable, Hashable, Sendable {
         case "fade": return L10n.Tool.fade
         case "bloom": return L10n.Tool.bloom
         case "halation": return L10n.Tool.halation
+        case "radialBlur": return L10n.Tool.radialBlur
+        case "linearBlur": return L10n.Tool.linearBlur
         default: return name
         }
     }
@@ -77,6 +79,8 @@ struct ToolDefinition: Identifiable, Hashable, Sendable {
         case skinToneSaturation
 
         // Effects
+        case radialBlur
+        case linearBlur
         case clarity
         case sharpen
         case grain
@@ -117,6 +121,8 @@ extension ToolDefinition {
         .skinTone,
 
         // Effects tools
+        .radialBlur,
+        .linearBlur,
         .clarity,
         .sharpen,
         .grain,
@@ -138,7 +144,7 @@ extension ToolDefinition {
         case .color:
             return [.saturation, .vibrance, .temperature, .tint, .skinTone]
         case .effects:
-            return [.sharpen, .clarity, .bloom, .halation, .grain, .vignette, .fade]
+            return [.radialBlur, .linearBlur, .sharpen, .clarity, .bloom, .halation, .grain, .vignette, .fade]
         }
     }
 
@@ -268,6 +274,28 @@ extension ToolDefinition {
     )
 
     // MARK: - Effects Tools
+
+    static let radialBlur = ToolDefinition(
+        id: "radialBlur",
+        name: "Radial Blur",
+        icon: "circle.dashed",
+        category: .effects,
+        parameterType: .radialBlur,
+        range: 0...100,
+        defaultValue: 0,
+        isNew: false
+    )
+
+    static let linearBlur = ToolDefinition(
+        id: "linearBlur",
+        name: "Linear Blur",
+        icon: "line.horizontal.3",
+        category: .effects,
+        parameterType: .linearBlur,
+        range: 0...100,
+        defaultValue: 0,
+        isNew: false
+    )
 
     static let clarity = ToolDefinition(
         id: "clarity",

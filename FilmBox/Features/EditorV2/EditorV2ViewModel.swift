@@ -177,6 +177,8 @@ final class EditorV2ViewModel {
         case .tint: return params.tint
         case .skinToneHue: return params.skinToneHue
         case .skinToneSaturation: return params.skinToneSaturation
+        case .radialBlur: return params.radialBlur.amount
+        case .linearBlur: return params.linearBlur.amount
         case .clarity: return params.clarity
         case .sharpen: return params.sharpness
         case .grain: return params.grain.amount
@@ -203,6 +205,8 @@ final class EditorV2ViewModel {
         case .tint: params.tint = value
         case .skinToneHue: params.skinToneHue = value
         case .skinToneSaturation: params.skinToneSaturation = value
+        case .radialBlur: params.radialBlur.amount = value
+        case .linearBlur: params.linearBlur.amount = value
         case .clarity: params.clarity = value
         case .sharpen: params.sharpness = value
         case .grain: params.grain.amount = value

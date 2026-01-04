@@ -12,6 +12,16 @@ struct VSCOImagePreview: View {
     /// Whether to show the vertical intensity slider (for filter detail mode)
     var showIntensitySlider: Bool = false
 
+    /// Whether radial blur tool is active
+    private var isRadialBlurActive: Bool {
+        viewModel.activeTool?.parameterType == .radialBlur
+    }
+
+    /// Whether linear blur tool is active
+    private var isLinearBlurActive: Bool {
+        viewModel.activeTool?.parameterType == .linearBlur
+    }
+
     var body: some View {
         GeometryReader { geometry in
             ZStack {
@@ -22,6 +32,16 @@ struct VSCOImagePreview: View {
                 if let image = viewModel.editor.currentImage {
                     MetalImageViewWrapper(image: image)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+                    // Radial blur focus point overlay
+                    if isRadialBlurActive {
+                        radialBlurOverlay(in: geometry.size, imageExtent: image.extent)
+                    }
+
+                    // Linear blur position line overlay
+                    if isLinearBlurActive {
+                        linearBlurOverlay(in: geometry.size, imageExtent: image.extent)
+                    }
                 } else if viewModel.editor.isLoading {
                     ProgressView()
                         .tint(.white)
@@ -68,6 +88,155 @@ struct VSCOImagePreview: View {
                 }
             }
         }
+    }
+
+    // MARK: - Radial Blur Overlay
+
+    @ViewBuilder
+    private func radialBlurOverlay(in viewSize: CGSize, imageExtent: CGRect) -> some View {
+        let imageRect = calculateImageRect(viewSize: viewSize, imageExtent: imageExtent)
+        let centerX = imageRect.origin.x + imageRect.width * CGFloat(viewModel.editor.currentParameters.radialBlur.centerX)
+        let centerY = imageRect.origin.y + imageRect.height * (1 - CGFloat(viewModel.editor.currentParameters.radialBlur.centerY)) // Flip Y for SwiftUI
+        let radius = min(imageRect.width, imageRect.height) * CGFloat(viewModel.editor.currentParameters.radialBlur.radius)
+
+        ZStack {
+            // Focus circle outline
+            Circle()
+                .stroke(Color.white.opacity(0.8), lineWidth: 2)
+                .frame(width: radius * 2, height: radius * 2)
+                .position(x: centerX, y: centerY)
+
+            // Center crosshair/dot
+            Circle()
+                .fill(Color.yellow)
+                .frame(width: 24, height: 24)
+                .overlay(
+                    Circle()
+                        .stroke(Color.white, lineWidth: 2)
+                )
+                .shadow(color: .black.opacity(0.5), radius: 4, y: 2)
+                .position(x: centerX, y: centerY)
+        }
+        .contentShape(Rectangle())
+        .gesture(
+            DragGesture()
+                .onChanged { value in
+                    viewModel.editor.isDraggingBlur = true
+                    let normalizedX = Float((value.location.x - imageRect.origin.x) / imageRect.width)
+                    let normalizedY = Float(1 - (value.location.y - imageRect.origin.y) / imageRect.height)
+                    var params = viewModel.editor.currentParameters
+                    params.radialBlur.centerX = max(0, min(1, normalizedX))
+                    params.radialBlur.centerY = max(0, min(1, normalizedY))
+                    viewModel.editor.currentParameters = params
+                }
+                .onEnded { _ in
+                    viewModel.editor.isDraggingBlur = false
+                    viewModel.editor.schedulePreviewUpdatePublic()
+                }
+        )
+        .simultaneousGesture(
+            MagnificationGesture()
+                .onChanged { scale in
+                    viewModel.editor.isDraggingBlur = true
+                    let currentRadius = viewModel.editor.currentParameters.radialBlur.radius
+                    let newRadius = currentRadius * Float(scale)
+                    var params = viewModel.editor.currentParameters
+                    params.radialBlur.radius = max(0.05, min(0.8, newRadius))
+                    viewModel.editor.currentParameters = params
+                }
+                .onEnded { _ in
+                    viewModel.editor.isDraggingBlur = false
+                    viewModel.editor.schedulePreviewUpdatePublic()
+                }
+        )
+    }
+
+    // MARK: - Linear Blur Overlay
+
+    @ViewBuilder
+    private func linearBlurOverlay(in viewSize: CGSize, imageExtent: CGRect) -> some View {
+        let imageRect = calculateImageRect(viewSize: viewSize, imageExtent: imageExtent)
+        let positionY = imageRect.origin.y + imageRect.height * (1 - CGFloat(viewModel.editor.currentParameters.linearBlur.position))
+        let focusHeight = imageRect.height * CGFloat(viewModel.editor.currentParameters.linearBlur.focusWidth)
+
+        ZStack {
+            // Top blur zone indicator
+            Rectangle()
+                .fill(Color.white.opacity(0.15))
+                .frame(width: imageRect.width, height: max(0, positionY - focusHeight / 2 - imageRect.origin.y))
+                .position(x: imageRect.midX, y: imageRect.origin.y + (positionY - focusHeight / 2 - imageRect.origin.y) / 2)
+
+            // Bottom blur zone indicator
+            Rectangle()
+                .fill(Color.white.opacity(0.15))
+                .frame(width: imageRect.width, height: max(0, imageRect.maxY - (positionY + focusHeight / 2)))
+                .position(x: imageRect.midX, y: positionY + focusHeight / 2 + (imageRect.maxY - positionY - focusHeight / 2) / 2)
+
+            // Focus band lines
+            Rectangle()
+                .fill(Color.yellow.opacity(0.8))
+                .frame(width: imageRect.width, height: 2)
+                .position(x: imageRect.midX, y: positionY - focusHeight / 2)
+
+            Rectangle()
+                .fill(Color.yellow.opacity(0.8))
+                .frame(width: imageRect.width, height: 2)
+                .position(x: imageRect.midX, y: positionY + focusHeight / 2)
+
+            // Draggable handle in center
+            Capsule()
+                .fill(Color.yellow)
+                .frame(width: 60, height: 24)
+                .overlay(
+                    Capsule()
+                        .stroke(Color.white, lineWidth: 2)
+                )
+                .shadow(color: .black.opacity(0.5), radius: 4, y: 2)
+                .position(x: imageRect.midX, y: positionY)
+        }
+        .contentShape(Rectangle())
+        .gesture(
+            DragGesture()
+                .onChanged { value in
+                    viewModel.editor.isDraggingBlur = true
+                    let normalizedY = Float(1 - (value.location.y - imageRect.origin.y) / imageRect.height)
+                    var params = viewModel.editor.currentParameters
+                    params.linearBlur.position = max(0.1, min(0.9, normalizedY))
+                    viewModel.editor.currentParameters = params
+                }
+                .onEnded { _ in
+                    viewModel.editor.isDraggingBlur = false
+                    viewModel.editor.schedulePreviewUpdatePublic()
+                }
+        )
+        .simultaneousGesture(
+            MagnificationGesture()
+                .onChanged { scale in
+                    viewModel.editor.isDraggingBlur = true
+                    let currentWidth = viewModel.editor.currentParameters.linearBlur.focusWidth
+                    // Scale relative to 1.0 (no change)
+                    let newWidth = currentWidth * Float(scale)
+                    var params = viewModel.editor.currentParameters
+                    params.linearBlur.focusWidth = max(0.05, min(0.8, newWidth))
+                    viewModel.editor.currentParameters = params
+                }
+                .onEnded { _ in
+                    viewModel.editor.isDraggingBlur = false
+                    viewModel.editor.schedulePreviewUpdatePublic()
+                }
+        )
+    }
+
+    // MARK: - Helper
+
+    /// Calculate the actual image rect within the view (aspect-fit)
+    private func calculateImageRect(viewSize: CGSize, imageExtent: CGRect) -> CGRect {
+        let scale = min(viewSize.width / imageExtent.width, viewSize.height / imageExtent.height)
+        let scaledWidth = imageExtent.width * scale
+        let scaledHeight = imageExtent.height * scale
+        let xOffset = (viewSize.width - scaledWidth) / 2
+        let yOffset = (viewSize.height - scaledHeight) / 2
+        return CGRect(x: xOffset, y: yOffset, width: scaledWidth, height: scaledHeight)
     }
 }
 

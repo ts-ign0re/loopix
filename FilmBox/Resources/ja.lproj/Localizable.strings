@@ -172,6 +172,8 @@
 "tool.fade" = "フェード";
 "tool.bloom" = "ブルーム";
 "tool.halation" = "ハレーション";
+"tool.radial_blur" = "円形";
+"tool.linear_blur" = "直線";
 
 // MARK: - Filters Management
 "filters.title" = "// フィルター";

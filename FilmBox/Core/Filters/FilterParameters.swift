@@ -39,6 +39,8 @@ struct FilterParameters: Codable, Hashable, Sendable {
     var skinToneSaturation: Float = 0
 
     // === EFFECTS ===
+    var radialBlur: RadialBlurData = .none
+    var linearBlur: LinearBlurData = .none
     var clarity: Float = 0          // -100...+100
     var noiseReduction: Float = 0   // -100...+100 (negative = detail enhancement, positive = smoothing)
     var grain: GrainData = .none
@@ -301,6 +303,40 @@ struct HalationData: Codable, Hashable, Sendable {
     }
 }
 
+// MARK: - Radial Blur (Tilt-Shift / Bokeh)
+
+struct RadialBlurData: Codable, Hashable, Sendable {
+    var amount: Float = 0           // 0...100 blur intensity
+    var centerX: Float = 0.5        // 0...1 normalized X position
+    var centerY: Float = 0.5        // 0...1 normalized Y position
+    var radius: Float = 0.3         // 0...1 focus area radius (normalized)
+    var feather: Float = 0.5        // 0...1 transition softness
+    var bokehIntensity: Float = 0.5 // 0...1 hexagonal bokeh highlight intensity
+
+    static let none = RadialBlurData()
+
+    var isActive: Bool {
+        amount > 0
+    }
+}
+
+// MARK: - Linear Blur (Tilt-Shift Linear)
+
+struct LinearBlurData: Codable, Hashable, Sendable {
+    var amount: Float = 0           // 0...100 blur intensity
+    var position: Float = 0.5       // 0...1 focus line position (vertical by default)
+    var angle: Float = 0            // 0...360 rotation angle of focus line
+    var focusWidth: Float = 0.2     // 0...1 width of sharp focus area
+    var feather: Float = 0.5        // 0...1 transition softness
+    var bokehIntensity: Float = 0.5 // 0...1 hexagonal bokeh highlight intensity
+
+    static let none = LinearBlurData()
+
+    var isActive: Bool {
+        amount > 0
+    }
+}
+
 // MARK: - Film Simulation (Fuji-style)
 
 /// Fuji film simulation types
@@ -414,6 +450,16 @@ extension FilterParameters {
         case halationIntensity
         case halationHue
         case halationSpread
+        case radialBlurAmount
+        case radialBlurRadius
+        case radialBlurFeather
+        case radialBlurBokeh
+        case linearBlurAmount
+        case linearBlurPosition
+        case linearBlurAngle
+        case linearBlurFocusWidth
+        case linearBlurFeather
+        case linearBlurBokeh
         case hslHue
         case hslSaturation
         case hslLuminance
@@ -445,6 +491,16 @@ extension FilterParameters {
             case .halationIntensity: return 0...100
             case .halationHue: return 0...360
             case .halationSpread: return 0...1
+            case .radialBlurAmount: return 0...100
+            case .radialBlurRadius: return 0...1
+            case .radialBlurFeather: return 0...1
+            case .radialBlurBokeh: return 0...1
+            case .linearBlurAmount: return 0...100
+            case .linearBlurPosition: return 0...1
+            case .linearBlurAngle: return 0...360
+            case .linearBlurFocusWidth: return 0...1
+            case .linearBlurFeather: return 0...1
+            case .linearBlurBokeh: return 0...1
             case .hslHue: return -180...180
             case .hslSaturation, .hslLuminance: return -100...100
             case .splitToneHue: return 0...360
@@ -462,6 +518,11 @@ extension FilterParameters {
             case .bloomRadius: return 0.5
             case .bloomThreshold: return 0.8
             case .halationSpread: return 0.5
+            case .radialBlurRadius: return 0.3
+            case .radialBlurFeather, .radialBlurBokeh: return 0.5
+            case .linearBlurPosition: return 0.5
+            case .linearBlurFocusWidth: return 0.2
+            case .linearBlurFeather, .linearBlurBokeh: return 0.5
             default: return 0
             }
         }

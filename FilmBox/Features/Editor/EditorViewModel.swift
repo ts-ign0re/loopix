@@ -117,6 +117,9 @@ final class EditorViewModel {
     /// Whether before/after comparison is active
     var isShowingOriginal: Bool = false
 
+    /// Whether user is actively dragging blur focus point (use fast preview)
+    var isDraggingBlur: Bool = false
+
     /// Current zoom scale for preview
     var zoomScale: CGFloat = 1.0
 
@@ -665,6 +668,16 @@ final class EditorViewModel {
 
         // === EFFECTS ===
 
+        // Apply radial blur (bokeh effect)
+        if parameters.radialBlur.isActive {
+            output = await applyRadialBlur(parameters.radialBlur, to: output)
+        }
+
+        // Apply linear blur (tilt-shift effect)
+        if parameters.linearBlur.isActive {
+            output = await applyLinearBlur(parameters.linearBlur, to: output)
+        }
+
         // Apply clarity (local contrast)
         if parameters.clarity != 0 {
             output = applyClarity(parameters.clarity, to: output)
@@ -777,6 +790,231 @@ final class EditorViewModel {
         filter.setValue(CGFloat(radius), forKey: kCIInputRadiusKey)
 
         return filter.outputImage ?? image
+    }
+
+    // MARK: - Radial Blur
+
+    private func applyRadialBlur(_ blur: RadialBlurData, to image: CIImage) async -> CIImage {
+        let extent = image.extent
+        let maxBlurRadius = CGFloat(blur.amount) * 0.8
+
+        guard maxBlurRadius > 0 else { return image }
+
+        // Calculate center in image coordinates
+        let centerX = extent.origin.x + extent.width * CGFloat(blur.centerX)
+        let centerY = extent.origin.y + extent.height * CGFloat(blur.centerY)
+        let center = CIVector(x: centerX, y: centerY)
+
+        // Focus radius in pixels (relative to image size)
+        let imageSize = min(extent.width, extent.height)
+        let focusRadius = imageSize * CGFloat(blur.radius)
+        let featherWidth = imageSize * CGFloat(blur.feather) * 0.5
+
+        // Create depth mask (black = no blur in center, white = blur at edges)
+        guard let radialGradient = CIFilter(name: "CIRadialGradient") else { return image }
+        radialGradient.setValue(center, forKey: "inputCenter")
+        radialGradient.setValue(focusRadius, forKey: "inputRadius0")
+        radialGradient.setValue(focusRadius + featherWidth, forKey: "inputRadius1")
+        radialGradient.setValue(CIColor.black, forKey: "inputColor0")
+        radialGradient.setValue(CIColor.white, forKey: "inputColor1")
+
+        guard let depthMask = radialGradient.outputImage?.cropped(to: extent) else { return image }
+
+        // Fast mode during dragging - simple Gaussian blur for responsiveness
+        if isDraggingBlur {
+            return applyFastBlur(to: image, mask: depthMask, radius: maxBlurRadius * 0.5)
+        }
+
+        // Full optical mode - disc blur with bokeh effects
+        return applyOpticalRadialBlur(blur, to: image, mask: depthMask, radius: maxBlurRadius)
+    }
+
+    /// Fast blur for dragging (uses simplified Metal bokeh for real-time performance)
+    private func applyFastBlur(to image: CIImage, mask: CIImage, radius: CGFloat) -> CIImage {
+        let extent = image.extent
+
+        // Clamp edges to prevent square corners
+        guard let clampFilter = CIFilter(name: "CIAffineClamp") else { return image }
+        clampFilter.setValue(image, forKey: kCIInputImageKey)
+        clampFilter.setValue(CGAffineTransform.identity, forKey: kCIInputTransformKey)
+        guard let clampedImage = clampFilter.outputImage else { return image }
+
+        // Try fast Metal bokeh kernel first
+        do {
+            let bokehResult = try MetalFilterLoader.shared.applyBokeh(
+                to: clampedImage.cropped(to: extent),
+                mask: mask,
+                maxRadius: Float(radius),
+                fast: true  // Uses simplified 3-ring sampling for speed
+            )
+            return bokehResult.cropped(to: extent)
+        } catch {
+            // Fallback to Gaussian blur
+            guard let gaussianBlur = CIFilter(name: "CIGaussianBlur") else { return image }
+            gaussianBlur.setValue(clampedImage, forKey: kCIInputImageKey)
+            gaussianBlur.setValue(radius, forKey: kCIInputRadiusKey)
+
+            guard let blurred = gaussianBlur.outputImage?.cropped(to: extent) else { return image }
+
+            guard let blend = CIFilter(name: "CIBlendWithMask") else { return image }
+            blend.setValue(blurred, forKey: kCIInputImageKey)
+            blend.setValue(image, forKey: kCIInputBackgroundImageKey)
+            blend.setValue(mask, forKey: kCIInputMaskImageKey)
+
+            return blend.outputImage?.cropped(to: extent) ?? image
+        }
+    }
+
+    /// Full optical radial blur with bokeh effect using Metal kernel
+    private func applyOpticalRadialBlur(_ blur: RadialBlurData, to image: CIImage, mask: CIImage, radius: CGFloat) -> CIImage {
+        let extent = image.extent
+
+        // Clamp edges to prevent square corners
+        guard let clampFilter = CIFilter(name: "CIAffineClamp") else { return image }
+        clampFilter.setValue(image, forKey: kCIInputImageKey)
+        clampFilter.setValue(CGAffineTransform.identity, forKey: kCIInputTransformKey)
+        guard let clampedImage = clampFilter.outputImage else { return image }
+
+        // Try Metal bokeh kernel for realistic optical blur
+        do {
+            let bokehResult = try MetalFilterLoader.shared.applyBokeh(
+                to: clampedImage.cropped(to: extent),
+                mask: mask,
+                maxRadius: Float(radius),
+                highlightThreshold: 0.65,
+                highlightBoost: Float(blur.bokehIntensity) * 2.0,
+                apertureBlades: 0.0,  // Circular aperture
+                fast: false
+            )
+            return bokehResult.cropped(to: extent)
+        } catch {
+            // Fallback to disc blur if Metal kernel fails
+            guard let discBlur = CIFilter(name: "CIDiscBlur") else {
+                guard let gaussBlur = CIFilter(name: "CIGaussianBlur") else { return image }
+                gaussBlur.setValue(clampedImage, forKey: kCIInputImageKey)
+                gaussBlur.setValue(radius, forKey: kCIInputRadiusKey)
+                guard let blurred = gaussBlur.outputImage?.cropped(to: extent) else { return image }
+
+                guard let blend = CIFilter(name: "CIBlendWithMask") else { return image }
+                blend.setValue(blurred, forKey: kCIInputImageKey)
+                blend.setValue(image, forKey: kCIInputBackgroundImageKey)
+                blend.setValue(mask, forKey: kCIInputMaskImageKey)
+                return blend.outputImage?.cropped(to: extent) ?? image
+            }
+
+            discBlur.setValue(clampedImage, forKey: kCIInputImageKey)
+            discBlur.setValue(radius, forKey: kCIInputRadiusKey)
+            guard let blurred = discBlur.outputImage?.cropped(to: extent) else { return image }
+
+            guard let blendFilter = CIFilter(name: "CIBlendWithMask") else { return image }
+            blendFilter.setValue(blurred, forKey: kCIInputImageKey)
+            blendFilter.setValue(image, forKey: kCIInputBackgroundImageKey)
+            blendFilter.setValue(mask, forKey: kCIInputMaskImageKey)
+
+            return blendFilter.outputImage?.cropped(to: extent) ?? image
+        }
+    }
+
+    // MARK: - Linear Blur
+
+    private func applyLinearBlur(_ blur: LinearBlurData, to image: CIImage) async -> CIImage {
+        let extent = image.extent
+        let maxBlurRadius = CGFloat(blur.amount) * 0.8
+
+        guard maxBlurRadius > 0 else { return image }
+
+        // Calculate focus band position and width
+        let focusY = extent.origin.y + extent.height * CGFloat(blur.position)
+        let focusHalfWidth = extent.height * CGFloat(blur.focusWidth) * 0.5
+        let featherDistance = extent.height * CGFloat(blur.feather) * 0.4
+
+        // Create linear gradient mask for tilt-shift effect
+        guard let topGradient = CIFilter(name: "CILinearGradient"),
+              let bottomGradient = CIFilter(name: "CILinearGradient") else { return image }
+
+        // Top gradient
+        let topSharpY = focusY + focusHalfWidth
+        let topBlurY = topSharpY + featherDistance
+        topGradient.setValue(CIVector(x: extent.midX, y: topSharpY), forKey: "inputPoint0")
+        topGradient.setValue(CIVector(x: extent.midX, y: topBlurY), forKey: "inputPoint1")
+        topGradient.setValue(CIColor.black, forKey: "inputColor0")
+        topGradient.setValue(CIColor.white, forKey: "inputColor1")
+
+        // Bottom gradient
+        let bottomSharpY = focusY - focusHalfWidth
+        let bottomBlurY = bottomSharpY - featherDistance
+        bottomGradient.setValue(CIVector(x: extent.midX, y: bottomSharpY), forKey: "inputPoint0")
+        bottomGradient.setValue(CIVector(x: extent.midX, y: bottomBlurY), forKey: "inputPoint1")
+        bottomGradient.setValue(CIColor.black, forKey: "inputColor0")
+        bottomGradient.setValue(CIColor.white, forKey: "inputColor1")
+
+        guard let topMask = topGradient.outputImage?.cropped(to: extent),
+              let bottomMask = bottomGradient.outputImage?.cropped(to: extent) else { return image }
+
+        // Combine masks using maximum
+        guard let maxFilter = CIFilter(name: "CIMaximumCompositing") else { return image }
+        maxFilter.setValue(topMask, forKey: kCIInputImageKey)
+        maxFilter.setValue(bottomMask, forKey: kCIInputBackgroundImageKey)
+
+        guard let depthMask = maxFilter.outputImage?.cropped(to: extent) else { return image }
+
+        // Fast mode during dragging
+        if isDraggingBlur {
+            return applyFastBlur(to: image, mask: depthMask, radius: maxBlurRadius * 0.5)
+        }
+
+        // Full optical mode
+        return applyOpticalLinearBlur(blur, to: image, mask: depthMask, radius: maxBlurRadius)
+    }
+
+    /// Full optical linear blur with Metal bokeh kernel
+    private func applyOpticalLinearBlur(_ blur: LinearBlurData, to image: CIImage, mask: CIImage, radius: CGFloat) -> CIImage {
+        let extent = image.extent
+
+        // Clamp edges to prevent square corners
+        guard let clampFilter = CIFilter(name: "CIAffineClamp") else { return image }
+        clampFilter.setValue(image, forKey: kCIInputImageKey)
+        clampFilter.setValue(CGAffineTransform.identity, forKey: kCIInputTransformKey)
+        guard let clampedImage = clampFilter.outputImage else { return image }
+
+        // Try Metal bokeh kernel for realistic optical blur
+        do {
+            let bokehResult = try MetalFilterLoader.shared.applyBokeh(
+                to: clampedImage.cropped(to: extent),
+                mask: mask,
+                maxRadius: Float(radius),
+                highlightThreshold: 0.65,
+                highlightBoost: Float(blur.bokehIntensity) * 2.0,
+                apertureBlades: 0.0,  // Circular aperture
+                fast: false
+            )
+            return bokehResult.cropped(to: extent)
+        } catch {
+            // Fallback to disc blur if Metal kernel fails
+            guard let discBlur = CIFilter(name: "CIDiscBlur") else {
+                guard let gaussBlur = CIFilter(name: "CIGaussianBlur") else { return image }
+                gaussBlur.setValue(clampedImage, forKey: kCIInputImageKey)
+                gaussBlur.setValue(radius, forKey: kCIInputRadiusKey)
+                guard let blurred = gaussBlur.outputImage?.cropped(to: extent) else { return image }
+
+                guard let blend = CIFilter(name: "CIBlendWithMask") else { return image }
+                blend.setValue(blurred, forKey: kCIInputImageKey)
+                blend.setValue(image, forKey: kCIInputBackgroundImageKey)
+                blend.setValue(mask, forKey: kCIInputMaskImageKey)
+                return blend.outputImage?.cropped(to: extent) ?? image
+            }
+
+            discBlur.setValue(clampedImage, forKey: kCIInputImageKey)
+            discBlur.setValue(radius, forKey: kCIInputRadiusKey)
+            guard let blurred = discBlur.outputImage?.cropped(to: extent) else { return image }
+
+            guard let blendFilter = CIFilter(name: "CIBlendWithMask") else { return image }
+            blendFilter.setValue(blurred, forKey: kCIInputImageKey)
+            blendFilter.setValue(image, forKey: kCIInputBackgroundImageKey)
+            blendFilter.setValue(mask, forKey: kCIInputMaskImageKey)
+
+            return blendFilter.outputImage?.cropped(to: extent) ?? image
+        }
     }
 
     // MARK: - Vignette
