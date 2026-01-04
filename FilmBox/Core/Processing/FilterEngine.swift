@@ -1157,8 +1157,8 @@ actor FilterEngine {
         radialGradient.setValue(center, forKey: "inputCenter")
         radialGradient.setValue(focusRadius, forKey: "inputRadius0")
         radialGradient.setValue(focusRadius + featherWidth, forKey: "inputRadius1")
-        radialGradient.setValue(CIColor.white, forKey: "inputColor0")
-        radialGradient.setValue(CIColor.black, forKey: "inputColor1")
+        radialGradient.setValue(CIColor.black, forKey: "inputColor0")
+        radialGradient.setValue(CIColor.white, forKey: "inputColor1")
 
         guard let depthMask = radialGradient.outputImage?.cropped(to: extent) else { return image }
 
@@ -1224,24 +1224,25 @@ actor FilterEngine {
         let topBlurY = topSharpY + featherDistance
         topGradient.setValue(CIVector(x: extent.midX, y: topSharpY), forKey: "inputPoint0")
         topGradient.setValue(CIVector(x: extent.midX, y: topBlurY), forKey: "inputPoint1")
-        topGradient.setValue(CIColor.white, forKey: "inputColor0")
-        topGradient.setValue(CIColor.black, forKey: "inputColor1")
+        topGradient.setValue(CIColor.black, forKey: "inputColor0")
+        topGradient.setValue(CIColor.white, forKey: "inputColor1")
 
         let bottomSharpY = focusY - focusHalfWidth
         let bottomBlurY = bottomSharpY - featherDistance
         bottomGradient.setValue(CIVector(x: extent.midX, y: bottomSharpY), forKey: "inputPoint0")
         bottomGradient.setValue(CIVector(x: extent.midX, y: bottomBlurY), forKey: "inputPoint1")
-        bottomGradient.setValue(CIColor.white, forKey: "inputColor0")
-        bottomGradient.setValue(CIColor.black, forKey: "inputColor1")
+        bottomGradient.setValue(CIColor.black, forKey: "inputColor0")
+        bottomGradient.setValue(CIColor.white, forKey: "inputColor1")
 
         guard let topMask = topGradient.outputImage?.cropped(to: extent),
               let bottomMask = bottomGradient.outputImage?.cropped(to: extent) else { return image }
 
-        guard let multiplyFilter = CIFilter(name: "CIMultiplyCompositing") else { return image }
-        multiplyFilter.setValue(topMask, forKey: kCIInputImageKey)
-        multiplyFilter.setValue(bottomMask, forKey: kCIInputBackgroundImageKey)
+        // Use maximum to combine masks (white = blur, black = sharp)
+        guard let maxFilter = CIFilter(name: "CIMaximumCompositing") else { return image }
+        maxFilter.setValue(topMask, forKey: kCIInputImageKey)
+        maxFilter.setValue(bottomMask, forKey: kCIInputBackgroundImageKey)
 
-        guard let depthMask = multiplyFilter.outputImage?.cropped(to: extent) else { return image }
+        guard let depthMask = maxFilter.outputImage?.cropped(to: extent) else { return image }
 
         // Enhance highlights
         var processedImage = image
