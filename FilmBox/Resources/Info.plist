@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Loopix needs camera access to scan recipe QR codes for importing filter presets.</string>
 	<key>UILaunchScreen</key>
 	<dict>
 		<key>UIColorName</key>

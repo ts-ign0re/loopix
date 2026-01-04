@@ -35,6 +35,18 @@ struct FiltersManagementView: View {
     /// Show Fuji recipe form
     @State private var showFujiRecipeForm = false
 
+    /// Show QR code export view
+    @State private var showQRExport = false
+
+    /// Show QR code scanner for import
+    @State private var showQRScanner = false
+
+    /// Show import loading overlay
+    @State private var isImporting = false
+
+    /// Recently imported filter ID for highlight animation
+    @State private var recentlyImportedID: UUID?
+
     /// Filter being edited (nil for new filter)
     @State private var filterToEdit: FilterPreset?
 
@@ -196,6 +208,11 @@ struct FiltersManagementView: View {
 
                 // FAB overlay (right side)
                 fabMenuOverlay
+
+                // Import loading overlay
+                if isImporting {
+                    importingOverlay
+                }
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(.black, for: .navigationBar)
@@ -240,20 +257,39 @@ struct FiltersManagementView: View {
         } message: {
             Text(deleteAlertMessage)
         }
-        .sheet(isPresented: $showFilterEditor) {
-            FilterEditorView(
-                filter: filterToEdit,
-                onSave: { savedFilter in
-                    Task {
-                        await handleFilterSaved(savedFilter)
+        .sheet(
+            isPresented: $showFilterEditor,
+            onDismiss: { filterToEdit = nil },
+            content: {
+                FilterEditorView(
+                    filter: filterToEdit,
+                    onSave: { savedFilter in
+                        Task {
+                            await handleFilterSaved(savedFilter)
+                        }
                     }
-                }
-            )
-        }
+                )
+                .id(filterToEdit?.id)
+            }
+        )
         .sheet(isPresented: $showFujiRecipeForm) {
             FujiRecipeFormView { newPreset in
                 Task {
                     await handleFilterSaved(newPreset)
+                }
+            }
+        }
+        .sheet(isPresented: $showQRExport) {
+            if let filter = singleSelectedFilter {
+                RecipeQRCodeView(filter: filter)
+            }
+        }
+        .sheet(isPresented: $showQRScanner) {
+            RecipeScannerView(
+                existingNames: Set(allFilters.map { $0.name })
+            ) { importedFilter in
+                Task {
+                    await handleFilterImported(importedFilter)
                 }
             }
         }
@@ -585,6 +621,17 @@ struct FiltersManagementView: View {
                 }
                 duplicateSelectedFilter()
             }
+
+            Divider()
+                .background(Color.white.opacity(0.15))
+
+            // Export recipe as QR code
+            menuItem(title: "export recipe", icon: "qrcode") {
+                withAnimation(.spring(response: 0.2, dampingFraction: 0.8)) {
+                    showMoreMenu = false
+                }
+                showQRExport = true
+            }
         }
         .padding(.vertical, 4)
         .background(
@@ -684,6 +731,26 @@ struct FiltersManagementView: View {
             .padding(.horizontal, 2)
     }
 
+    // MARK: - Importing Overlay
+
+    private var importingOverlay: some View {
+        ZStack {
+            Color.black.opacity(0.85)
+                .ignoresSafeArea()
+
+            VStack(spacing: 20) {
+                ProgressView()
+                    .progressViewStyle(CircularProgressViewStyle(tint: .yellow))
+                    .scaleEffect(1.5)
+
+                Text("importing recipe...")
+                    .font(.system(size: 16, weight: .medium, design: .monospaced))
+                    .foregroundStyle(.white)
+            }
+        }
+        .transition(.opacity)
+    }
+
     // MARK: - FAB Menu
 
     private var fabMenuOverlay: some View {
@@ -692,13 +759,20 @@ struct FiltersManagementView: View {
             HStack {
                 Spacer()
                 VStack(alignment: .trailing, spacing: 8) {
-                    // Expanded menu items - only creation actions
+                    // Expanded menu items - creation/import actions
                     if isFabExpanded {
                         VStack(alignment: .trailing, spacing: 8) {
-                            // Fuji recipe
-                            fabMenuItem(title: "fuji recipe", icon: "camera.aperture") {
-                                showFujiRecipeForm = true
+                            // Import recipe via QR
+                            fabMenuItem(title: "import recipe", icon: "qrcode.viewfinder") {
                                 isFabExpanded = false
+                                showQRScanner = true
+                            }
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
+
+                            // Create Fuji recipe
+                            fabMenuItem(title: "fuji recipe", icon: "camera.aperture") {
+                                isFabExpanded = false
+                                showFujiRecipeForm = true
                             }
                             .transition(.move(edge: .bottom).combined(with: .opacity))
                         }
@@ -864,6 +938,21 @@ struct FiltersManagementView: View {
     }
 
     private func handleFilterSaved(_ filter: FilterPreset) async {
+        // Save filter to storage if it's a new user filter
+        do {
+            // Check if filter already exists
+            let existingFilters = await FilterStorage.shared.getUserPresets()
+            if existingFilters.contains(where: { $0.id == filter.id }) {
+                // Update existing filter
+                try await FilterStorage.shared.update(filter)
+            } else {
+                // Save new filter
+                try await FilterStorage.shared.save(filter)
+            }
+        } catch {
+            print("Failed to save filter: \(error)")
+        }
+
         // Regenerate preview for the saved filter
         await FilterPreviewCache.shared.regeneratePreview(for: filter)
         if let preview = await FilterPreviewCache.shared.getPreview(for: filter) {
@@ -872,6 +961,61 @@ struct FiltersManagementView: View {
 
         await loadFilters()
         selectedFilterIDs = [filter.id]
+    }
+
+    private func handleFilterImported(_ filter: FilterPreset) async {
+        // Show importing state
+        await MainActor.run {
+            isImporting = true
+        }
+
+        // Fake delay for perceived value
+        try? await Task.sleep(nanoseconds: 800_000_000)
+
+        // Save filter to storage
+        do {
+            try await FilterStorage.shared.save(filter)
+            Analytics.shared.trackFilterCreate(name: filter.name, source: "qr_import")
+        } catch {
+            print("Failed to save imported filter: \(error)")
+        }
+
+        // Generate preview
+        await FilterPreviewCache.shared.regeneratePreview(for: filter)
+        if let preview = await FilterPreviewCache.shared.getPreview(for: filter) {
+            await MainActor.run {
+                previewImages[filter.id] = preview
+            }
+        }
+
+        await loadFilters()
+
+        // Switch to "my" category and highlight the imported filter
+        await MainActor.run {
+            withAnimation(.easeInOut(duration: 0.3)) {
+                selectedCategory = .custom
+                isImporting = false
+            }
+
+            // Small delay then select and highlight
+            Task {
+                try? await Task.sleep(nanoseconds: 300_000_000)
+                await MainActor.run {
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                        selectedFilterIDs = [filter.id]
+                        recentlyImportedID = filter.id
+                    }
+                }
+
+                // Remove highlight after a moment
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
+                await MainActor.run {
+                    withAnimation(.easeOut(duration: 0.5)) {
+                        recentlyImportedID = nil
+                    }
+                }
+            }
+        }
     }
 }
 
