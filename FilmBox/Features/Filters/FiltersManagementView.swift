@@ -17,8 +17,8 @@ struct FiltersManagementView: View {
     /// User-created filters
     @State private var userFilters: [FilterPreset] = []
 
-    /// Currently selected filter (for FAB menu context)
-    @State private var selectedFilter: FilterPreset?
+    /// Currently selected filter IDs (supports multi-selection)
+    @State private var selectedFilterIDs: Set<UUID> = []
 
     /// FAB expanded state
     @State private var isFabExpanded = false
@@ -28,6 +28,9 @@ struct FiltersManagementView: View {
 
     /// Show filter editor sheet
     @State private var showFilterEditor = false
+
+    /// Show more menu popup
+    @State private var showMoreMenu = false
 
     /// Show Fuji recipe form
     @State private var showFujiRecipeForm = false
@@ -81,14 +84,94 @@ struct FiltersManagementView: View {
         return result
     }
 
-    /// Whether selected filter is user-created (can be deleted/edited)
-    private var selectedFilterIsUserCreated: Bool {
-        guard let filter = selectedFilter else { return false }
-        switch filter.source {
-        case .builtIn:
-            return false
-        case .userCreated, .calibrated, .imported, .haldCLUT:
-            return true
+    /// Get selected filters
+    private var selectedFilters: [FilterPreset] {
+        allFilters.filter { selectedFilterIDs.contains($0.id) }
+    }
+
+    /// Single selected filter (for FAB actions that need one filter)
+    private var singleSelectedFilter: FilterPreset? {
+        guard selectedFilterIDs.count == 1,
+              let id = selectedFilterIDs.first else { return nil }
+        return allFilters.first { $0.id == id }
+    }
+
+    /// Whether any selected filter is user-created (can be deleted)
+    private var anySelectedIsUserCreated: Bool {
+        selectedFilters.contains { filter in
+            switch filter.source {
+            case .builtIn:
+                return false
+            case .userCreated, .calibrated, .imported, .haldCLUT:
+                return true
+            }
+        }
+    }
+
+    /// Whether all selected filters are user-created
+    private var allSelectedAreUserCreated: Bool {
+        !selectedFilters.isEmpty && selectedFilters.allSatisfy { filter in
+            switch filter.source {
+            case .builtIn:
+                return false
+            case .userCreated, .calibrated, .imported, .haldCLUT:
+                return true
+            }
+        }
+    }
+
+    /// Whether a filter is selected
+    private var hasSelection: Bool {
+        !selectedFilterIDs.isEmpty
+    }
+
+    /// Whether single filter is selected
+    private var isSingleSelection: Bool {
+        selectedFilterIDs.count == 1
+    }
+
+    /// Favorite state for selected filters
+    private enum FavoriteState {
+        case none      // No selected filters are favorites
+        case some      // Some are favorites, some are not
+        case all       // All selected filters are favorites
+    }
+
+    private var selectedFavoriteState: FavoriteState {
+        guard !selectedFilterIDs.isEmpty else { return .none }
+        let favoriteCount = selectedFilterIDs.filter { favoriteIDs.contains($0) }.count
+        if favoriteCount == 0 {
+            return .none
+        } else if favoriteCount == selectedFilterIDs.count {
+            return .all
+        } else {
+            return .some
+        }
+    }
+
+    /// Delete alert title based on selection count
+    private var deleteAlertTitle: String {
+        let count = selectedFilters.filter { filter in
+            switch filter.source {
+            case .builtIn: return false
+            default: return true
+            }
+        }.count
+        return count == 1 ? "Delete Filter" : "Delete \(count) Filters"
+    }
+
+    /// Delete alert message based on selection
+    private var deleteAlertMessage: String {
+        let deletableFilters = selectedFilters.filter { filter in
+            switch filter.source {
+            case .builtIn: return false
+            default: return true
+            }
+        }
+        if deletableFilters.count == 1 {
+            return "Are you sure you want to delete \"\(deletableFilters.first?.name ?? "")\"? This action cannot be undone."
+        } else {
+            return "Are you sure you want to delete \(deletableFilters.count) filters? This action cannot be undone."
         }
     }
 
@@ -108,7 +191,10 @@ struct FiltersManagementView: View {
                     filtersGrid
                 }
 
-                // FAB overlay
+                // Action bar overlay (left side when filter selected)
+                actionBarOverlay
+
+                // FAB overlay (right side)
                 fabMenuOverlay
             }
             .navigationBarTitleDisplayMode(.inline)
@@ -144,15 +230,15 @@ struct FiltersManagementView: View {
             let allFiltersForPreview = builtInFilters + userFilters
             await FilterPreviewCache.shared.generateInitialPreviews(for: allFiltersForPreview)
         }
-        .alert("Delete Filter", isPresented: $showDeleteConfirmation) {
+        .alert(deleteAlertTitle, isPresented: $showDeleteConfirmation) {
             Button("Cancel", role: .cancel) { }
             Button("Delete", role: .destructive) {
                 Task {
-                    await deleteSelectedFilter()
+                    await deleteSelectedFilters()
                 }
             }
         } message: {
-            Text("Are you sure you want to delete \"\(selectedFilter?.name ?? "")\"? This action cannot be undone.")
+            Text(deleteAlertMessage)
         }
         .sheet(isPresented: $showFilterEditor) {
             FilterEditorView(
@@ -193,6 +279,7 @@ struct FiltersManagementView: View {
         return Button {
             withAnimation(.easeInOut(duration: 0.2)) {
                 selectedCategory = category
+                selectedFilterIDs.removeAll()  // Clear selection on category switch
             }
             // Track category switch
             Analytics.shared.trackFilterCategorySwitch(category: category.displayName)
@@ -244,16 +331,16 @@ struct FiltersManagementView: View {
     }
 
     private func filterCell(_ filter: FilterPreset) -> some View {
-        let isSelected = selectedFilter?.id == filter.id
+        let isSelected = selectedFilterIDs.contains(filter.id)
         let isFavorite = favoriteIDs.contains(filter.id)
         let previewImage = previewImages[filter.id]
 
         return Button {
             withAnimation(.easeInOut(duration: 0.15)) {
-                if selectedFilter?.id == filter.id {
-                    selectedFilter = nil
+                if selectedFilterIDs.contains(filter.id) {
+                    selectedFilterIDs.remove(filter.id)
                 } else {
-                    selectedFilter = filter
+                    selectedFilterIDs.insert(filter.id)
                 }
             }
         } label: {
@@ -376,6 +463,227 @@ struct FiltersManagementView: View {
         }
     }
 
+    // MARK: - Action Bar (left side when filter selected)
+
+    private var actionBarOverlay: some View {
+        ZStack(alignment: .bottom) {
+            // Dismiss overlay for popup menu
+            if showMoreMenu {
+                Color.clear
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        withAnimation(.spring(response: 0.2, dampingFraction: 0.8)) {
+                            showMoreMenu = false
+                        }
+                    }
+            }
+
+            // Left side - Action tabs (when filter selected)
+            if hasSelection {
+                VStack {
+                    Spacer()
+                    HStack {
+                        actionTabsView
+                        Spacer()
+                    }
+                    .padding(.leading, 20)
+                    .padding(.bottom, 28)
+                }
+                .transition(.move(edge: .leading).combined(with: .opacity))
+            }
+        }
+        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: hasSelection)
+    }
+
+    private var actionTabsView: some View {
+        HStack(spacing: 0) {
+            // Edit/View button - only for single selection
+            if isSingleSelection {
+                if let filter = singleSelectedFilter {
+                    let isUserCreated = anySelectedIsUserCreated
+                    Button {
+                        filterToEdit = filter
+                        showFilterEditor = true
+                    } label: {
+                        Text(isUserCreated ? L10n.Action.edit : "view")
+                            .font(.system(size: 14, weight: .semibold, design: .monospaced))
+                            .foregroundStyle(.black)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(
+                                Capsule()
+                                    .fill(Color.yellow)
+                            )
+                    }
+                    .buttonStyle(.plain)
+
+                    actionTabDivider
+                }
+            }
+
+            // Favorite button with state-dependent icon
+            actionButton(
+                icon: favoriteIconName,
+                iconColor: favoriteIconColor
+            ) {
+                toggleFavoritesForSelection()
+            }
+
+            // Delete button - only if all selected are user-created
+            if allSelectedAreUserCreated {
+                actionTabDivider
+
+                actionButton(icon: "trash", iconColor: .white) {
+                    showDeleteConfirmation = true
+                }
+            }
+
+            // More menu button - only for single selection (duplicate available)
+            if isSingleSelection {
+                actionTabDivider
+
+                actionButton(icon: "ellipsis", iconColor: .white) {
+                    withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
+                        showMoreMenu.toggle()
+                    }
+                }
+            }
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 6)
+        .background(
+            Capsule()
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    Capsule()
+                        .stroke(Color.white.opacity(0.2), lineWidth: 0.5)
+                )
+        )
+        .overlay(alignment: .topTrailing) {
+            // Floating popup menu
+            if showMoreMenu {
+                floatingMoreMenu
+                    .offset(x: 0, y: -52)
+                    .transition(
+                        .asymmetric(
+                            insertion: .scale(scale: 0.8, anchor: .bottomTrailing).combined(with: .opacity),
+                            removal: .scale(scale: 0.8, anchor: .bottomTrailing).combined(with: .opacity)
+                        )
+                    )
+            }
+        }
+    }
+
+    // MARK: - Floating More Menu
+
+    private var floatingMoreMenu: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // Duplicate - always available for single selection
+            menuItem(title: "duplicate", icon: "doc.on.doc") {
+                withAnimation(.spring(response: 0.2, dampingFraction: 0.8)) {
+                    showMoreMenu = false
+                }
+                duplicateSelectedFilter()
+            }
+        }
+        .padding(.vertical, 4)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(Color.white.opacity(0.2), lineWidth: 0.5)
+                )
+                .shadow(color: .black.opacity(0.3), radius: 12, y: 4)
+        )
+    }
+
+    private func menuItem(title: String, icon: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 10) {
+                Image(systemName: icon)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.7))
+                    .frame(width: 20)
+
+                Text(title)
+                    .font(.system(size: 14, weight: .medium, design: .monospaced))
+                    .foregroundStyle(.white)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 11)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// Icon name based on favorite state
+    private var favoriteIconName: String {
+        switch selectedFavoriteState {
+        case .none:
+            return "star"
+        case .some:
+            return "star.leadinghalf.filled"
+        case .all:
+            return "star.fill"
+        }
+    }
+
+    /// Icon color based on favorite state
+    private var favoriteIconColor: Color {
+        switch selectedFavoriteState {
+        case .none:
+            return .white
+        case .some, .all:
+            return .yellow
+        }
+    }
+
+    /// Toggle favorites for all selected filters
+    private func toggleFavoritesForSelection() {
+        let shouldAdd = selectedFavoriteState != .all  // Add if not all are favorites
+
+        withAnimation(.easeInOut(duration: 0.2)) {
+            for id in selectedFilterIDs {
+                if shouldAdd {
+                    favoriteIDs.insert(id)
+                } else {
+                    favoriteIDs.remove(id)
+                }
+            }
+        }
+
+        // Track analytics for each filter
+        for filter in selectedFilters {
+            Analytics.shared.trackFilterFavorite(filterName: filter.name, isFavorite: shouldAdd)
+        }
+
+        // Persist to UserDefaults
+        let idStrings = favoriteIDs.map { $0.uuidString }
+        UserDefaults.standard.set(idStrings, forKey: "favoriteFilterIDs")
+
+        // Haptic feedback
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+    }
+
+    private func actionButton(icon: String, iconColor: Color = .white, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: 16, weight: .medium))
+                .foregroundStyle(iconColor)
+                .frame(width: 44, height: 36)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var actionTabDivider: some View {
+        Text("|")
+            .font(.system(size: 14, weight: .light, design: .monospaced))
+            .foregroundStyle(.white.opacity(0.3))
+            .padding(.horizontal, 2)
+    }
+
     // MARK: - FAB Menu
 
     private var fabMenuOverlay: some View {
@@ -384,50 +692,19 @@ struct FiltersManagementView: View {
             HStack {
                 Spacer()
                 VStack(alignment: .trailing, spacing: 8) {
-                    // Expanded menu items
+                    // Expanded menu items - only creation actions
                     if isFabExpanded {
                         VStack(alignment: .trailing, spacing: 8) {
-                            // Fuji recipe - always visible
+                            // Fuji recipe
                             fabMenuItem(title: "fuji recipe", icon: "camera.aperture") {
                                 showFujiRecipeForm = true
                                 isFabExpanded = false
                             }
                             .transition(.move(edge: .bottom).combined(with: .opacity))
-
-                            // Duplicate - only when filter selected
-                            if selectedFilter != nil {
-                                fabMenuItem(title: "duplicate", icon: "doc.on.doc") {
-                                    duplicateSelectedFilter()
-                                    isFabExpanded = false
-                                }
-                                .transition(.move(edge: .bottom).combined(with: .opacity))
-                            }
-
-                            // Show config - only when filter selected
-                            if selectedFilter != nil {
-                                fabMenuItem(
-                                    title: selectedFilterIsUserCreated ? "edit" : "view",
-                                    icon: selectedFilterIsUserCreated ? "slider.horizontal.3" : "eye"
-                                ) {
-                                    filterToEdit = selectedFilter
-                                    showFilterEditor = true
-                                    isFabExpanded = false
-                                }
-                                .transition(.move(edge: .bottom).combined(with: .opacity))
-                            }
-
-                            // Delete - only for user filters
-                            if selectedFilter != nil && selectedFilterIsUserCreated {
-                                fabMenuItem(title: "delete", icon: "trash") {
-                                    showDeleteConfirmation = true
-                                    isFabExpanded = false
-                                }
-                                .transition(.move(edge: .bottom).combined(with: .opacity))
-                            }
                         }
                     }
 
-                    // Main FAB button - Yellow
+                    // Main FAB button - Yellow (always plus for creation)
                     Button {
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                             isFabExpanded.toggle()
@@ -438,7 +715,7 @@ struct FiltersManagementView: View {
                             .frame(width: 56, height: 56)
                             .shadow(color: .yellow.opacity(0.4), radius: 8, y: 2)
                             .overlay {
-                                Image(systemName: isFabExpanded ? "xmark" : (selectedFilter != nil ? "ellipsis" : "plus"))
+                                Image(systemName: isFabExpanded ? "xmark" : "plus")
                                     .font(.system(size: 22, weight: .semibold))
                                     .foregroundStyle(.black)
                                     .rotationEffect(.degrees(isFabExpanded ? 90 : 0))
@@ -520,7 +797,7 @@ struct FiltersManagementView: View {
     }
 
     private func duplicateSelectedFilter() {
-        guard let filter = selectedFilter else { return }
+        guard let filter = singleSelectedFilter else { return }
 
         let newFilter = FilterPreset(
             id: UUID(),
@@ -545,7 +822,8 @@ struct FiltersManagementView: View {
             }
 
             await loadFilters()
-            selectedFilter = newFilter
+            // Select the new filter
+            selectedFilterIDs = [newFilter.id]
         }
 
         // Haptic feedback
@@ -553,28 +831,36 @@ struct FiltersManagementView: View {
         generator.notificationOccurred(.success)
     }
 
-    private func deleteSelectedFilter() async {
-        guard let filter = selectedFilter else { return }
-
-        do {
-            try await FilterStorage.shared.delete(id: filter.id)
-
-            // Track filter delete
-            Analytics.shared.trackEvent(
-                category: .filter,
-                action: .delete,
-                name: filter.name
-            )
-
-            // Delete the preview for this filter
-            await FilterPreviewCache.shared.deletePreview(for: filter.id)
-            previewImages.removeValue(forKey: filter.id)
-
-            selectedFilter = nil
-            await loadFilters()
-        } catch {
-            print("Failed to delete filter: \(error)")
+    private func deleteSelectedFilters() async {
+        // Only delete user-created filters
+        let filtersToDelete = selectedFilters.filter { filter in
+            switch filter.source {
+            case .builtIn: return false
+            default: return true
+            }
         }
+
+        for filter in filtersToDelete {
+            do {
+                try await FilterStorage.shared.delete(id: filter.id)
+
+                // Track filter delete
+                Analytics.shared.trackEvent(
+                    category: .filter,
+                    action: .delete,
+                    name: filter.name
+                )
+
+                // Delete the preview for this filter
+                await FilterPreviewCache.shared.deletePreview(for: filter.id)
+                previewImages.removeValue(forKey: filter.id)
+            } catch {
+                print("Failed to delete filter \(filter.name): \(error)")
+            }
+        }
+
+        selectedFilterIDs.removeAll()
+        await loadFilters()
     }
 
     private func handleFilterSaved(_ filter: FilterPreset) async {
@@ -585,7 +871,7 @@ struct FiltersManagementView: View {
         }
 
         await loadFilters()
-        selectedFilter = filter
+        selectedFilterIDs = [filter.id]
     }
 }
 
