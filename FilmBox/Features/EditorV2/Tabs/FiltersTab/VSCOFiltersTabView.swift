@@ -72,14 +72,23 @@ struct VSCOFiltersTabView: View {
     private var filteredPresets: [FilterPreset] {
         switch viewModel.selectedFilterCategory {
         case .all:
-            return filters
+            // All filters sorted alphabetically
+            return filters.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
         case .favorites:
-            return filters.filter { favoriteIDs.contains($0.id) }
+            // Favorites sorted by modifiedAt (newest first)
+            return filters
+                .filter { favoriteIDs.contains($0.id) }
+                .sorted { $0.modifiedAt > $1.modifiedAt }
         case .custom:
-            // Include all non-builtIn filters (userCreated, imported, calibrated, haldCLUT)
-            return filters.filter { $0.source != .builtIn }
+            // User filters sorted by createdAt (newest first)
+            return filters
+                .filter { $0.source != .builtIn }
+                .sorted { $0.createdAt > $1.createdAt }
         default:
-            return filters.filter { $0.category == viewModel.selectedFilterCategory }
+            // Category filters sorted alphabetically
+            return filters
+                .filter { $0.category == viewModel.selectedFilterCategory }
+                .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
         }
     }
 
