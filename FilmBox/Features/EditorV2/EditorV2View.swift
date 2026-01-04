@@ -102,14 +102,17 @@ struct EditorV2View: View {
         }
         .padding(.horizontal, 8)
         .frame(height: 44)
-        .alert("discard changes?", isPresented: $showDiscardAlert) {
+        .alert("keep your edits?", isPresented: $showDiscardAlert) {
+            Button("save", role: .cancel) {
+                Task {
+                    await saveChanges()
+                }
+            }
             Button("discard", role: .destructive) {
-                // Track editor cancel with changes discarded
                 let hasChanges = viewModel.editor.currentParameters.hasAdjustments || viewModel.editor.selectedPreset != nil
                 Analytics.shared.trackEditorCancel(hadChanges: hasChanges)
                 dismiss()
             }
-            Button("cancel", role: .cancel) {}
         }
         .alert("save error", isPresented: $showSaveError) {
             Button("ok", role: .cancel) {}
