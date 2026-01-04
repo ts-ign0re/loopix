@@ -1,0 +1,249 @@
+/*
+  Localizable.strings
+  FilmBox
+
+  English (Base)
+*/
+
+// MARK: - Navigation & Tabs
+"nav.home" = "/ home";
+"nav.settings" = "/ settings";
+"nav.filters" = "/ filters";
+"tab.library" = "Library";
+"tab.filters" = "Filters";
+"tab.import" = "Import";
+"tab.settings" = "Settings";
+
+// MARK: - Common Actions
+"action.save" = "save";
+"action.cancel" = "cancel";
+"action.delete" = "Delete";
+"action.discard" = "discard";
+"action.ok" = "ok";
+"action.edit" = "edit";
+"action.done" = "Done";
+"action.reset" = "Reset";
+
+// MARK: - Editor
+"editor.keep_edits" = "keep your edits?";
+"editor.save_error" = "save error";
+"editor.unknown_error" = "unknown error";
+
+// MARK: - Home Screen
+"home.no_photos" = "// no_photos";
+"home.tap_to_add" = "tap [button] to add files";
+"home.delete_confirmation" = "Delete %d photo%@?";
+"home.storage_limit" = "// storage_limit_reached";
+"home.storage_full" = "storage is full (%@gb / %@gb)\nfree up space to import new photos";
+"home.photo_access" = "// photo_access_required";
+"home.allow_access" = "allow photo access in settings to import photos";
+"home.open_settings" = "open_settings";
+
+// MARK: - FAB Menu
+"fab.import" = "import";
+"fab.filters" = "filters";
+"fab.settings" = "settings";
+
+// MARK: - Actions Bar
+"action.copy_edits" = "copy edits";
+"action.copied" = "copied!";
+"action.paste_edits" = "paste edits";
+
+// MARK: - Settings
+"settings.storage" = "storage";
+"settings.used" = "used: %@ / %dgb";
+"settings.limit" = "limit";
+"settings.clear_photos" = "clear_photos()";
+"settings.clear_photos_comment" = "// removes imported photos only";
+"settings.clear_cache" = "clear_cache()";
+"settings.clear_cache_comment" = "// removes temporary files";
+"settings.delete_all_photos" = "delete all photos";
+"settings.clear_photos_message" = "this will remove all imported photos.\nfilters, presets, and settings will be preserved.";
+"settings.clear_cache_message" = "this will remove temporary files.\nyour photos and settings will be preserved.";
+
+"settings.export_defaults" = "export_defaults";
+"settings.format" = "format";
+"settings.quality" = "quality";
+"settings.size" = "size";
+
+"settings.performance" = "performance";
+"settings.preview_quality" = "preview_quality";
+"settings.affects_responsiveness" = "// affects editor responsiveness";
+
+"settings.security" = "security";
+"settings.security_mode" = "// security_mode";
+"settings.strip_metadata" = "strip_metadata";
+"settings.strip_metadata_comment" = "// removes identifying info on export";
+"settings.removed_on_export" = "removed on export:";
+"settings.gps_location" = "gps / location";
+"settings.date_time" = "date / time";
+"settings.device_model" = "device model";
+"settings.camera_settings" = "camera settings";
+"settings.software_author" = "software / author";
+"settings.thumbnails_previews" = "thumbnails / previews";
+"settings.protected_tag" = "// only 'Protected by Loopix iOS' tag preserved";
+
+"settings.security_help.title" = "// security_mode";
+"settings.security_help.description" = "when enabled, all exported photos are stripped of identifying metadata.";
+"settings.security_help.location_title" = "location data";
+"settings.security_help.location_desc" = "gps coordinates that reveal where the photo was taken are removed.";
+"settings.security_help.timestamps_title" = "timestamps";
+"settings.security_help.timestamps_desc" = "creation and modification dates are stripped to prevent timeline analysis.";
+"settings.security_help.device_title" = "device info";
+"settings.security_help.device_desc" = "camera model, lens data, and device identifiers are erased.";
+"settings.security_help.software_title" = "software traces";
+"settings.security_help.software_desc" = "editing history and software signatures are cleared.";
+"settings.security_help.thumbnails_title" = "thumbnails";
+"settings.security_help.thumbnails_desc" = "embedded preview images that may contain original data are removed.";
+"settings.security_help.preserved" = "the only metadata preserved is 'Protected by Loopix iOS' as the software tag.";
+"settings.security_help.recommended" = "// recommended for sharing sensitive images";
+
+"settings.backup" = "backup";
+"settings.status" = "status";
+"settings.last_backup" = "last: %@ from %@";
+"settings.last_backup_no_device" = "last: %@";
+"settings.icloud_signin" = "// sign in to iCloud to enable backup";
+"settings.icloud_enable" = "// enable iCloud Drive to enable backup";
+"settings.backup_now" = "backup_now()";
+"settings.syncing" = "syncing...";
+"settings.checking" = "checking...";
+"settings.synced" = "synced";
+"settings.unavailable" = "unavailable";
+"settings.disabled" = "disabled";
+
+// Language
+"settings.language" = "language";
+"settings.language.system" = "System";
+"settings.app_language" = "app_language";
+"settings.restart_required" = "restart_required";
+"settings.restart_message" = "restart app to apply language change";
+"settings.restart_comment" = "// restart required to apply";
+
+"settings.about" = "about";
+"settings.version" = "filmbox v%@ (%@)";
+"settings.tap_to_copy" = "// tap to copy debug info";
+"settings.copied_to_clipboard" = "copied to clipboard";
+
+// MARK: - Time
+"time.just_now" = "just now";
+"time.min_ago" = "%d min ago";
+"time.hr_ago" = "%d hr ago";
+"time.day_ago" = "%d day ago";
+"time.days_ago" = "%d days ago";
+
+// MARK: - Filter Categories
+"category.favourites" = "favourites";
+"category.my" = "my";
+"category.fuji" = "fuji recipes";
+"category.filters" = "filters";
+"category.cool" = "cool";
+"category.warm" = "warm";
+"category.pro" = "pro";
+"category.portrait" = "portrait";
+"category.urban" = "urban";
+"category.film" = "film";
+"category.bw" = "b&w";
+"category.vintage" = "vintage";
+"category.creative" = "creative";
+
+// MARK: - Tool Categories
+"tool_category.all" = "ALL TOOLS";
+"tool_category.essential" = "ESSENTIAL";
+"tool_category.light" = "LIGHT";
+"tool_category.color" = "COLOR";
+"tool_category.effects" = "EFFECTS";
+
+// MARK: - Tools
+"tool.exposure" = "Exposure";
+"tool.contrast" = "Contrast";
+"tool.highlights" = "Highlights";
+"tool.shadows" = "Shadows";
+"tool.whites" = "Whites";
+"tool.blacks" = "Blacks";
+"tool.saturation" = "Saturation";
+"tool.vibrance" = "Vibrance";
+"tool.temperature" = "Temperature";
+"tool.tint" = "Tint";
+"tool.skin_tone" = "Skin Tone";
+"tool.clarity" = "Clarity";
+"tool.sharpen" = "Sharpen";
+"tool.grain" = "Grain";
+"tool.vignette" = "Vignette";
+"tool.fade" = "Fade";
+"tool.bloom" = "Bloom";
+"tool.halation" = "Halation";
+
+// MARK: - Filters Management
+"filters.title" = "// filters";
+"filters.film_presets" = "film presets & luts";
+
+// MARK: - Crop
+"crop.free" = "Free";
+"crop.square" = "Square";
+"crop.original" = "Original";
+
+// MARK: - Export
+"export.format.jpeg" = "JPEG";
+"export.format.png" = "PNG";
+"export.size.original" = "Original";
+"export.size.large" = "Large";
+"export.size.medium" = "Medium";
+"export.size.small" = "Small";
+
+// MARK: - Preview Quality
+"quality.low" = "Low";
+"quality.medium" = "Medium";
+"quality.high" = "High";
+
+// MARK: - Fuji Recipe Form
+"fuji.title" = "/ fuji_recipe";
+"fuji.help_title" = "// fuji_recipe_help";
+"fuji.help_intro" = "fuji x recipes are custom jpeg settings for fujifilm cameras that replicate classic film stocks and unique color grades in-camera.";
+"fuji.help_credit" = "popularized by fujixweekly.com, recipes let photographers achieve film-like results without post-processing.";
+"fuji.help_instruction" = "enter values from your camera or a recipe you found online:";
+
+"fuji.name" = "name";
+"fuji.recipe_name" = "recipe name";
+"fuji.film_simulation" = "film simulation";
+"fuji.grain_effect" = "grain effect";
+"fuji.color_chrome" = "color chrome";
+"fuji.effect" = "effect";
+"fuji.fx_blue" = "fx blue";
+"fuji.wb_shift" = "white balance shift";
+"fuji.red" = "red";
+"fuji.blue" = "blue";
+"fuji.dynamic_range" = "dynamic range";
+"fuji.tone" = "tone";
+"fuji.highlight" = "highlight";
+"fuji.shadow" = "shadow";
+"fuji.color" = "color";
+"fuji.detail" = "detail";
+"fuji.sharpness" = "sharpness";
+"fuji.noise_reduction" = "noise reduction";
+"fuji.clarity" = "clarity";
+
+"fuji.name_required" = "// name_required";
+"fuji.enter_name" = "enter a name for your recipe";
+
+// Fuji help items
+"fuji.help.film_sim" = "film simulation";
+"fuji.help.film_sim_desc" = "base look of the filter. classic chrome, velvia, acros, etc.";
+"fuji.help.wb_shift" = "white balance shift";
+"fuji.help.wb_shift_desc" = "red/blue color shift. range: -9 to +9.";
+"fuji.help.dynamic_range" = "dynamic range";
+"fuji.help.dynamic_range_desc" = "dr100 = standard, dr200/400 = more shadow detail.";
+"fuji.help.highlight_shadow" = "highlight / shadow";
+"fuji.help.highlight_shadow_desc" = "tone curve adjustments. range: -2 to +4.";
+"fuji.help.color" = "color";
+"fuji.help.color_desc" = "saturation level. range: -4 to +4.";
+"fuji.help.grain" = "grain effect";
+"fuji.help.grain_desc" = "adds film grain. weak/strong + small/large.";
+"fuji.help.color_chrome" = "color chrome";
+"fuji.help.color_chrome_desc" = "deepens saturated colors. off/weak/strong.";
+
+// Grain options
+"fuji.grain.off" = "Off";
+"fuji.grain.weak_small" = "Weak / Small";
+"fuji.grain.weak_large" = "Weak / Large";
+"fuji.grain.strong_small" = "Strong / Small";
+"fuji.grain.strong_large" = "Strong / Large";

@@ -1,0 +1,249 @@
+/*
+  Localizable.strings
+  FilmBox
+
+  Chinese Simplified (简体中文)
+*/
+
+// MARK: - Navigation & Tabs
+"nav.home" = "/ 首页";
+"nav.settings" = "/ 设置";
+"nav.filters" = "/ 滤镜";
+"tab.library" = "图库";
+"tab.filters" = "滤镜";
+"tab.import" = "导入";
+"tab.settings" = "设置";
+
+// MARK: - Common Actions
+"action.save" = "保存";
+"action.cancel" = "取消";
+"action.delete" = "删除";
+"action.discard" = "放弃";
+"action.ok" = "好";
+"action.edit" = "编辑";
+"action.done" = "完成";
+"action.reset" = "重置";
+
+// MARK: - Editor
+"editor.keep_edits" = "保留编辑内容？";
+"editor.save_error" = "保存错误";
+"editor.unknown_error" = "未知错误";
+
+// MARK: - Home Screen
+"home.no_photos" = "// 暂无照片";
+"home.tap_to_add" = "点击 [按钮] 添加文件";
+"home.delete_confirmation" = "删除 %d 张照片？";
+"home.storage_limit" = "// 存储空间已满";
+"home.storage_full" = "存储已满 (%@gb / %@gb)\n释放空间以导入新照片";
+"home.photo_access" = "// 需要相册权限";
+"home.allow_access" = "请在设置中允许访问照片以导入";
+"home.open_settings" = "打开设置";
+
+// MARK: - FAB Menu
+"fab.import" = "导入";
+"fab.filters" = "滤镜";
+"fab.settings" = "设置";
+
+// MARK: - Actions Bar
+"action.copy_edits" = "复制编辑";
+"action.copied" = "已复制！";
+"action.paste_edits" = "粘贴编辑";
+
+// MARK: - Settings
+"settings.storage" = "存储";
+"settings.used" = "已用: %@ / %dgb";
+"settings.limit" = "限制";
+"settings.clear_photos" = "清除照片()";
+"settings.clear_photos_comment" = "// 仅删除导入的照片";
+"settings.clear_cache" = "清除缓存()";
+"settings.clear_cache_comment" = "// 删除临时文件";
+"settings.delete_all_photos" = "删除所有照片";
+"settings.clear_photos_message" = "这将删除所有导入的照片。\n滤镜、预设和设置将被保留。";
+"settings.clear_cache_message" = "这将删除临时文件。\n您的照片和设置将被保留。";
+
+"settings.export_defaults" = "导出默认";
+"settings.format" = "格式";
+"settings.quality" = "质量";
+"settings.size" = "尺寸";
+
+"settings.performance" = "性能";
+"settings.preview_quality" = "预览质量";
+"settings.affects_responsiveness" = "// 影响编辑器响应速度";
+
+"settings.security" = "安全";
+"settings.security_mode" = "// 安全模式";
+"settings.strip_metadata" = "清除元数据";
+"settings.strip_metadata_comment" = "// 导出时移除识别信息";
+"settings.removed_on_export" = "导出时移除:";
+"settings.gps_location" = "GPS / 位置";
+"settings.date_time" = "日期 / 时间";
+"settings.device_model" = "设备型号";
+"settings.camera_settings" = "相机设置";
+"settings.software_author" = "软件 / 作者";
+"settings.thumbnails_previews" = "缩略图 / 预览";
+"settings.protected_tag" = "// 仅保留 'Protected by Loopix iOS' 标签";
+
+"settings.security_help.title" = "// 安全模式";
+"settings.security_help.description" = "启用后，导出的照片将清除所有识别元数据。";
+"settings.security_help.location_title" = "位置数据";
+"settings.security_help.location_desc" = "显示拍摄地点的GPS坐标将被移除。";
+"settings.security_help.timestamps_title" = "时间戳";
+"settings.security_help.timestamps_desc" = "创建和修改日期将被清除以防止时间线分析。";
+"settings.security_help.device_title" = "设备信息";
+"settings.security_help.device_desc" = "相机型号、镜头数据和设备标识符将被清除。";
+"settings.security_help.software_title" = "软件痕迹";
+"settings.security_help.software_desc" = "编辑历史和软件签名将被清除。";
+"settings.security_help.thumbnails_title" = "缩略图";
+"settings.security_help.thumbnails_desc" = "可能包含原始数据的嵌入式预览图将被移除。";
+"settings.security_help.preserved" = "唯一保留的元数据是 'Protected by Loopix iOS' 软件标签。";
+"settings.security_help.recommended" = "// 建议在分享敏感图片时使用";
+
+"settings.backup" = "备份";
+"settings.status" = "状态";
+"settings.last_backup" = "上次: %@ 来自 %@";
+"settings.last_backup_no_device" = "上次: %@";
+"settings.icloud_signin" = "// 登录 iCloud 以启用备份";
+"settings.icloud_enable" = "// 启用 iCloud Drive 以启用备份";
+"settings.backup_now" = "立即备份()";
+"settings.syncing" = "同步中...";
+"settings.checking" = "检查中...";
+"settings.synced" = "已同步";
+"settings.unavailable" = "不可用";
+"settings.disabled" = "已禁用";
+
+// Language
+"settings.language" = "语言";
+"settings.language.system" = "系统";
+"settings.app_language" = "应用语言";
+"settings.restart_required" = "需要重启";
+"settings.restart_message" = "重启应用以应用语言更改";
+"settings.restart_comment" = "// 需要重启才能应用";
+
+"settings.about" = "关于";
+"settings.version" = "filmbox v%@ (%@)";
+"settings.tap_to_copy" = "// 点击复制调试信息";
+"settings.copied_to_clipboard" = "已复制到剪贴板";
+
+// MARK: - Time
+"time.just_now" = "刚刚";
+"time.min_ago" = "%d 分钟前";
+"time.hr_ago" = "%d 小时前";
+"time.day_ago" = "%d 天前";
+"time.days_ago" = "%d 天前";
+
+// MARK: - Filter Categories
+"category.favourites" = "收藏";
+"category.my" = "我的";
+"category.fuji" = "富士配方";
+"category.filters" = "滤镜";
+"category.cool" = "冷色";
+"category.warm" = "暖色";
+"category.pro" = "专业";
+"category.portrait" = "人像";
+"category.urban" = "城市";
+"category.film" = "胶片";
+"category.bw" = "黑白";
+"category.vintage" = "复古";
+"category.creative" = "创意";
+
+// MARK: - Tool Categories
+"tool_category.all" = "全部工具";
+"tool_category.essential" = "基础";
+"tool_category.light" = "光线";
+"tool_category.color" = "色彩";
+"tool_category.effects" = "效果";
+
+// MARK: - Tools
+"tool.exposure" = "曝光";
+"tool.contrast" = "对比度";
+"tool.highlights" = "高光";
+"tool.shadows" = "阴影";
+"tool.whites" = "白色";
+"tool.blacks" = "黑色";
+"tool.saturation" = "饱和度";
+"tool.vibrance" = "自然饱和度";
+"tool.temperature" = "色温";
+"tool.tint" = "色调";
+"tool.skin_tone" = "肤色";
+"tool.clarity" = "清晰度";
+"tool.sharpen" = "锐化";
+"tool.grain" = "颗粒";
+"tool.vignette" = "暗角";
+"tool.fade" = "褪色";
+"tool.bloom" = "光晕";
+"tool.halation" = "光晕溢出";
+
+// MARK: - Filters Management
+"filters.title" = "// 滤镜";
+"filters.film_presets" = "胶片预设和LUT";
+
+// MARK: - Crop
+"crop.free" = "自由";
+"crop.square" = "正方形";
+"crop.original" = "原始";
+
+// MARK: - Export
+"export.format.jpeg" = "JPEG";
+"export.format.png" = "PNG";
+"export.size.original" = "原始";
+"export.size.large" = "大";
+"export.size.medium" = "中";
+"export.size.small" = "小";
+
+// MARK: - Preview Quality
+"quality.low" = "低";
+"quality.medium" = "中";
+"quality.high" = "高";
+
+// MARK: - Fuji Recipe Form
+"fuji.title" = "/ 富士配方";
+"fuji.help_title" = "// 富士配方帮助";
+"fuji.help_intro" = "富士X配方是富士相机的自定义JPEG设置，可在相机内复制经典胶片效果和独特的色彩风格。";
+"fuji.help_credit" = "由fujixweekly.com推广，配方让摄影师无需后期处理即可获得胶片般的效果。";
+"fuji.help_instruction" = "输入您相机或网上找到的配方数值:";
+
+"fuji.name" = "名称";
+"fuji.recipe_name" = "配方名称";
+"fuji.film_simulation" = "胶片模拟";
+"fuji.grain_effect" = "颗粒效果";
+"fuji.color_chrome" = "彩色铬效果";
+"fuji.effect" = "效果";
+"fuji.fx_blue" = "FX蓝";
+"fuji.wb_shift" = "白平衡偏移";
+"fuji.red" = "红";
+"fuji.blue" = "蓝";
+"fuji.dynamic_range" = "动态范围";
+"fuji.tone" = "色调";
+"fuji.highlight" = "高光";
+"fuji.shadow" = "阴影";
+"fuji.color" = "色彩";
+"fuji.detail" = "细节";
+"fuji.sharpness" = "锐度";
+"fuji.noise_reduction" = "降噪";
+"fuji.clarity" = "清晰度";
+
+"fuji.name_required" = "// 需要名称";
+"fuji.enter_name" = "请输入配方名称";
+
+// Fuji help items
+"fuji.help.film_sim" = "胶片模拟";
+"fuji.help.film_sim_desc" = "滤镜的基础外观。经典铬、Velvia、Acros等。";
+"fuji.help.wb_shift" = "白平衡偏移";
+"fuji.help.wb_shift_desc" = "红/蓝色偏移。范围: -9 到 +9。";
+"fuji.help.dynamic_range" = "动态范围";
+"fuji.help.dynamic_range_desc" = "dr100 = 标准，dr200/400 = 更多阴影细节。";
+"fuji.help.highlight_shadow" = "高光 / 阴影";
+"fuji.help.highlight_shadow_desc" = "色调曲线调整。范围: -2 到 +4。";
+"fuji.help.color" = "色彩";
+"fuji.help.color_desc" = "饱和度级别。范围: -4 到 +4。";
+"fuji.help.grain" = "颗粒效果";
+"fuji.help.grain_desc" = "添加胶片颗粒。弱/强 + 小/大。";
+"fuji.help.color_chrome" = "彩色铬效果";
+"fuji.help.color_chrome_desc" = "加深饱和色彩。关/弱/强。";
+
+// Grain options
+"fuji.grain.off" = "关";
+"fuji.grain.weak_small" = "弱 / 小";
+"fuji.grain.weak_large" = "弱 / 大";
+"fuji.grain.strong_small" = "强 / 小";
+"fuji.grain.strong_large" = "强 / 大";

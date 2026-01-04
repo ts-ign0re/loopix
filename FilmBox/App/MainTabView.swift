@@ -21,10 +21,10 @@ enum AppTab: Int, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .library: return "Library"
-        case .filters: return "Filters"
-        case .importTab: return "Import"
-        case .settings: return "Settings"
+        case .library: return L10n.Tab.library
+        case .filters: return L10n.Tab.filters
+        case .importTab: return L10n.Tab.import
+        case .settings: return L10n.Tab.settings
         }
     }
 
@@ -103,7 +103,7 @@ struct LibraryContentView: View {
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .principal) {
-                    Text("/ home")
+                    Text(L10n.Nav.home)
                         .font(.system(size: 17, weight: .semibold, design: .monospaced))
                         .foregroundStyle(.white)
                 }
@@ -111,17 +111,17 @@ struct LibraryContentView: View {
         }
         .preferredColorScheme(.dark)
         .confirmationDialog(
-            "Delete \(manager.selectedCount) photo\(manager.selectedCount == 1 ? "" : "s")?",
+            L10n.Home.deleteConfirmation(count: manager.selectedCount),
             isPresented: $showDeleteConfirmation,
             titleVisibility: .visible
         ) {
-            Button("Delete", role: .destructive) {
+            Button(L10n.Action.delete, role: .destructive) {
                 withAnimation {
                     manager.removeSelectedPhotos()
                     isFabExpanded = false
                 }
             }
-            Button("Cancel", role: .cancel) {}
+            Button(L10n.Action.cancel, role: .cancel) {}
         }
         .fullScreenCover(item: $photoToEdit) { photo in
             if let ciImage = manager.loadCIImage(for: photo) {
@@ -139,27 +139,25 @@ struct LibraryContentView: View {
         .sheet(isPresented: $showFilters) {
             FiltersManagementView()
         }
-        .alert("// storage_limit_reached", isPresented: $showStorageLimitAlert) {
-            Button("cancel", role: .cancel) {}
-            Button("open_settings") {
+        .alert(L10n.Home.storageLimit, isPresented: $showStorageLimitAlert) {
+            Button(L10n.Action.cancel, role: .cancel) {}
+            Button(L10n.Home.openSettings) {
                 showSettings = true
             }
         } message: {
             let usedGB = Double(manager.calculateStorageUsed()) / 1024 / 1024 / 1024
             let limitGB = AppSettings.shared.storageLimitGB
-            Text(
-                "storage is full (\(String(format: "%.1f", usedGB))gb / \(String(format: "%.0f", limitGB))gb)\nfree up space to import new photos"
-            )
+            Text(L10n.Home.storageFull(used: String(format: "%.1f", usedGB), limit: String(format: "%.0f", limitGB)))
         }
-        .alert("// photo_access_required", isPresented: $showPermissionDeniedAlert) {
-            Button("cancel", role: .cancel) {}
-            Button("open_settings") {
+        .alert(L10n.Home.photoAccess, isPresented: $showPermissionDeniedAlert) {
+            Button(L10n.Action.cancel, role: .cancel) {}
+            Button(L10n.Home.openSettings) {
                 if let url = URL(string: UIApplication.openSettingsURLString) {
                     UIApplication.shared.open(url)
                 }
             }
         } message: {
-            Text("allow photo access in settings to import photos")
+            Text(L10n.Home.allowAccess)
         }
     }
 
@@ -200,11 +198,11 @@ struct LibraryContentView: View {
                 .foregroundStyle(.white.opacity(0.2))
 
             VStack(spacing: 8) {
-                Text("// no_photos")
+                Text(L10n.Home.noPhotos)
                     .font(.system(size: 16, weight: .medium, design: .monospaced))
                     .foregroundStyle(.white.opacity(0.6))
 
-                Text("tap [button] to add files")
+                Text(L10n.Home.tapToAdd)
                     .font(.system(size: 12, weight: .regular, design: .monospaced))
                     .foregroundStyle(.white.opacity(0.4))
             }
@@ -285,7 +283,7 @@ struct LibraryContentView: View {
                     VStack(alignment: .trailing, spacing: 8) {
                         // Expanded menu items - navigation only
                         if isFabExpanded {
-                            fabMenuItem(title: "import", icon: "plus") {
+                            fabMenuItem(title: L10n.Fab.import, icon: "plus") {
                                 isFabExpanded = false
                                 // Check storage limit before importing
                                 if manager.isStorageLimitExceeded() {
@@ -299,13 +297,13 @@ struct LibraryContentView: View {
                             }
                             .transition(.move(edge: .bottom).combined(with: .opacity))
 
-                            fabMenuItem(title: "filters", icon: "camera.filters") {
+                            fabMenuItem(title: L10n.Fab.filters, icon: "camera.filters") {
                                 isFabExpanded = false
                                 showFilters = true
                             }
                             .transition(.move(edge: .bottom).combined(with: .opacity))
 
-                            fabMenuItem(title: "settings", icon: "gearshape") {
+                            fabMenuItem(title: L10n.Fab.settings, icon: "gearshape") {
                                 isFabExpanded = false
                                 showSettings = true
                             }
@@ -360,7 +358,7 @@ struct LibraryContentView: View {
                         photoToEdit = photo
                     }
                 } label: {
-                    Text("edit")
+                    Text(L10n.Action.edit)
                         .font(.system(size: 14, weight: .semibold, design: .monospaced))
                         .foregroundStyle(.black)
                         .padding(.horizontal, 12)
@@ -467,7 +465,7 @@ struct LibraryContentView: View {
             // Copy Edits - only for single selection with edits
             if isSingleSelection && manager.selectedHasEdits() {
                 menuItem(
-                    title: showCopiedFeedback ? "copied!" : "copy edits",
+                    title: showCopiedFeedback ? L10n.Action.copied : L10n.Action.copyEdits,
                     icon: showCopiedFeedback ? "checkmark" : "doc.on.doc"
                 ) {
                     _ = manager.copyEditsFromSelected()
@@ -490,7 +488,7 @@ struct LibraryContentView: View {
                         .background(Color.white.opacity(0.15))
                 }
 
-                menuItem(title: "paste edits", icon: "doc.on.clipboard") {
+                menuItem(title: L10n.Action.pasteEdits, icon: "doc.on.clipboard") {
                     withAnimation(.spring(response: 0.2, dampingFraction: 0.8)) {
                         showMoreMenu = false
                     }

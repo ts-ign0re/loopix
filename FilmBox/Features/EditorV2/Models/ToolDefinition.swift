@@ -12,6 +12,31 @@ struct ToolDefinition: Identifiable, Hashable, Sendable {
     let defaultValue: Float
     let isNew: Bool
 
+    /// Localized name for display in UI
+    var localizedName: String {
+        switch id {
+        case "exposure": return L10n.Tool.exposure
+        case "contrast": return L10n.Tool.contrast
+        case "highlights": return L10n.Tool.highlights
+        case "shadows": return L10n.Tool.shadows
+        case "whites": return L10n.Tool.whites
+        case "blacks": return L10n.Tool.blacks
+        case "saturation": return L10n.Tool.saturation
+        case "vibrance": return L10n.Tool.vibrance
+        case "temperature": return L10n.Tool.temperature
+        case "tint": return L10n.Tool.tint
+        case "skinTone": return L10n.Tool.skinTone
+        case "clarity": return L10n.Tool.clarity
+        case "sharpen": return L10n.Tool.sharpen
+        case "grain": return L10n.Tool.grain
+        case "vignette": return L10n.Tool.vignette
+        case "fade": return L10n.Tool.fade
+        case "bloom": return L10n.Tool.bloom
+        case "halation": return L10n.Tool.halation
+        default: return name
+        }
+    }
+
     /// Tool categories matching VSCO style
     enum ToolCategory: String, CaseIterable, Sendable {
         case all = "ALL TOOLS"
@@ -19,6 +44,16 @@ struct ToolDefinition: Identifiable, Hashable, Sendable {
         case light = "LIGHT"
         case color = "COLOR"
         case effects = "EFFECTS"
+
+        var displayName: String {
+            switch self {
+            case .all: return L10n.ToolCategory.all
+            case .essential: return L10n.ToolCategory.essential
+            case .light: return L10n.ToolCategory.light
+            case .color: return L10n.ToolCategory.color
+            case .effects: return L10n.ToolCategory.effects
+            }
+        }
     }
 
     /// Maps to FilterParameters keyPaths

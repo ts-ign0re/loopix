@@ -102,22 +102,22 @@ struct EditorV2View: View {
         }
         .padding(.horizontal, 8)
         .frame(height: 44)
-        .alert("keep your edits?", isPresented: $showDiscardAlert) {
-            Button("save", role: .cancel) {
+        .alert(L10n.Editor.keepEdits, isPresented: $showDiscardAlert) {
+            Button(L10n.Action.save, role: .cancel) {
                 Task {
                     await saveChanges()
                 }
             }
-            Button("discard", role: .destructive) {
+            Button(L10n.Action.discard, role: .destructive) {
                 let hasChanges = viewModel.editor.currentParameters.hasAdjustments || viewModel.editor.selectedPreset != nil
                 Analytics.shared.trackEditorCancel(hadChanges: hasChanges)
                 dismiss()
             }
         }
-        .alert("save error", isPresented: $showSaveError) {
-            Button("ok", role: .cancel) {}
+        .alert(L10n.Editor.saveError, isPresented: $showSaveError) {
+            Button(L10n.Action.ok, role: .cancel) {}
         } message: {
-            Text(saveError?.localizedDescription ?? "unknown error")
+            Text(saveError?.localizedDescription ?? L10n.Editor.unknownError)
         }
     }
 

@@ -19,6 +19,7 @@ struct SettingsView: View {
     @State private var showSecurityHelp = false
     @State private var backupInfo: BackupInfo?
     @State private var isBackingUp = false
+    @State private var showRestartAlert = false
     var body: some View {
         NavigationStack {
             ScrollView(showsIndicators: false) {
@@ -37,6 +38,12 @@ struct SettingsView: View {
 
                     // Performance Section
                     performanceSection
+
+                    Divider()
+                        .background(Color.white.opacity(0.1))
+
+                    // Language Section
+                    languageSection
 
                     Divider()
                         .background(Color.white.opacity(0.1))
@@ -242,7 +249,7 @@ struct SettingsView: View {
 
     private var storageSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            sectionHeader("storage")
+            sectionHeader(L10n.Settings.storage)
 
             // Usage bar
             VStack(alignment: .leading, spacing: 8) {
@@ -250,7 +257,7 @@ struct SettingsView: View {
                 let limitGB = settings.storageLimitGB
                 let percentage = min(usedGB / limitGB, 1.0)
 
-                Text("used: \(formatBytes(storageUsed)) / \(Int(limitGB))gb")
+                Text(L10n.Settings.used(size: formatBytes(storageUsed), limit: Int(limitGB)))
                     .font(.system(size: 13, weight: .medium, design: .monospaced))
                     .foregroundStyle(.white.opacity(0.8))
 
@@ -273,7 +280,7 @@ struct SettingsView: View {
 
             // Limit slider
             VStack(alignment: .leading, spacing: 6) {
-                Text("limit")
+                Text(L10n.Settings.limit)
                     .font(.system(size: 12, weight: .medium, design: .monospaced))
                     .foregroundStyle(.white.opacity(0.6))
                     .padding(.top, 6)
@@ -305,16 +312,16 @@ struct SettingsView: View {
             // Clear buttons
             VStack(spacing: 12) {
                 clearButton(
-                    title: "clear_photos()",
-                    comment: "// removes imported photos only",
+                    title: L10n.Settings.clearPhotos,
+                    comment: L10n.Settings.clearPhotosComment,
                     size: formatBytes(storageUsed)
                 ) {
                     showClearPhotosConfirmation = true
                 }
 
                 clearButton(
-                    title: "clear_cache()",
-                    comment: "// removes temporary files",
+                    title: L10n.Settings.clearCache,
+                    comment: L10n.Settings.clearCacheComment,
                     size: formatBytes(cacheSize)
                 ) {
                     showClearCacheConfirmation = true
@@ -327,11 +334,11 @@ struct SettingsView: View {
 
     private var exportSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            sectionHeader("export_defaults")
+            sectionHeader(L10n.Settings.exportDefaults)
 
             // Format picker
             VStack(alignment: .leading, spacing: 8) {
-                Text("format")
+                Text(L10n.Settings.format)
                     .font(.system(size: 12, weight: .medium, design: .monospaced))
                     .foregroundStyle(.white.opacity(0.6))
 
@@ -350,7 +357,7 @@ struct SettingsView: View {
 
             // Quality slider
             VStack(alignment: .leading, spacing: 8) {
-                Text("quality")
+                Text(L10n.Settings.quality)
                     .font(.system(size: 12, weight: .medium, design: .monospaced))
                     .foregroundStyle(.white.opacity(0.6))
 
@@ -375,7 +382,7 @@ struct SettingsView: View {
 
             // Size picker
             VStack(alignment: .leading, spacing: 8) {
-                Text("size")
+                Text(L10n.Settings.size)
                     .font(.system(size: 12, weight: .medium, design: .monospaced))
                     .foregroundStyle(.white.opacity(0.6))
 
@@ -398,10 +405,10 @@ struct SettingsView: View {
 
     private var performanceSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            sectionHeader("performance")
+            sectionHeader(L10n.Settings.performance)
 
             VStack(alignment: .leading, spacing: 8) {
-                Text("preview_quality")
+                Text(L10n.Settings.previewQuality)
                     .font(.system(size: 12, weight: .medium, design: .monospaced))
                     .foregroundStyle(.white.opacity(0.6))
 
@@ -417,11 +424,71 @@ struct SettingsView: View {
                     }
                 }
 
-                Text("// affects editor responsiveness")
+                Text(L10n.Settings.affectsResponsiveness)
                     .font(.system(size: 11, design: .monospaced))
                     .foregroundStyle(.white.opacity(0.4))
             }
         }
+    }
+
+    // MARK: - Language Section
+
+    private var languageSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            sectionHeader("settings.language".localized)
+
+            VStack(alignment: .leading, spacing: 8) {
+                VStack(spacing: 8) {
+                    ForEach(AppLanguage.allCases, id: \.self) { language in
+                        languageButton(language)
+                    }
+                }
+
+                Text("settings.restart_comment".localized)
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundStyle(.white.opacity(0.4))
+            }
+        }
+        .alert("settings.restart_required".localized, isPresented: $showRestartAlert) {
+            Button(L10n.Action.ok, role: .cancel) {}
+        } message: {
+            Text("settings.restart_message".localized)
+        }
+    }
+
+    private func languageButton(_ language: AppLanguage) -> some View {
+        Button {
+            let oldLanguage = settings.appLanguage
+            settings.appLanguage = language
+            Analytics.shared.trackSettingChange(setting: "app_language", value: language.rawValue)
+
+            if oldLanguage != language {
+                showRestartAlert = true
+            }
+        } label: {
+            HStack {
+                Text(language.displayName)
+                    .font(.system(size: 13, weight: .medium, design: .monospaced))
+                    .foregroundStyle(settings.appLanguage == language ? .black : .white)
+
+                Spacer()
+
+                if settings.appLanguage == language {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(.black)
+                }
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .background(settings.appLanguage == language ? Color.yellow : Color(white: 0.15))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color.white.opacity(settings.appLanguage == language ? 0 : 0.1), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Security Section
@@ -429,7 +496,7 @@ struct SettingsView: View {
     private var securitySection: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
-                sectionHeader("security")
+                sectionHeader(L10n.Settings.security)
                 Spacer()
                 Button {
                     showSecurityHelp = true
@@ -449,11 +516,11 @@ struct SettingsView: View {
                     }
                 )) {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("strip_metadata")
+                        Text(L10n.Settings.stripMetadata)
                             .font(.system(size: 13, weight: .medium, design: .monospaced))
                             .foregroundStyle(.white)
 
-                        Text("// removes identifying info on export")
+                        Text(L10n.Settings.stripMetadataComment)
                             .font(.system(size: 11, design: .monospaced))
                             .foregroundStyle(.white.opacity(0.4))
                     }
@@ -462,20 +529,20 @@ struct SettingsView: View {
 
                 if settings.securityMode {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("removed on export:")
+                        Text(L10n.Settings.removedOnExport)
                             .font(.system(size: 11, weight: .medium, design: .monospaced))
                             .foregroundStyle(.white.opacity(0.5))
 
                         VStack(alignment: .leading, spacing: 3) {
-                            metadataItem("gps / location")
-                            metadataItem("date / time")
-                            metadataItem("device model")
-                            metadataItem("camera settings")
-                            metadataItem("software / author")
-                            metadataItem("thumbnails / previews")
+                            metadataItem(L10n.Settings.gpsLocation)
+                            metadataItem(L10n.Settings.dateTime)
+                            metadataItem(L10n.Settings.deviceModel)
+                            metadataItem(L10n.Settings.cameraSettings)
+                            metadataItem(L10n.Settings.softwareAuthor)
+                            metadataItem(L10n.Settings.thumbnailsPreviews)
                         }
 
-                        Text("// only 'Protected by Loopix iOS' tag preserved")
+                        Text(L10n.Settings.protectedTag)
                             .font(.system(size: 11, design: .monospaced))
                             .foregroundStyle(.yellow.opacity(0.6))
                             .padding(.top, 4)
@@ -509,12 +576,12 @@ struct SettingsView: View {
 
     private var backupSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            sectionHeader("backup")
+            sectionHeader(L10n.Settings.backup)
 
             VStack(alignment: .leading, spacing: 12) {
                 // Status row
                 HStack {
-                    Text("status")
+                    Text(L10n.Settings.status)
                         .font(.system(size: 12, weight: .medium, design: .monospaced))
                         .foregroundStyle(.white.opacity(0.6))
                     Spacer()
@@ -530,18 +597,25 @@ struct SettingsView: View {
 
                 // Last backup info
                 if let info = backupInfo, let lastDate = info.lastBackupDate {
-                    Text("last: \(formatRelativeTime(lastDate))\(info.lastDeviceName.map { " from \($0)" } ?? "")")
-                        .font(.system(size: 11, design: .monospaced))
-                        .foregroundStyle(.white.opacity(0.4))
+                    let timeText = formatRelativeTime(lastDate)
+                    if let device = info.lastDeviceName {
+                        Text(L10n.Settings.lastBackup(time: timeText, device: device))
+                            .font(.system(size: 11, design: .monospaced))
+                            .foregroundStyle(.white.opacity(0.4))
+                    } else {
+                        Text(L10n.Settings.lastBackupNoDevice(time: timeText))
+                            .font(.system(size: 11, design: .monospaced))
+                            .foregroundStyle(.white.opacity(0.4))
+                    }
                 }
 
                 // iCloud unavailable message
                 if backupInfo?.status == .noAccount {
-                    Text("// sign in to iCloud to enable backup")
+                    Text(L10n.Settings.icloudSignin)
                         .font(.system(size: 11, design: .monospaced))
                         .foregroundStyle(.white.opacity(0.4))
                 } else if backupInfo?.status == .disabled {
-                    Text("// enable iCloud Drive to enable backup")
+                    Text(L10n.Settings.icloudEnable)
                         .font(.system(size: 11, design: .monospaced))
                         .foregroundStyle(.white.opacity(0.4))
                 }
@@ -558,7 +632,7 @@ struct SettingsView: View {
                                 .progressViewStyle(CircularProgressViewStyle(tint: .yellow))
                                 .scaleEffect(0.8)
                         }
-                        Text(isBackingUp ? "syncing..." : "backup_now()")
+                        Text(isBackingUp ? L10n.Settings.syncing : L10n.Settings.backupNow)
                             .font(.system(size: 13, weight: .medium, design: .monospaced))
                             .foregroundStyle(.yellow)
                     }
@@ -607,28 +681,28 @@ struct SettingsView: View {
     }
 
     private var backupStatusText: String {
-        guard let info = backupInfo else { return "checking..." }
+        guard let info = backupInfo else { return L10n.Settings.checking }
         switch info.status {
-        case .available: return "synced"
-        case .syncing: return "syncing..."
-        case .noAccount: return "unavailable"
-        case .disabled: return "disabled"
+        case .available: return L10n.Settings.synced
+        case .syncing: return L10n.Settings.syncing
+        case .noAccount: return L10n.Settings.unavailable
+        case .disabled: return L10n.Settings.disabled
         }
     }
 
     private func formatRelativeTime(_ date: Date) -> String {
         let interval = Date().timeIntervalSince(date)
         if interval < 60 {
-            return "just now"
+            return L10n.Time.justNow
         } else if interval < 3600 {
             let minutes = Int(interval / 60)
-            return "\(minutes) min ago"
+            return L10n.Time.minAgo(minutes)
         } else if interval < 86400 {
             let hours = Int(interval / 3600)
-            return "\(hours) hr ago"
+            return L10n.Time.hrAgo(hours)
         } else {
             let days = Int(interval / 86400)
-            return "\(days) day\(days == 1 ? "" : "s") ago"
+            return L10n.Time.dayAgo(days)
         }
     }
 
@@ -650,7 +724,7 @@ struct SettingsView: View {
 
     private var aboutSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            sectionHeader("about")
+            sectionHeader(L10n.Settings.about)
 
             Button {
                 copyDebugInfo()
@@ -659,11 +733,11 @@ struct SettingsView: View {
                     let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
                     let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?"
 
-                    Text("filmbox v\(version) (\(build))")
+                    Text(L10n.Settings.version(ver: version, build: build))
                         .font(.system(size: 14, weight: .medium, design: .monospaced))
                         .foregroundStyle(.white)
 
-                    Text("// tap to copy debug info")
+                    Text(L10n.Settings.tapToCopy)
                         .font(.system(size: 11, design: .monospaced))
                         .foregroundStyle(.white.opacity(0.4))
                 }
@@ -738,7 +812,7 @@ struct SettingsView: View {
     private var copiedToast: some View {
         VStack {
             Spacer()
-            Text("copied to clipboard")
+            Text(L10n.Settings.copiedToClipboard)
                 .font(.system(size: 13, weight: .medium, design: .monospaced))
                 .foregroundStyle(.black)
                 .padding(.horizontal, 16)

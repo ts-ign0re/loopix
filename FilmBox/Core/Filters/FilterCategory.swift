@@ -18,8 +18,19 @@ enum FilterCategory: String, Codable, CaseIterable, Sendable {
 
     var displayName: String {
         switch self {
-        case .fujiRecipes: return "fuji recipes"
-        default: return rawValue
+        case .favorites: return L10n.Category.favourites
+        case .custom: return L10n.Category.my
+        case .fujiRecipes: return L10n.Category.fuji
+        case .all: return L10n.Category.filters
+        case .cool: return L10n.Category.cool
+        case .warm: return L10n.Category.warm
+        case .pro: return L10n.Category.pro
+        case .portrait: return L10n.Category.portrait
+        case .urban: return L10n.Category.urban
+        case .film: return L10n.Category.film
+        case .bw: return L10n.Category.bw
+        case .vintage: return L10n.Category.vintage
+        case .creative: return L10n.Category.creative
         }
     }
 

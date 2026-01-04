@@ -1,0 +1,249 @@
+/*
+  Localizable.strings
+  FilmBox
+
+  Japanese (日本語)
+*/
+
+// MARK: - Navigation & Tabs
+"nav.home" = "/ ホーム";
+"nav.settings" = "/ 設定";
+"nav.filters" = "/ フィルター";
+"tab.library" = "ライブラリ";
+"tab.filters" = "フィルター";
+"tab.import" = "読み込み";
+"tab.settings" = "設定";
+
+// MARK: - Common Actions
+"action.save" = "保存";
+"action.cancel" = "キャンセル";
+"action.delete" = "削除";
+"action.discard" = "破棄";
+"action.ok" = "OK";
+"action.edit" = "編集";
+"action.done" = "完了";
+"action.reset" = "リセット";
+
+// MARK: - Editor
+"editor.keep_edits" = "編集内容を保存しますか？";
+"editor.save_error" = "保存エラー";
+"editor.unknown_error" = "不明なエラー";
+
+// MARK: - Home Screen
+"home.no_photos" = "// 写真なし";
+"home.tap_to_add" = "[ボタン] をタップして追加";
+"home.delete_confirmation" = "%d枚の写真を削除しますか？";
+"home.storage_limit" = "// ストレージ上限";
+"home.storage_full" = "ストレージがいっぱいです (%@gb / %@gb)\n新しい写真を読み込むには空き容量を確保してください";
+"home.photo_access" = "// 写真へのアクセスが必要";
+"home.allow_access" = "写真を読み込むには設定で写真へのアクセスを許可してください";
+"home.open_settings" = "設定を開く";
+
+// MARK: - FAB Menu
+"fab.import" = "読み込み";
+"fab.filters" = "フィルター";
+"fab.settings" = "設定";
+
+// MARK: - Actions Bar
+"action.copy_edits" = "編集をコピー";
+"action.copied" = "コピー完了！";
+"action.paste_edits" = "編集をペースト";
+
+// MARK: - Settings
+"settings.storage" = "ストレージ";
+"settings.used" = "使用中: %@ / %dgb";
+"settings.limit" = "上限";
+"settings.clear_photos" = "写真を消去()";
+"settings.clear_photos_comment" = "// 読み込んだ写真のみを削除";
+"settings.clear_cache" = "キャッシュを消去()";
+"settings.clear_cache_comment" = "// 一時ファイルを削除";
+"settings.delete_all_photos" = "すべての写真を削除";
+"settings.clear_photos_message" = "読み込んだすべての写真が削除されます。\nフィルター、プリセット、設定は保持されます。";
+"settings.clear_cache_message" = "一時ファイルが削除されます。\n写真と設定は保持されます。";
+
+"settings.export_defaults" = "書き出し設定";
+"settings.format" = "形式";
+"settings.quality" = "品質";
+"settings.size" = "サイズ";
+
+"settings.performance" = "パフォーマンス";
+"settings.preview_quality" = "プレビュー品質";
+"settings.affects_responsiveness" = "// エディターの応答性に影響します";
+
+"settings.security" = "セキュリティ";
+"settings.security_mode" = "// セキュリティモード";
+"settings.strip_metadata" = "メタデータを削除";
+"settings.strip_metadata_comment" = "// 書き出し時に識別情報を削除";
+"settings.removed_on_export" = "書き出し時に削除:";
+"settings.gps_location" = "GPS / 位置情報";
+"settings.date_time" = "日付 / 時刻";
+"settings.device_model" = "デバイスモデル";
+"settings.camera_settings" = "カメラ設定";
+"settings.software_author" = "ソフトウェア / 作成者";
+"settings.thumbnails_previews" = "サムネイル / プレビュー";
+"settings.protected_tag" = "// 'Protected by Loopix iOS' タグのみ保持";
+
+"settings.security_help.title" = "// セキュリティモード";
+"settings.security_help.description" = "有効にすると、書き出される写真からすべての識別メタデータが削除されます。";
+"settings.security_help.location_title" = "位置情報データ";
+"settings.security_help.location_desc" = "写真の撮影場所を示すGPS座標が削除されます。";
+"settings.security_help.timestamps_title" = "タイムスタンプ";
+"settings.security_help.timestamps_desc" = "タイムライン分析を防ぐため、作成日と変更日が削除されます。";
+"settings.security_help.device_title" = "デバイス情報";
+"settings.security_help.device_desc" = "カメラモデル、レンズデータ、デバイス識別子が消去されます。";
+"settings.security_help.software_title" = "ソフトウェアの痕跡";
+"settings.security_help.software_desc" = "編集履歴とソフトウェア署名がクリアされます。";
+"settings.security_help.thumbnails_title" = "サムネイル";
+"settings.security_help.thumbnails_desc" = "元のデータを含む可能性のある埋め込みプレビュー画像が削除されます。";
+"settings.security_help.preserved" = "保持されるメタデータは 'Protected by Loopix iOS' のソフトウェアタグのみです。";
+"settings.security_help.recommended" = "// 機密性の高い画像を共有する際に推奨";
+
+"settings.backup" = "バックアップ";
+"settings.status" = "状態";
+"settings.last_backup" = "前回: %@ (%@から)";
+"settings.last_backup_no_device" = "前回: %@";
+"settings.icloud_signin" = "// バックアップを有効にするにはiCloudにサインインしてください";
+"settings.icloud_enable" = "// バックアップを有効にするにはiCloud Driveを有効にしてください";
+"settings.backup_now" = "今すぐバックアップ()";
+"settings.syncing" = "同期中...";
+"settings.checking" = "確認中...";
+"settings.synced" = "同期済み";
+"settings.unavailable" = "利用不可";
+"settings.disabled" = "無効";
+
+// Language
+"settings.language" = "言語";
+"settings.language.system" = "システム";
+"settings.app_language" = "アプリの言語";
+"settings.restart_required" = "再起動が必要";
+"settings.restart_message" = "言語変更を適用するにはアプリを再起動してください";
+"settings.restart_comment" = "// 適用には再起動が必要";
+
+"settings.about" = "このアプリについて";
+"settings.version" = "filmbox v%@ (%@)";
+"settings.tap_to_copy" = "// タップしてデバッグ情報をコピー";
+"settings.copied_to_clipboard" = "クリップボードにコピーしました";
+
+// MARK: - Time
+"time.just_now" = "たった今";
+"time.min_ago" = "%d分前";
+"time.hr_ago" = "%d時間前";
+"time.day_ago" = "%d日前";
+"time.days_ago" = "%d日前";
+
+// MARK: - Filter Categories
+"category.favourites" = "お気に入り";
+"category.my" = "マイ";
+"category.fuji" = "富士フィルムレシピ";
+"category.filters" = "フィルター";
+"category.cool" = "クール";
+"category.warm" = "ウォーム";
+"category.pro" = "プロ";
+"category.portrait" = "ポートレート";
+"category.urban" = "アーバン";
+"category.film" = "フィルム";
+"category.bw" = "白黒";
+"category.vintage" = "ヴィンテージ";
+"category.creative" = "クリエイティブ";
+
+// MARK: - Tool Categories
+"tool_category.all" = "すべてのツール";
+"tool_category.essential" = "基本";
+"tool_category.light" = "ライト";
+"tool_category.color" = "カラー";
+"tool_category.effects" = "エフェクト";
+
+// MARK: - Tools
+"tool.exposure" = "露出";
+"tool.contrast" = "コントラスト";
+"tool.highlights" = "ハイライト";
+"tool.shadows" = "シャドウ";
+"tool.whites" = "ホワイト";
+"tool.blacks" = "ブラック";
+"tool.saturation" = "彩度";
+"tool.vibrance" = "自然な彩度";
+"tool.temperature" = "色温度";
+"tool.tint" = "色かぶり";
+"tool.skin_tone" = "肌色";
+"tool.clarity" = "明瞭度";
+"tool.sharpen" = "シャープ";
+"tool.grain" = "粒子";
+"tool.vignette" = "周辺減光";
+"tool.fade" = "フェード";
+"tool.bloom" = "ブルーム";
+"tool.halation" = "ハレーション";
+
+// MARK: - Filters Management
+"filters.title" = "// フィルター";
+"filters.film_presets" = "フィルムプリセットとLUT";
+
+// MARK: - Crop
+"crop.free" = "フリー";
+"crop.square" = "正方形";
+"crop.original" = "オリジナル";
+
+// MARK: - Export
+"export.format.jpeg" = "JPEG";
+"export.format.png" = "PNG";
+"export.size.original" = "オリジナル";
+"export.size.large" = "大";
+"export.size.medium" = "中";
+"export.size.small" = "小";
+
+// MARK: - Preview Quality
+"quality.low" = "低";
+"quality.medium" = "中";
+"quality.high" = "高";
+
+// MARK: - Fuji Recipe Form
+"fuji.title" = "/ 富士レシピ";
+"fuji.help_title" = "// 富士レシピヘルプ";
+"fuji.help_intro" = "富士Xレシピは、富士フイルムカメラ用のカスタムJPEG設定で、クラシックなフィルムストックやユニークなカラーグレードをカメラ内で再現します。";
+"fuji.help_credit" = "fujixweekly.comで人気を博し、後処理なしでフィルムのような仕上がりを実現できます。";
+"fuji.help_instruction" = "カメラまたはオンラインで見つけたレシピの値を入力してください:";
+
+"fuji.name" = "名前";
+"fuji.recipe_name" = "レシピ名";
+"fuji.film_simulation" = "フィルムシミュレーション";
+"fuji.grain_effect" = "グレインエフェクト";
+"fuji.color_chrome" = "カラークローム";
+"fuji.effect" = "エフェクト";
+"fuji.fx_blue" = "FXブルー";
+"fuji.wb_shift" = "ホワイトバランスシフト";
+"fuji.red" = "赤";
+"fuji.blue" = "青";
+"fuji.dynamic_range" = "ダイナミックレンジ";
+"fuji.tone" = "トーン";
+"fuji.highlight" = "ハイライト";
+"fuji.shadow" = "シャドウ";
+"fuji.color" = "カラー";
+"fuji.detail" = "ディテール";
+"fuji.sharpness" = "シャープネス";
+"fuji.noise_reduction" = "ノイズリダクション";
+"fuji.clarity" = "明瞭度";
+
+"fuji.name_required" = "// 名前が必要";
+"fuji.enter_name" = "レシピの名前を入力してください";
+
+// Fuji help items
+"fuji.help.film_sim" = "フィルムシミュレーション";
+"fuji.help.film_sim_desc" = "フィルターの基本的な見た目。クラシッククローム、ベルビア、アクロスなど。";
+"fuji.help.wb_shift" = "ホワイトバランスシフト";
+"fuji.help.wb_shift_desc" = "赤/青の色シフト。範囲: -9 から +9。";
+"fuji.help.dynamic_range" = "ダイナミックレンジ";
+"fuji.help.dynamic_range_desc" = "dr100 = 標準、dr200/400 = シャドウのディテールが多い。";
+"fuji.help.highlight_shadow" = "ハイライト / シャドウ";
+"fuji.help.highlight_shadow_desc" = "トーンカーブ調整。範囲: -2 から +4。";
+"fuji.help.color" = "カラー";
+"fuji.help.color_desc" = "彩度レベル。範囲: -4 から +4。";
+"fuji.help.grain" = "グレインエフェクト";
+"fuji.help.grain_desc" = "フィルムグレインを追加。弱/強 + 小/大。";
+"fuji.help.color_chrome" = "カラークローム";
+"fuji.help.color_chrome_desc" = "彩度の高い色を深くします。オフ/弱/強。";
+
+// Grain options
+"fuji.grain.off" = "オフ";
+"fuji.grain.weak_small" = "弱 / 小";
+"fuji.grain.weak_large" = "弱 / 大";
+"fuji.grain.strong_small" = "強 / 小";
+"fuji.grain.strong_large" = "強 / 大";

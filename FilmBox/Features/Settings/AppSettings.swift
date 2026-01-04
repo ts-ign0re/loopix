@@ -8,6 +8,36 @@
 import Foundation
 import SwiftUI
 
+// MARK: - App Language
+
+enum AppLanguage: String, Codable, CaseIterable, Sendable {
+    case system = "system"
+    case english = "en"
+    case spanish = "es"
+    case japanese = "ja"
+    case chineseSimplified = "zh-Hans"
+
+    var displayName: String {
+        switch self {
+        case .system: return "settings.language.system".localized
+        case .english: return "English"
+        case .spanish: return "Español"
+        case .japanese: return "日本語"
+        case .chineseSimplified: return "简体中文"
+        }
+    }
+
+    var localeIdentifier: String? {
+        switch self {
+        case .system: return nil
+        case .english: return "en"
+        case .spanish: return "es"
+        case .japanese: return "ja"
+        case .chineseSimplified: return "zh-Hans"
+        }
+    }
+}
+
 // MARK: - Preview Quality
 
 enum PreviewQuality: String, Codable, CaseIterable, Sendable {
@@ -80,6 +110,40 @@ final class AppSettings {
         didSet { save() }
     }
 
+    // MARK: - Language Settings
+
+    /// App language override. When set to .system, uses device language
+    var appLanguage: AppLanguage = .system {
+        didSet {
+            save()
+            applyLanguage()
+        }
+    }
+
+    /// Apply the selected language by setting AppleLanguages in UserDefaults
+    private func applyLanguage() {
+        if let localeId = appLanguage.localeIdentifier {
+            UserDefaults.standard.set([localeId], forKey: "AppleLanguages")
+        } else {
+            UserDefaults.standard.removeObject(forKey: "AppleLanguages")
+        }
+        UserDefaults.standard.synchronize()
+    }
+
+    /// Check if app restart is needed after language change
+    var needsRestartForLanguage: Bool {
+        guard let currentLanguages = UserDefaults.standard.array(forKey: "AppleLanguages") as? [String],
+              let currentLang = currentLanguages.first else {
+            return appLanguage != .system
+        }
+
+        if let selectedLocale = appLanguage.localeIdentifier {
+            return !currentLang.hasPrefix(selectedLocale)
+        } else {
+            return true
+        }
+    }
+
     // MARK: - Private
 
     private let userDefaultsKey = "com.filmbox.appSettings"
@@ -99,7 +163,8 @@ final class AppSettings {
             exportQuality: exportQuality,
             exportSize: exportSize,
             previewQuality: previewQuality,
-            securityMode: securityMode
+            securityMode: securityMode,
+            appLanguage: appLanguage
         )
 
         if let encoded = try? JSONEncoder().encode(data) {
@@ -119,6 +184,7 @@ final class AppSettings {
         exportSize = decoded.exportSize
         previewQuality = decoded.previewQuality
         securityMode = decoded.securityMode ?? false
+        appLanguage = decoded.appLanguage ?? .system
     }
 
     // MARK: - Debug Info
@@ -153,4 +219,5 @@ private struct SettingsData: Codable {
     var exportSize: ExportSize
     var previewQuality: PreviewQuality
     var securityMode: Bool?
+    var appLanguage: AppLanguage?
 }

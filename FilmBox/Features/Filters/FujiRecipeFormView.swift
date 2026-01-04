@@ -16,7 +16,15 @@ enum GrainEffectOption: String, CaseIterable {
     case strongSmall = "Strong / Small"
     case strongLarge = "Strong / Large"
 
-    var displayName: String { rawValue }
+    var displayName: String {
+        switch self {
+        case .off: return L10n.FujiRecipe.grainOff
+        case .weakSmall: return L10n.FujiRecipe.grainWeakSmall
+        case .weakLarge: return L10n.FujiRecipe.grainWeakLarge
+        case .strongSmall: return L10n.FujiRecipe.grainStrongSmall
+        case .strongLarge: return L10n.FujiRecipe.grainStrongLarge
+        }
+    }
 }
 
 // MARK: - Fuji Recipe Form View
@@ -78,7 +86,7 @@ struct FujiRecipeFormView: View {
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     HStack(spacing: 8) {
-                        Text("/ fuji_recipe")
+                        Text(L10n.FujiRecipe.title)
                             .font(.system(size: 17, weight: .semibold, design: .monospaced))
                             .foregroundStyle(.white)
                         Button {
@@ -116,7 +124,7 @@ struct FujiRecipeFormView: View {
         VStack(alignment: .leading, spacing: 20) {
             // Header
             HStack {
-                Text("// fuji_recipe_help")
+                Text(L10n.FujiRecipe.helpTitle)
                     .font(.system(size: 17, weight: .semibold, design: .monospaced))
                     .foregroundStyle(.white)
                 Spacer()
@@ -136,12 +144,12 @@ struct FujiRecipeFormView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     // Definition
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("fuji x recipes are custom jpeg settings for fujifilm cameras that replicate classic film stocks and unique color grades in-camera.")
+                        Text(L10n.FujiRecipe.helpIntro)
                             .font(.system(size: 14, design: .monospaced))
                             .foregroundStyle(.white.opacity(0.9))
                             .lineSpacing(4)
 
-                        Text("popularized by fujixweekly.com, recipes let photographers achieve film-like results without post-processing.")
+                        Text(L10n.FujiRecipe.helpCredit)
                             .font(.system(size: 12, design: .monospaced))
                             .foregroundStyle(.white.opacity(0.5))
                             .lineSpacing(3)
@@ -150,44 +158,44 @@ struct FujiRecipeFormView: View {
                     .background(Color.white.opacity(0.05))
                     .clipShape(RoundedRectangle(cornerRadius: 8))
 
-                    Text("enter values from your camera or a recipe you found online:")
+                    Text(L10n.FujiRecipe.helpInstruction)
                         .font(.system(size: 13, design: .monospaced))
                         .foregroundStyle(.white.opacity(0.7))
 
                     VStack(alignment: .leading, spacing: 12) {
                         helpItem(
-                            title: "film simulation",
-                            desc: "base look of the filter. classic chrome, velvia, acros, etc."
+                            title: L10n.FujiRecipe.helpFilmSim,
+                            desc: L10n.FujiRecipe.helpFilmSimDesc
                         )
 
                         helpItem(
-                            title: "white balance shift",
-                            desc: "red/blue color shift. range: -9 to +9."
+                            title: L10n.FujiRecipe.helpWbShift,
+                            desc: L10n.FujiRecipe.helpWbShiftDesc
                         )
 
                         helpItem(
-                            title: "dynamic range",
-                            desc: "dr100 = standard, dr200/400 = more shadow detail."
+                            title: L10n.FujiRecipe.helpDynamicRange,
+                            desc: L10n.FujiRecipe.helpDynamicRangeDesc
                         )
 
                         helpItem(
-                            title: "highlight / shadow",
-                            desc: "tone curve adjustments. range: -2 to +4."
+                            title: L10n.FujiRecipe.helpHighlightShadow,
+                            desc: L10n.FujiRecipe.helpHighlightShadowDesc
                         )
 
                         helpItem(
-                            title: "color",
-                            desc: "saturation level. range: -4 to +4."
+                            title: L10n.FujiRecipe.helpColor,
+                            desc: L10n.FujiRecipe.helpColorDesc
                         )
 
                         helpItem(
-                            title: "grain effect",
-                            desc: "adds film grain. weak/strong + small/large."
+                            title: L10n.FujiRecipe.helpGrain,
+                            desc: L10n.FujiRecipe.helpGrainDesc
                         )
 
                         helpItem(
-                            title: "color chrome",
-                            desc: "deepens saturated colors. off/weak/strong."
+                            title: L10n.FujiRecipe.helpColorChrome,
+                            desc: L10n.FujiRecipe.helpColorChromeDesc
                         )
                     }
                 }
@@ -217,8 +225,8 @@ struct FujiRecipeFormView: View {
     // MARK: - Sections
 
     private var nameSection: some View {
-        FormSection(title: "name") {
-            TextField("recipe name", text: $name)
+        FormSection(title: L10n.FujiRecipe.name) {
+            TextField(L10n.FujiRecipe.recipeName, text: $name)
                 .font(.system(size: 16, design: .monospaced))
                 .foregroundStyle(.white)
                 .padding(.horizontal, 16)
@@ -229,7 +237,7 @@ struct FujiRecipeFormView: View {
     }
 
     private var filmSimulationSection: some View {
-        FormSection(title: "film simulation") {
+        FormSection(title: L10n.FujiRecipe.filmSimulation) {
             FormPicker(
                 selection: $filmSimulation,
                 options: FilmSimulationType.allCases.filter { $0 != .none }
@@ -240,7 +248,7 @@ struct FujiRecipeFormView: View {
     }
 
     private var grainSection: some View {
-        FormSection(title: "grain effect") {
+        FormSection(title: L10n.FujiRecipe.grainEffect) {
             FormPicker(
                 selection: $grainEffect,
                 options: GrainEffectOption.allCases
@@ -251,16 +259,16 @@ struct FujiRecipeFormView: View {
     }
 
     private var colorChromeSection: some View {
-        FormSection(title: "color chrome") {
+        FormSection(title: L10n.FujiRecipe.colorChrome) {
             VStack(spacing: 12) {
-                LabeledPicker(label: "effect", selection: $colorChrome)
-                LabeledPicker(label: "fx blue", selection: $colorChromeFxBlue)
+                LabeledPicker(label: L10n.FujiRecipe.effect, selection: $colorChrome)
+                LabeledPicker(label: L10n.FujiRecipe.fxBlue, selection: $colorChromeFxBlue)
             }
         }
     }
 
     private var whiteBalanceSection: some View {
-        FormSection(title: "white balance shift") {
+        FormSection(title: L10n.FujiRecipe.whiteBalanceShift) {
             VStack(spacing: 16) {
                 // Red Shift - cyan to red gradient
                 GradientSlider(
@@ -270,7 +278,7 @@ struct FujiRecipeFormView: View {
                     ),
                     range: -9...9,
                     step: 1,
-                    label: "red",
+                    label: L10n.FujiRecipe.red,
                     gradient: Gradient(colors: [.cyan, .white, .red])
                 )
 
@@ -282,7 +290,7 @@ struct FujiRecipeFormView: View {
                     ),
                     range: -9...9,
                     step: 1,
-                    label: "blue",
+                    label: L10n.FujiRecipe.blue,
                     gradient: Gradient(colors: [.yellow, .white, .blue])
                 )
             }
@@ -290,7 +298,7 @@ struct FujiRecipeFormView: View {
     }
 
     private var dynamicRangeSection: some View {
-        FormSection(title: "dynamic range") {
+        FormSection(title: L10n.FujiRecipe.dynamicRange) {
             FormPicker(
                 selection: $dynamicRange,
                 options: DynamicRangeMode.allCases
@@ -301,10 +309,10 @@ struct FujiRecipeFormView: View {
     }
 
     private var toneSection: some View {
-        FormSection(title: "tone") {
+        FormSection(title: L10n.FujiRecipe.tone) {
             VStack(spacing: 12) {
-                StepSlider(value: $highlight, range: -2...4, step: 0.5, label: "highlight")
-                StepSlider(value: $shadow, range: -2...4, step: 0.5, label: "shadow")
+                StepSlider(value: $highlight, range: -2...4, step: 0.5, label: L10n.FujiRecipe.highlight)
+                StepSlider(value: $shadow, range: -2...4, step: 0.5, label: L10n.FujiRecipe.shadow)
                 StepSlider(
                     value: Binding(
                         get: { Float(color) },
@@ -312,14 +320,14 @@ struct FujiRecipeFormView: View {
                     ),
                     range: -4...4,
                     step: 1,
-                    label: "color"
+                    label: L10n.FujiRecipe.color
                 )
             }
         }
     }
 
     private var detailSection: some View {
-        FormSection(title: "detail") {
+        FormSection(title: L10n.FujiRecipe.detail) {
             VStack(spacing: 12) {
                 StepSlider(
                     value: Binding(
@@ -328,7 +336,7 @@ struct FujiRecipeFormView: View {
                     ),
                     range: -4...4,
                     step: 1,
-                    label: "sharpness"
+                    label: L10n.FujiRecipe.sharpness
                 )
                 StepSlider(
                     value: Binding(
@@ -337,7 +345,7 @@ struct FujiRecipeFormView: View {
                     ),
                     range: -4...4,
                     step: 1,
-                    label: "noise reduction"
+                    label: L10n.FujiRecipe.noiseReduction
                 )
                 StepSlider(
                     value: Binding(
@@ -346,7 +354,7 @@ struct FujiRecipeFormView: View {
                     ),
                     range: -5...5,
                     step: 1,
-                    label: "clarity"
+                    label: L10n.FujiRecipe.clarity
                 )
             }
         }
@@ -373,10 +381,10 @@ struct FujiRecipeFormView: View {
             }
         }
         .disabled(isCreating)
-        .alert("// name_required", isPresented: $showNameRequired) {
-            Button("ok", role: .cancel) {}
+        .alert(L10n.FujiRecipe.nameRequired, isPresented: $showNameRequired) {
+            Button(L10n.Action.ok, role: .cancel) {}
         } message: {
-            Text("enter a name for your recipe")
+            Text(L10n.FujiRecipe.enterName)
         }
     }
 
