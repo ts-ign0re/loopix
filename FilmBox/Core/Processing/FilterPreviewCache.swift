@@ -62,8 +62,8 @@ actor FilterPreviewCache {
     /// Pending requests queue
     private var pendingRequests: [PreviewRequest] = []
 
-    /// Maximum concurrent generations
-    private let maxConcurrentGenerations = 4
+    /// Maximum concurrent generations (increased for faster loading)
+    private let maxConcurrentGenerations = 8
 
     /// Current generation count
     private var currentGenerationCount = 0
@@ -328,14 +328,16 @@ actor FilterPreviewCache {
             return await existingTask.value
         }
 
-        // Check concurrency limit
+        // Wait for a slot if at capacity (with timeout)
+        var waitAttempts = 0
+        while currentGenerationCount >= maxConcurrentGenerations && waitAttempts < 50 {
+            // Wait a bit for a slot to open up
+            try? await Task.sleep(nanoseconds: 50_000_000) // 50ms
+            waitAttempts += 1
+        }
+
+        // Still at capacity after waiting - return nil (caller will retry)
         if currentGenerationCount >= maxConcurrentGenerations {
-            // Queue the request
-            pendingRequests.append(PreviewRequest(
-                presetID: preset.id,
-                clutPath: preset.clutPath,
-                priority: priority
-            ))
             return nil
         }
 
@@ -359,7 +361,7 @@ actor FilterPreviewCache {
                 await self.cacheImage(image, forKey: key)
             }
 
-            // Cleanup and process next
+            // Cleanup
             await self.generationCompleted(for: preset.id)
 
             return filteredImage
@@ -522,10 +524,12 @@ final class FilterPreviewLoader: ObservableObject {
     @Published var isLoading = false
 
     private var loadTask: Task<Void, Never>?
+    private var currentPreset: FilterPreset?
 
     func load(preset: FilterPreset, priority: FilterPreviewCache.LoadPriority = .medium) {
         // Cancel any existing load
         loadTask?.cancel()
+        currentPreset = preset
 
         isLoading = true
 
@@ -539,12 +543,30 @@ final class FilterPreviewLoader: ObservableObject {
                 return
             }
 
-            let preview = await FilterPreviewCache.shared.preview(for: preset, priority: priority)
+            // Retry loop - if we get nil (queue full), retry after delay
+            var retryCount = 0
+            let maxRetries = 10
 
-            guard !Task.isCancelled else { return }
+            while retryCount < maxRetries && !Task.isCancelled {
+                let preview = await FilterPreviewCache.shared.preview(for: preset, priority: priority)
 
+                guard !Task.isCancelled else { return }
+
+                if let preview {
+                    await MainActor.run {
+                        self.image = preview
+                        self.isLoading = false
+                    }
+                    return
+                }
+
+                // Wait before retry (staggered based on retry count)
+                retryCount += 1
+                try? await Task.sleep(nanoseconds: UInt64(100_000_000 * retryCount)) // 100ms * retryCount
+            }
+
+            // Give up after max retries
             await MainActor.run {
-                self.image = preview
                 self.isLoading = false
             }
         }
@@ -553,6 +575,7 @@ final class FilterPreviewLoader: ObservableObject {
     func cancel() {
         loadTask?.cancel()
         loadTask = nil
+        currentPreset = nil
         isLoading = false
     }
 

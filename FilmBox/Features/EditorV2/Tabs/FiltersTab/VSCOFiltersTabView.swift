@@ -49,6 +49,12 @@ struct VSCOFiltersTabView: View {
             await loadFilters()
             loadFavorites()
         }
+        .onAppear {
+            // Reload filters when view reappears (e.g., after importing from FiltersManagementView)
+            Task {
+                await loadFilters()
+            }
+        }
         .onChange(of: viewModel.selectedFilterCategory) { _, _ in
             // Filters are recalculated via filteredPresets
         }
@@ -70,10 +76,8 @@ struct VSCOFiltersTabView: View {
         case .favorites:
             return filters.filter { favoriteIDs.contains($0.id) }
         case .custom:
-            return filters.filter {
-                if case .userCreated = $0.source { return true }
-                return false
-            }
+            // Include all non-builtIn filters (userCreated, imported, calibrated, haldCLUT)
+            return filters.filter { $0.source != .builtIn }
         default:
             return filters.filter { $0.category == viewModel.selectedFilterCategory }
         }
@@ -82,10 +86,16 @@ struct VSCOFiltersTabView: View {
     // MARK: - Data Loading
 
     private func loadFilters() async {
-        isLoadingFilters = true
-        defer { isLoadingFilters = false }
+        await MainActor.run {
+            isLoadingFilters = true
+        }
 
-        filters = await FilterStorage.shared.allPresets
+        let loadedFilters = await FilterStorage.shared.allPresets
+
+        await MainActor.run {
+            filters = loadedFilters
+            isLoadingFilters = false
+        }
     }
 
     private func loadFavorites() {

@@ -558,6 +558,12 @@ struct LibraryContentView: View {
     // MARK: - Actions
 
     private func handlePhotoTap(_ photo: ImportedPhoto) {
+        // Close FAB menu if open
+        if isFabExpanded {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                isFabExpanded = false
+            }
+        }
         withAnimation(.easeInOut(duration: 0.2)) {
             manager.toggleSelection(photo)
         }

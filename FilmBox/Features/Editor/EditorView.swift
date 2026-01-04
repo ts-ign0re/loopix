@@ -199,8 +199,8 @@ struct EditorView: View {
             syncCropRectFromParameters()
         }
         .sheet(isPresented: $showFilterEditor) {
-            FilterEditorView(
-                filter: nil,
+            FujiRecipeFormView(
+                existingFilter: nil,
                 onSave: { savedFilter in
                     Task {
                         await loadFilters()
@@ -474,6 +474,12 @@ struct EditorView: View {
         .task {
             await loadFilters()
         }
+        .onAppear {
+            // Reload filters when view reappears (e.g., after importing from FiltersManagementView)
+            Task {
+                await loadFilters()
+            }
+        }
         .onChange(of: selectedFilterCategory) { _, _ in
             Task {
                 await loadFilters()
@@ -483,24 +489,27 @@ struct EditorView: View {
 
     private func loadFilters() async {
         // Load user presets
-        userPresets = await FilterStorage.shared.getUserPresets()
+        let loadedUserPresets = await FilterStorage.shared.getUserPresets()
 
         // Load favorites from UserDefaults
+        let loadedFavoriteIDs: Set<UUID>
         if let savedIDs = UserDefaults.standard.array(forKey: "favoriteFilterIDs") as? [String] {
-            favoriteIDs = Set(savedIDs.compactMap { UUID(uuidString: $0) })
+            loadedFavoriteIDs = Set(savedIDs.compactMap { UUID(uuidString: $0) })
+        } else {
+            loadedFavoriteIDs = []
         }
 
         // Get all built-in presets
         let allBuiltIn = FilmEmulations.all + CreativeFilters.all + FujiRecipes.all
-        let allFilters = allBuiltIn + userPresets
+        let allFilters = allBuiltIn + loadedUserPresets
 
         // Filter by category
         let filtered: [FilterPreset]
         switch selectedFilterCategory {
         case .favorites:
-            filtered = allFilters.filter { favoriteIDs.contains($0.id) }
+            filtered = allFilters.filter { loadedFavoriteIDs.contains($0.id) }
         case .custom:
-            filtered = userPresets
+            filtered = loadedUserPresets
         case .all:
             filtered = allFilters
         case .film:
@@ -525,7 +534,12 @@ struct EditorView: View {
             filtered = FujiRecipes.all
         }
 
-        availableFilters = filtered
+        // Update state on MainActor
+        await MainActor.run {
+            userPresets = loadedUserPresets
+            favoriteIDs = loadedFavoriteIDs
+            availableFilters = filtered
+        }
     }
 
     private func filterCategoryTab(_ category: FilterCategory) -> some View {

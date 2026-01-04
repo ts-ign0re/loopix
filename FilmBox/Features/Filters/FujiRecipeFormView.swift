@@ -2,7 +2,7 @@
 //  FujiRecipeFormView.swift
 //  FilmBox
 //
-//  Fuji X Recipe input form for creating filters
+//  Unified filter editor for all presets (Fuji-style interface)
 //
 
 import SwiftUI
@@ -25,6 +25,35 @@ enum GrainEffectOption: String, CaseIterable {
         case .strongLarge: return L10n.FujiRecipe.grainStrongLarge
         }
     }
+
+    /// Convert to GrainData parameters
+    var toGrainData: GrainData {
+        switch self {
+        case .off:
+            return GrainData(amount: 0, size: 0.5, roughness: 0.5, monochromatic: true)
+        case .weakSmall:
+            return GrainData(amount: 30, size: 0.3, roughness: 0.4, monochromatic: true)
+        case .weakLarge:
+            return GrainData(amount: 30, size: 0.7, roughness: 0.4, monochromatic: true)
+        case .strongSmall:
+            return GrainData(amount: 70, size: 0.3, roughness: 0.6, monochromatic: true)
+        case .strongLarge:
+            return GrainData(amount: 70, size: 0.7, roughness: 0.6, monochromatic: true)
+        }
+    }
+
+    /// Create from GrainData
+    static func from(_ grain: GrainData) -> GrainEffectOption {
+        if grain.amount <= 0 { return .off }
+        let isStrong = grain.amount >= 50
+        let isLarge = grain.size >= 0.5
+        switch (isStrong, isLarge) {
+        case (false, false): return .weakSmall
+        case (false, true): return .weakLarge
+        case (true, false): return .strongSmall
+        case (true, true): return .strongLarge
+        }
+    }
 }
 
 // MARK: - Fuji Recipe Form View
@@ -36,7 +65,12 @@ struct FujiRecipeFormView: View {
 
     @Environment(\.dismiss) private var dismiss
 
-    // MARK: - Form State
+    // MARK: - Input
+
+    /// Existing filter to edit (nil for new filter)
+    let existingFilter: FilterPreset?
+
+    // MARK: - Form State - Fuji Simulation
 
     @State private var name = ""
     @State private var filmSimulation: FilmSimulationType = .classicNegative
@@ -53,13 +87,46 @@ struct FujiRecipeFormView: View {
     @State private var noiseReduction: Int = 0
     @State private var clarity: Int = 0
 
+    // MARK: - Form State - Additional Effects
+
+    @State private var grainAmount: Float = 0
+    @State private var grainSize: Float = 0.5
+    @State private var grainRoughness: Float = 0.5
+    @State private var grainMonochromatic: Bool = true
+
+    @State private var vignetteAmount: Float = 0
+    @State private var vignetteMidpoint: Float = 0.5
+    @State private var vignetteRoundness: Float = 0
+    @State private var vignetteFeather: Float = 0.5
+
+    @State private var fade: Float = 0
+    @State private var sharpenRadius: Float = 1.0
+
+    // MARK: - UI State
+
     @State private var isCreating = false
     @State private var showHelp = false
     @State private var showNameRequired = false
+    @State private var showAdvancedGrain = false
+
+    // MARK: - Computed
+
+    private var isEditing: Bool { existingFilter != nil }
+    private var isReadOnly: Bool {
+        guard let filter = existingFilter else { return false }
+        return filter.source == .builtIn
+    }
 
     // MARK: - Callback
 
     var onSave: (FilterPreset) -> Void
+
+    // MARK: - Init
+
+    init(existingFilter: FilterPreset? = nil, onSave: @escaping (FilterPreset) -> Void) {
+        self.existingFilter = existingFilter
+        self.onSave = onSave
+    }
 
     // MARK: - Body
 
@@ -75,6 +142,19 @@ struct FujiRecipeFormView: View {
                     dynamicRangeSection
                     toneSection
                     detailSection
+
+                    // Loopix app-specific parameters
+                    loopixParametersSection
+
+                    // Read-only notice
+                    if isReadOnly {
+                        Text("Built-in filters are read-only. Use Duplicate to create an editable copy.")
+                            .font(.system(.caption, design: .monospaced))
+                            .foregroundStyle(.white.opacity(0.4))
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 40)
+                            .padding(.vertical, 20)
+                    }
                 }
                 .padding(.horizontal, 20)
                 .padding(.vertical, 16)
@@ -86,7 +166,7 @@ struct FujiRecipeFormView: View {
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     HStack(spacing: 8) {
-                        Text(L10n.FujiRecipe.title)
+                        Text(isEditing ? "/ edit recipe" : L10n.FujiRecipe.title)
                             .font(.system(size: 17, weight: .semibold, design: .monospaced))
                             .foregroundStyle(.white)
                         Button {
@@ -108,7 +188,9 @@ struct FujiRecipeFormView: View {
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    createButton
+                    if !isReadOnly {
+                        createButton
+                    }
                 }
             }
             .sheet(isPresented: $showHelp) {
@@ -116,6 +198,59 @@ struct FujiRecipeFormView: View {
             }
         }
         .preferredColorScheme(.dark)
+        .onAppear {
+            loadExistingFilter()
+        }
+    }
+
+    // MARK: - Load Existing Filter
+
+    private func loadExistingFilter() {
+        guard let filter = existingFilter else { return }
+
+        name = filter.name
+
+        let params = filter.parameters
+
+        // Fuji simulation
+        filmSimulation = params.filmSimulation
+        colorChrome = params.colorChrome.effect
+        colorChromeFxBlue = params.colorChrome.fxBlue
+        wbRedShift = params.whiteBalanceShift.redShift
+        wbBlueShift = params.whiteBalanceShift.blueShift
+        dynamicRange = params.dynamicRange
+
+        // Tone
+        highlight = params.highlights / 25  // Map -100..100 to -4..4
+        shadow = params.shadows / 25
+        color = Int(params.saturation / 25)
+
+        // Detail
+        sharpness = Int(params.sharpness / 25)  // Map 0..100 to -4..4
+        noiseReduction = Int(params.noiseReduction / 25)
+        clarity = Int(params.clarity / 20)  // Map -100..100 to -5..5
+
+        // Grain - use preset or advanced values
+        grainEffect = GrainEffectOption.from(params.grain)
+        grainAmount = params.grain.amount
+        grainSize = params.grain.size
+        grainRoughness = params.grain.roughness
+        grainMonochromatic = params.grain.monochromatic
+
+        // Show advanced grain if custom values
+        if params.grain.amount > 0 && grainEffect.toGrainData != params.grain {
+            showAdvancedGrain = true
+        }
+
+        // Vignette
+        vignetteAmount = params.vignette.amount
+        vignetteMidpoint = params.vignette.midpoint
+        vignetteRoundness = params.vignette.roundness
+        vignetteFeather = params.vignette.feather
+
+        // Effects
+        fade = params.fade
+        sharpenRadius = params.sharpenRadius
     }
 
     // MARK: - Help Sheet
@@ -245,6 +380,7 @@ struct FujiRecipeFormView: View {
                 type.displayName
             }
         }
+        .disabled(isReadOnly)
     }
 
     private var grainSection: some View {
@@ -256,6 +392,7 @@ struct FujiRecipeFormView: View {
                 option.displayName
             }
         }
+        .disabled(isReadOnly)
     }
 
     private var colorChromeSection: some View {
@@ -265,6 +402,7 @@ struct FujiRecipeFormView: View {
                 LabeledPicker(label: L10n.FujiRecipe.fxBlue, selection: $colorChromeFxBlue)
             }
         }
+        .disabled(isReadOnly)
     }
 
     private var whiteBalanceSection: some View {
@@ -295,6 +433,7 @@ struct FujiRecipeFormView: View {
                 )
             }
         }
+        .disabled(isReadOnly)
     }
 
     private var dynamicRangeSection: some View {
@@ -306,6 +445,7 @@ struct FujiRecipeFormView: View {
                 mode.rawValue
             }
         }
+        .disabled(isReadOnly)
     }
 
     private var toneSection: some View {
@@ -324,6 +464,7 @@ struct FujiRecipeFormView: View {
                 )
             }
         }
+        .disabled(isReadOnly)
     }
 
     private var detailSection: some View {
@@ -358,6 +499,168 @@ struct FujiRecipeFormView: View {
                 )
             }
         }
+        .disabled(isReadOnly)
+    }
+
+    // MARK: - Loopix App Parameters Section
+
+    private var loopixParametersSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // Header with app icon style
+            HStack(spacing: 8) {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(.yellow)
+                Text("loopix parameters")
+                    .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(.white.opacity(0.7))
+            }
+
+            // Parameters container
+            VStack(spacing: 16) {
+                effectsSection
+                advancedGrainSection
+                vignetteSection
+            }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color.white.opacity(0.03))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(Color.yellow.opacity(0.2), lineWidth: 1)
+                    )
+            )
+
+            // Explanation text
+            Text("these parameters are app-specific and not part of fuji recipe format. they will be exported with qr code but may not work in other apps.")
+                .font(.system(size: 11, design: .monospaced))
+                .foregroundStyle(.white.opacity(0.35))
+                .padding(.horizontal, 4)
+        }
+    }
+
+    // MARK: - Effects Section
+
+    private var effectsSection: some View {
+        FormSection(title: "effects") {
+            VStack(spacing: 12) {
+                // Fade
+                StepSlider(
+                    value: $fade,
+                    range: 0...100,
+                    step: 5,
+                    label: "fade"
+                )
+
+                // Sharpen radius
+                ContinuousSlider(
+                    value: $sharpenRadius,
+                    range: 0.5...3.0,
+                    label: "sharpen radius",
+                    format: "%.1f"
+                )
+            }
+        }
+        .disabled(isReadOnly)
+    }
+
+    // MARK: - Advanced Grain Section
+
+    private var advancedGrainSection: some View {
+        FormSection(title: "grain (advanced)") {
+            VStack(spacing: 12) {
+                // Toggle for advanced mode
+                HStack {
+                    Text("custom grain")
+                        .font(.system(size: 13, weight: .medium, design: .monospaced))
+                        .foregroundStyle(.white.opacity(0.6))
+                    Spacer()
+                    Toggle("", isOn: $showAdvancedGrain)
+                        .labelsHidden()
+                        .tint(.yellow)
+                }
+
+                if showAdvancedGrain {
+                    // Grain amount
+                    ContinuousSlider(
+                        value: $grainAmount,
+                        range: 0...100,
+                        label: "amount",
+                        format: "%.0f"
+                    )
+
+                    // Grain size
+                    ContinuousSlider(
+                        value: $grainSize,
+                        range: 0...1,
+                        label: "size",
+                        format: "%.2f"
+                    )
+
+                    // Grain roughness
+                    ContinuousSlider(
+                        value: $grainRoughness,
+                        range: 0...1,
+                        label: "roughness",
+                        format: "%.2f"
+                    )
+
+                    // Monochromatic toggle
+                    HStack {
+                        Text("monochromatic")
+                            .font(.system(size: 13, weight: .medium, design: .monospaced))
+                            .foregroundStyle(.white.opacity(0.6))
+                        Spacer()
+                        Toggle("", isOn: $grainMonochromatic)
+                            .labelsHidden()
+                            .tint(.yellow)
+                    }
+                }
+            }
+        }
+        .disabled(isReadOnly)
+    }
+
+    // MARK: - Vignette Section
+
+    private var vignetteSection: some View {
+        FormSection(title: "vignette") {
+            VStack(spacing: 12) {
+                // Amount (negative = brighten edges)
+                ContinuousSlider(
+                    value: $vignetteAmount,
+                    range: -100...100,
+                    label: "amount",
+                    format: "%.0f"
+                )
+
+                // Only show other controls if amount != 0
+                if vignetteAmount != 0 {
+                    ContinuousSlider(
+                        value: $vignetteMidpoint,
+                        range: 0...1,
+                        label: "midpoint",
+                        format: "%.2f"
+                    )
+
+                    ContinuousSlider(
+                        value: $vignetteRoundness,
+                        range: -100...100,
+                        label: "roundness",
+                        format: "%.0f"
+                    )
+
+                    ContinuousSlider(
+                        value: $vignetteFeather,
+                        range: 0...1,
+                        label: "feather",
+                        format: "%.2f"
+                    )
+                }
+            }
+        }
+        .disabled(isReadOnly)
     }
 
     // MARK: - Create Button
@@ -393,10 +696,10 @@ struct FujiRecipeFormView: View {
     private func createFilter() async {
         isCreating = true
 
-        // Build parameters using FujiRecipeImporter logic
-        let params = FujiRecipeImporter.buildParameters(
+        // Build base parameters using FujiRecipeImporter logic
+        var params = FujiRecipeImporter.buildParameters(
             filmSimulation: filmSimulation,
-            grainEffect: grainEffect.rawValue,
+            grainEffect: showAdvancedGrain ? GrainEffectOption.off.rawValue : grainEffect.rawValue,
             colorChrome: colorChrome,
             colorChromeFxBlue: colorChromeFxBlue,
             wbRedShift: wbRedShift,
@@ -410,11 +713,35 @@ struct FujiRecipeFormView: View {
             clarity: clarity
         )
 
+        // Add advanced grain if enabled
+        if showAdvancedGrain {
+            params.grain = GrainData(
+                amount: grainAmount,
+                size: grainSize,
+                roughness: grainRoughness,
+                monochromatic: grainMonochromatic
+            )
+        }
+
+        // Add vignette
+        if vignetteAmount != 0 {
+            params.vignette = VignetteData(
+                amount: vignetteAmount,
+                midpoint: vignetteMidpoint,
+                roundness: vignetteRoundness,
+                feather: vignetteFeather
+            )
+        }
+
+        // Add effects
+        params.fade = fade
+        params.sharpenRadius = sharpenRadius
+
         let preset = FilterPreset(
-            id: UUID(),
+            id: existingFilter?.id ?? UUID(),
             name: name,
             category: .custom,
-            source: .userCreated,
+            source: existingFilter?.source ?? .userCreated,
             parameters: params,
             metadata: FilterPreset.FilterMetadata(
                 filmStock: filmSimulation.rawValue,
@@ -422,12 +749,14 @@ struct FujiRecipeFormView: View {
             )
         )
 
-        // Save to storage
-        try? await FilterStorage.shared.save(preset)
-
-        // Track Fuji recipe creation
-        Analytics.shared.trackFilterCreate(name: preset.name, source: "fuji_recipe")
-        Analytics.shared.trackScreen(.fujiRecipeForm)
+        // Save or update to storage
+        if isEditing {
+            try? await FilterStorage.shared.update(preset)
+            Analytics.shared.trackEvent(category: .filter, action: "update", name: preset.name)
+        } else {
+            try? await FilterStorage.shared.save(preset)
+            Analytics.shared.trackFilterCreate(name: preset.name, source: "fuji_recipe")
+        }
 
         // Small delay for loader visibility
         try? await Task.sleep(for: .milliseconds(300))
@@ -686,6 +1015,67 @@ private struct StepSlider: View {
             } else {
                 return "0"
             }
+        }
+    }
+}
+
+// MARK: - Continuous Slider (for float values without stepping)
+
+private struct ContinuousSlider: View {
+    @Binding var value: Float
+    let range: ClosedRange<Float>
+    let label: String
+    let format: String
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Text(label)
+                .font(.system(size: 13, weight: .medium, design: .monospaced))
+                .foregroundStyle(.white.opacity(0.6))
+                .frame(width: 120, alignment: .leading)
+
+            GeometryReader { geometry in
+                let thumbX = geometry.size.width * CGFloat((value - range.lowerBound) / (range.upperBound - range.lowerBound))
+
+                ZStack {
+                    // Track background
+                    RoundedRectangle(cornerRadius: 3)
+                        .fill(Color.white.opacity(0.15))
+                        .frame(height: 6)
+
+                    // Active fill from start
+                    if value > range.lowerBound {
+                        HStack {
+                            RoundedRectangle(cornerRadius: 3)
+                                .fill(Color.yellow)
+                                .frame(width: max(0, thumbX), height: 6)
+                            Spacer()
+                        }
+                    }
+
+                    // Thumb
+                    Circle()
+                        .fill(Color.white)
+                        .frame(width: 18, height: 18)
+                        .shadow(color: .black.opacity(0.3), radius: 2, y: 1)
+                        .position(x: thumbX, y: geometry.size.height / 2)
+                }
+                .contentShape(Rectangle())
+                .gesture(
+                    DragGesture(minimumDistance: 0)
+                        .onChanged { gesture in
+                            let percent = gesture.location.x / geometry.size.width
+                            let newValue = range.lowerBound + Float(percent) * (range.upperBound - range.lowerBound)
+                            value = min(max(newValue, range.lowerBound), range.upperBound)
+                        }
+                )
+            }
+            .frame(height: 18)
+
+            Text(String(format: format, value))
+                .font(.system(size: 13, weight: .semibold, design: .monospaced))
+                .foregroundStyle(.white)
+                .frame(width: 50, alignment: .trailing)
         }
     }
 }

@@ -26,9 +26,6 @@ struct FiltersManagementView: View {
     /// Show delete confirmation alert
     @State private var showDeleteConfirmation = false
 
-    /// Show filter editor sheet
-    @State private var showFilterEditor = false
-
     /// Show more menu popup
     @State private var showMoreMenu = false
 
@@ -60,7 +57,6 @@ struct FiltersManagementView: View {
     @State private var favoriteIDs: Set<UUID> = []
 
     /// Cached filter preview images
-    @State private var previewImages: [UUID: CGImage] = [:]
 
     /// Loading state for previews
     @State private var isLoadingPreviews = false
@@ -257,21 +253,16 @@ struct FiltersManagementView: View {
         } message: {
             Text(deleteAlertMessage)
         }
-        .sheet(
-            isPresented: $showFilterEditor,
-            onDismiss: { filterToEdit = nil },
-            content: {
-                FilterEditorView(
-                    filter: filterToEdit,
-                    onSave: { savedFilter in
-                        Task {
-                            await handleFilterSaved(savedFilter)
-                        }
+        .sheet(item: $filterToEdit) { filter in
+            FujiRecipeFormView(
+                existingFilter: filter,
+                onSave: { savedFilter in
+                    Task {
+                        await handleFilterSaved(savedFilter)
                     }
-                )
-                .id(filterToEdit?.id)
-            }
-        )
+                }
+            )
+        }
         .sheet(isPresented: $showFujiRecipeForm) {
             FujiRecipeFormView { newPreset in
                 Task {
@@ -367,136 +358,23 @@ struct FiltersManagementView: View {
     }
 
     private func filterCell(_ filter: FilterPreset) -> some View {
-        let isSelected = selectedFilterIDs.contains(filter.id)
-        let isFavorite = favoriteIDs.contains(filter.id)
-        let previewImage = previewImages[filter.id]
-
-        return Button {
-            withAnimation(.easeInOut(duration: 0.15)) {
-                if selectedFilterIDs.contains(filter.id) {
-                    selectedFilterIDs.remove(filter.id)
-                } else {
-                    selectedFilterIDs.insert(filter.id)
-                }
-            }
-        } label: {
-            VStack(spacing: 8) {
-                // Filter preview image
-                ZStack {
-                    // Background / Preview image
-                    if let cgImage = previewImage {
-                        Image(decorative: cgImage, scale: 1.0)
-                            .resizable()
-                            .aspectRatio(1, contentMode: .fill)
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
+        FilterCellView(
+            filter: filter,
+            isSelected: selectedFilterIDs.contains(filter.id),
+            isFavorite: favoriteIDs.contains(filter.id),
+            onTap: {
+                withAnimation(.easeInOut(duration: 0.15)) {
+                    if selectedFilterIDs.contains(filter.id) {
+                        selectedFilterIDs.remove(filter.id)
                     } else {
-                        // Loading placeholder with gradient
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(
-                                LinearGradient(
-                                    colors: gradientColors(for: filter),
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .aspectRatio(1, contentMode: .fit)
-                            .overlay(
-                                ProgressView()
-                                    .tint(.white.opacity(0.5))
-                            )
-                    }
-
-                    // Selection indicator
-                    if isSelected {
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.yellow, lineWidth: 3)
-                    }
-
-                    // Favorite star
-                    if isFavorite {
-                        VStack {
-                            HStack {
-                                Spacer()
-                                Image(systemName: "star.fill")
-                                    .font(.system(size: 12, weight: .bold))
-                                    .foregroundStyle(.yellow)
-                                    .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 1)
-                                    .padding(6)
-                            }
-                            Spacer()
-                        }
-                    }
-
-                    // User filter badge
-                    if filter.source != .builtIn {
-                        VStack {
-                            Spacer()
-                            HStack {
-                                Image(systemName: "person.fill")
-                                    .font(.system(size: 10))
-                                    .foregroundStyle(.white.opacity(0.8))
-                                    .padding(4)
-                                    .background(
-                                        Circle()
-                                            .fill(.black.opacity(0.5))
-                                    )
-                                    .padding(6)
-                                Spacer()
-                            }
-                        }
+                        selectedFilterIDs.insert(filter.id)
                     }
                 }
-
-                // Filter name
-                Text(filter.name)
-                    .font(.system(size: 12, weight: .medium, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.9))
-                    .lineLimit(1)
+            },
+            onLongPress: {
+                toggleFavorite(filter)
             }
-        }
-        .buttonStyle(.plain)
-        .simultaneousGesture(
-            LongPressGesture(minimumDuration: 0.5)
-                .onEnded { _ in
-                    toggleFavorite(filter)
-                }
         )
-        .task {
-            // Load preview for this filter if not already loaded
-            if previewImages[filter.id] == nil {
-                if let preview = await FilterPreviewCache.shared.getPreview(for: filter) {
-                    previewImages[filter.id] = preview
-                }
-            }
-        }
-    }
-
-    private func gradientColors(for filter: FilterPreset) -> [Color] {
-        // Generate gradient based on filter category/characteristics
-        switch filter.category {
-        case .cool:
-            return [Color.blue.opacity(0.6), Color.cyan.opacity(0.4)]
-        case .warm:
-            return [Color.orange.opacity(0.6), Color.red.opacity(0.4)]
-        case .bw:
-            return [Color.gray.opacity(0.6), Color.black.opacity(0.8)]
-        case .vintage:
-            return [Color.brown.opacity(0.5), Color.orange.opacity(0.3)]
-        case .film:
-            return [Color.purple.opacity(0.4), Color.pink.opacity(0.3)]
-        case .portrait:
-            return [Color.pink.opacity(0.4), Color.orange.opacity(0.3)]
-        case .urban:
-            return [Color.gray.opacity(0.5), Color.blue.opacity(0.3)]
-        case .pro:
-            return [Color.indigo.opacity(0.5), Color.purple.opacity(0.3)]
-        case .custom:
-            return [Color.yellow.opacity(0.4), Color.orange.opacity(0.3)]
-        case .fujiRecipes:
-            return [Color.green.opacity(0.4), Color.teal.opacity(0.3)]
-        default:
-            return [Color.gray.opacity(0.4), Color.gray.opacity(0.6)]
-        }
     }
 
     // MARK: - Action Bar (left side when filter selected)
@@ -532,81 +410,81 @@ struct FiltersManagementView: View {
     }
 
     private var actionTabsView: some View {
-        HStack(spacing: 0) {
-            // Edit/View button - only for single selection
-            if isSingleSelection {
-                if let filter = singleSelectedFilter {
-                    let isUserCreated = anySelectedIsUserCreated
-                    Button {
-                        filterToEdit = filter
-                        showFilterEditor = true
-                    } label: {
-                        Text(isUserCreated ? L10n.Action.edit : "view")
-                            .font(.system(size: 14, weight: .semibold, design: .monospaced))
-                            .foregroundStyle(.black)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(
-                                Capsule()
-                                    .fill(Color.yellow)
-                            )
-                    }
-                    .buttonStyle(.plain)
-
-                    actionTabDivider
-                }
-            }
-
-            // Favorite button with state-dependent icon
-            actionButton(
-                icon: favoriteIconName,
-                iconColor: favoriteIconColor
-            ) {
-                toggleFavoritesForSelection()
-            }
-
-            // Delete button - only if all selected are user-created
-            if allSelectedAreUserCreated {
-                actionTabDivider
-
-                actionButton(icon: "trash", iconColor: .white) {
-                    showDeleteConfirmation = true
-                }
-            }
-
-            // More menu button - only for single selection (duplicate available)
-            if isSingleSelection {
-                actionTabDivider
-
-                actionButton(icon: "ellipsis", iconColor: .white) {
-                    withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
-                        showMoreMenu.toggle()
-                    }
-                }
-            }
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 6)
-        .background(
-            Capsule()
-                .fill(.ultraThinMaterial)
-                .overlay(
-                    Capsule()
-                        .stroke(Color.white.opacity(0.2), lineWidth: 0.5)
-                )
-        )
-        .overlay(alignment: .topTrailing) {
-            // Floating popup menu
+        VStack(alignment: .leading, spacing: 8) {
+            // Floating popup menu positioned above action bar
             if showMoreMenu {
                 floatingMoreMenu
-                    .offset(x: 0, y: -52)
                     .transition(
                         .asymmetric(
-                            insertion: .scale(scale: 0.8, anchor: .bottomTrailing).combined(with: .opacity),
-                            removal: .scale(scale: 0.8, anchor: .bottomTrailing).combined(with: .opacity)
+                            insertion: .scale(scale: 0.8, anchor: .bottomLeading).combined(with: .opacity),
+                            removal: .scale(scale: 0.8, anchor: .bottomLeading).combined(with: .opacity)
                         )
                     )
             }
+
+            // Main action bar
+            HStack(spacing: 0) {
+                // Edit/View button - only for single selection
+                if isSingleSelection {
+                    if let filter = singleSelectedFilter {
+                        let isUserCreated = anySelectedIsUserCreated
+                        Button {
+                            filterToEdit = filter
+                        } label: {
+                            Text(isUserCreated ? L10n.Action.edit : "view")
+                                .font(.system(size: 14, weight: .semibold, design: .monospaced))
+                                .foregroundStyle(.black)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(
+                                    Capsule()
+                                        .fill(Color.yellow)
+                                )
+                        }
+                        .buttonStyle(.plain)
+
+                        actionTabDivider
+                    }
+                }
+
+                // Favorite button with state-dependent icon
+                actionButton(
+                    icon: favoriteIconName,
+                    iconColor: favoriteIconColor
+                ) {
+                    toggleFavoritesForSelection()
+                }
+
+                // Delete button - only if all selected are user-created
+                if allSelectedAreUserCreated {
+                    actionTabDivider
+
+                    actionButton(icon: "trash", iconColor: .white) {
+                        showDeleteConfirmation = true
+                    }
+                }
+
+                // More menu button - only for single selection (duplicate available)
+                if isSingleSelection {
+                    actionTabDivider
+
+                    actionButton(icon: "ellipsis", iconColor: .white) {
+                        withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
+                            showMoreMenu.toggle()
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 6)
+            .background(
+                Capsule()
+                    .fill(.ultraThinMaterial)
+                    .overlay(
+                        Capsule()
+                            .stroke(Color.white.opacity(0.2), lineWidth: 0.5)
+                    )
+            )
         }
     }
 
@@ -831,8 +709,12 @@ struct FiltersManagementView: View {
     // MARK: - Data Loading
 
     private func loadFilters() async {
-        builtInFilters = FilmEmulations.all + CreativeFilters.all + FujiRecipes.all
-        userFilters = await FilterStorage.shared.getUserPresets()
+        let builtIn = FilmEmulations.all + CreativeFilters.all + FujiRecipes.all
+        let user = await FilterStorage.shared.getUserPresets()
+        await MainActor.run {
+            builtInFilters = builtIn
+            userFilters = user
+        }
     }
 
     private func loadFavorites() async {
@@ -890,10 +772,8 @@ struct FiltersManagementView: View {
         Task {
             try? await FilterStorage.shared.save(newFilter)
 
-            // Generate preview for the new filter
-            if let preview = await FilterPreviewCache.shared.generatePreview(for: newFilter) {
-                previewImages[newFilter.id] = preview
-            }
+            // Generate preview for the new filter (cached for cell loaders)
+            _ = await FilterPreviewCache.shared.generatePreview(for: newFilter)
 
             await loadFilters()
             // Select the new filter
@@ -927,7 +807,6 @@ struct FiltersManagementView: View {
 
                 // Delete the preview for this filter
                 await FilterPreviewCache.shared.deletePreview(for: filter.id)
-                previewImages.removeValue(forKey: filter.id)
             } catch {
                 print("Failed to delete filter \(filter.name): \(error)")
             }
@@ -953,11 +832,8 @@ struct FiltersManagementView: View {
             print("Failed to save filter: \(error)")
         }
 
-        // Regenerate preview for the saved filter
+        // Regenerate preview for the saved filter (cached for cell loaders)
         await FilterPreviewCache.shared.regeneratePreview(for: filter)
-        if let preview = await FilterPreviewCache.shared.getPreview(for: filter) {
-            previewImages[filter.id] = preview
-        }
 
         await loadFilters()
         selectedFilterIDs = [filter.id]
@@ -980,13 +856,8 @@ struct FiltersManagementView: View {
             print("Failed to save imported filter: \(error)")
         }
 
-        // Generate preview
+        // Generate preview (cached for cell loaders)
         await FilterPreviewCache.shared.regeneratePreview(for: filter)
-        if let preview = await FilterPreviewCache.shared.getPreview(for: filter) {
-            await MainActor.run {
-                previewImages[filter.id] = preview
-            }
-        }
 
         await loadFilters()
 
@@ -1019,577 +890,135 @@ struct FiltersManagementView: View {
     }
 }
 
-// MARK: - Filter Editor View
-
-/// Expanded section state
-enum FilterEditorSection: String, CaseIterable {
-    case light = "Light"
-    case color = "Color"
-    case effects = "Effects"
-    case fuji = "Film Simulation"
-    case grain = "Grain"
-    case vignette = "Vignette"
-}
+// MARK: - Filter Cell View (with proper preview loading)
 
 @available(iOS 17.0, *)
-struct FilterEditorView: View {
-    @Environment(\.dismiss) private var dismiss
+private struct FilterCellView: View {
+    let filter: FilterPreset
+    let isSelected: Bool
+    let isFavorite: Bool
+    let onTap: () -> Void
+    let onLongPress: () -> Void
 
-    let filter: FilterPreset?
-    let onSave: (FilterPreset) -> Void
-
-    @State private var filterName: String = ""
-    @State private var parameters: FilterParameters = .identity
-    @State private var expandedSections: Set<FilterEditorSection> = [.light, .fuji]
-
-    private var isNewFilter: Bool { filter == nil }
-    private var isReadOnly: Bool {
-        guard let filter else { return false }
-        return filter.source == .builtIn
-    }
-
-    /// Convert internal temperature value (-100...+100) to Kelvin for display
-    private func temperatureToKelvin(_ value: Float) -> Int {
-        // -100 = 2500K, 0 = 6500K, +100 = 10500K
-        Int(6500 + value * 40)
-    }
-
-    /// Convert Kelvin to internal temperature value
-    private func kelvinToTemperature(_ kelvin: Int) -> Float {
-        Float(kelvin - 6500) / 40
-    }
+    @StateObject private var previewLoader = FilterPreviewLoader()
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: 16) {
-                    // Filter name input
-                    nameSection
-
-                    // Parameter sections
-                    lightSection
-                    colorSection
-                    effectsSection
-                    fujiSection
-                    grainSection
-                    vignetteSection
-
-                    // Read-only notice
-                    if isReadOnly {
-                        Text("Built-in filters are read-only. Use Duplicate to create an editable copy.")
-                            .font(.system(.caption, design: .monospaced))
-                            .foregroundStyle(.white.opacity(0.4))
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, 40)
-                            .padding(.vertical, 20)
-                    }
-                }
-                .padding(.vertical, 16)
-            }
-            .background(Color.black)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(.black, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    Text(isNewFilter ? "/ new_filter" : (isReadOnly ? "/ view_filter" : "/ edit_filter"))
-                        .font(.system(size: 17, weight: .semibold, design: .monospaced))
-                        .foregroundStyle(.white)
-                }
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("cancel") {
-                        dismiss()
-                    }
-                    .font(.system(.body, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.7))
-                }
-
-                if !isReadOnly {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button("save") {
-                            saveFilter()
-                        }
-                        .font(.system(.body, design: .monospaced))
-                        .fontWeight(.semibold)
-                        .foregroundStyle(.yellow)
-                        .disabled(filterName.isEmpty)
-                    }
-                }
-            }
-        }
-        .preferredColorScheme(.dark)
-        .onAppear {
-            if let filter {
-                filterName = filter.name
-                parameters = filter.parameters
-            }
-        }
-    }
-
-    // MARK: - Name Section
-
-    private var nameSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("filter name")
-                .font(.system(.caption, design: .monospaced))
-                .foregroundStyle(.white.opacity(0.5))
-
-            TextField("my filter", text: $filterName)
-                .textFieldStyle(.plain)
-                .font(.system(.title3, design: .monospaced))
-                .foregroundStyle(.white)
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.white.opacity(0.1))
-                )
-                .disabled(isReadOnly)
-        }
-        .padding(.horizontal, 20)
-    }
-
-    // MARK: - Light Section
-
-    private var lightSection: some View {
-        collapsibleSection(title: "light", section: .light) {
-            VStack(spacing: 14) {
-                parameterSlider(title: "exposure", value: $parameters.exposure, range: -2...2, format: "%.2f EV")
-                parameterSlider(title: "contrast", value: $parameters.contrast, range: -100...100)
-                parameterSlider(title: "highlights", value: $parameters.highlights, range: -100...100)
-                parameterSlider(title: "shadows", value: $parameters.shadows, range: -100...100)
-                parameterSlider(title: "whites", value: $parameters.whites, range: -100...100)
-                parameterSlider(title: "blacks", value: $parameters.blacks, range: -100...100)
-            }
-            .disabled(isReadOnly)
-        }
-    }
-
-    // MARK: - Color Section
-
-    private var colorSection: some View {
-        collapsibleSection(title: "color", section: .color) {
-            VStack(spacing: 14) {
-                // Temperature with Kelvin scale and gradient
-                temperatureSlider
-
-                // Tint with green-magenta gradient
-                tintSlider
-
-                parameterSlider(title: "saturation", value: $parameters.saturation, range: -100...100)
-                parameterSlider(title: "vibrance", value: $parameters.vibrance, range: -100...100)
-            }
-            .disabled(isReadOnly)
-        }
-    }
-
-    // MARK: - Temperature Slider (Kelvin with gradient)
-
-    private var temperatureSlider: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Text("temperature")
-                    .font(.system(.subheadline, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.7))
-                Spacer()
-                Text("\(temperatureToKelvin(parameters.temperature))K")
-                    .font(.system(.subheadline, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.5))
-                    .frame(minWidth: 60, alignment: .trailing)
-            }
-
-            // Custom gradient slider
-            GeometryReader { geometry in
-                ZStack(alignment: .leading) {
-                    // Temperature gradient track (blue → neutral → orange)
-                    LinearGradient(
-                        colors: [
-                            Color(red: 0.4, green: 0.6, blue: 1.0),   // Cool blue (2500K)
-                            Color(red: 0.7, green: 0.8, blue: 1.0),   // Light blue
-                            Color.white,                               // Neutral (6500K)
-                            Color(red: 1.0, green: 0.9, blue: 0.7),   // Light orange
-                            Color(red: 1.0, green: 0.6, blue: 0.3)    // Warm orange (10500K)
-                        ],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                    .frame(height: 8)
-                    .clipShape(Capsule())
-
-                    // Thumb
-                    let thumbPosition = CGFloat((parameters.temperature + 100) / 200) * geometry.size.width
-                    Circle()
-                        .fill(Color.white)
-                        .frame(width: 24, height: 24)
-                        .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
-                        .offset(x: thumbPosition - 12)
-                }
-                .frame(height: 24)
-                .gesture(
-                    DragGesture(minimumDistance: 0)
-                        .onChanged { value in
-                            let percent = max(0, min(1, value.location.x / geometry.size.width))
-                            parameters.temperature = Float(percent * 200 - 100)
-                        }
-                )
-            }
-            .frame(height: 24)
-
-            // Kelvin scale labels
-            HStack {
-                Text("2500K")
-                    .font(.system(size: 9, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.3))
-                Spacer()
-                Text("6500K")
-                    .font(.system(size: 9, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.3))
-                Spacer()
-                Text("10500K")
-                    .font(.system(size: 9, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.3))
-            }
-        }
-    }
-
-    // MARK: - Tint Slider (Green-Magenta gradient)
-
-    private var tintSlider: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Text("tint")
-                    .font(.system(.subheadline, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.7))
-                Spacer()
-                Text(String(format: "%+.0f", parameters.tint))
-                    .font(.system(.subheadline, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.5))
-                    .frame(minWidth: 50, alignment: .trailing)
-            }
-
-            // Custom gradient slider
-            GeometryReader { geometry in
-                ZStack(alignment: .leading) {
-                    // Tint gradient track (green ↔ magenta)
-                    LinearGradient(
-                        colors: [
-                            Color(red: 0.2, green: 0.9, blue: 0.4),   // Green (-100)
-                            Color(red: 0.5, green: 0.95, blue: 0.6),  // Light green
-                            Color.white,                               // Neutral (0)
-                            Color(red: 0.95, green: 0.6, blue: 0.8),  // Light magenta
-                            Color(red: 0.9, green: 0.3, blue: 0.7)    // Magenta (+100)
-                        ],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                    .frame(height: 8)
-                    .clipShape(Capsule())
-
-                    // Thumb
-                    let thumbPosition = CGFloat((parameters.tint + 100) / 200) * geometry.size.width
-                    Circle()
-                        .fill(Color.white)
-                        .frame(width: 24, height: 24)
-                        .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
-                        .offset(x: thumbPosition - 12)
-                }
-                .frame(height: 24)
-                .gesture(
-                    DragGesture(minimumDistance: 0)
-                        .onChanged { value in
-                            let percent = max(0, min(1, value.location.x / geometry.size.width))
-                            parameters.tint = Float(percent * 200 - 100)
-                        }
-                )
-            }
-            .frame(height: 24)
-
-            // Labels
-            HStack {
-                Text("green")
-                    .font(.system(size: 9, design: .monospaced))
-                    .foregroundStyle(Color(red: 0.2, green: 0.9, blue: 0.4).opacity(0.7))
-                Spacer()
-                Text("magenta")
-                    .font(.system(size: 9, design: .monospaced))
-                    .foregroundStyle(Color(red: 0.9, green: 0.3, blue: 0.7).opacity(0.7))
-            }
-        }
-    }
-
-    // MARK: - Effects Section
-
-    private var effectsSection: some View {
-        collapsibleSection(title: "effects", section: .effects) {
-            VStack(spacing: 14) {
-                parameterSlider(title: "clarity", value: $parameters.clarity, range: -100...100)
-                parameterSlider(title: "sharpness", value: $parameters.sharpness, range: 0...100)
-                parameterSlider(title: "sharpen radius", value: $parameters.sharpenRadius, range: 0.5...3.0, format: "%.1f")
-                parameterSlider(title: "fade", value: $parameters.fade, range: 0...100)
-            }
-            .disabled(isReadOnly)
-        }
-    }
-
-    // MARK: - Fuji Simulation Section
-
-    private var fujiSection: some View {
-        collapsibleSection(title: "film simulation", section: .fuji) {
-            VStack(spacing: 14) {
-                // Film Simulation Picker
-                pickerRow(title: "film type") {
-                    Picker("Film Simulation", selection: $parameters.filmSimulation) {
-                        ForEach(FilmSimulationType.allCases, id: \.self) { sim in
-                            Text(sim.displayName.lowercased())
-                                .font(.system(.body, design: .monospaced))
-                                .tag(sim)
-                        }
-                    }
-                    .pickerStyle(.menu)
-                    .tint(.yellow)
-                }
-
-                // Dynamic Range Picker
-                pickerRow(title: "dynamic range") {
-                    Picker("Dynamic Range", selection: $parameters.dynamicRange) {
-                        ForEach(DynamicRangeMode.allCases, id: \.self) { mode in
-                            Text(mode.rawValue)
-                                .font(.system(.body, design: .monospaced))
-                                .tag(mode)
-                        }
-                    }
-                    .pickerStyle(.menu)
-                    .tint(.yellow)
-                }
-
-                // Color Chrome Effect
-                pickerRow(title: "color chrome") {
-                    Picker("Color Chrome", selection: $parameters.colorChrome.effect) {
-                        ForEach(ColorChromeData.ColorChromeLevel.allCases, id: \.self) { level in
-                            Text(level.rawValue.lowercased())
-                                .font(.system(.body, design: .monospaced))
-                                .tag(level)
-                        }
-                    }
-                    .pickerStyle(.menu)
-                    .tint(.yellow)
-                }
-
-                // Color Chrome FX Blue
-                pickerRow(title: "chrome fx blue") {
-                    Picker("FX Blue", selection: $parameters.colorChrome.fxBlue) {
-                        ForEach(ColorChromeData.ColorChromeLevel.allCases, id: \.self) { level in
-                            Text(level.rawValue.lowercased())
-                                .font(.system(.body, design: .monospaced))
-                                .tag(level)
-                        }
-                    }
-                    .pickerStyle(.menu)
-                    .tint(.yellow)
-                }
-
-                Divider().background(Color.white.opacity(0.2))
-
-                // White Balance Shifts
-                Text("white balance shift")
-                    .font(.system(.caption, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.5))
-                    .frame(maxWidth: .infinity, alignment: .leading)
-
-                intSlider(title: "red shift", value: Binding(
-                    get: { parameters.whiteBalanceShift.redShift },
-                    set: { parameters.whiteBalanceShift.redShift = $0 }
-                ), range: -9...9)
-
-                intSlider(title: "blue shift", value: Binding(
-                    get: { parameters.whiteBalanceShift.blueShift },
-                    set: { parameters.whiteBalanceShift.blueShift = $0 }
-                ), range: -9...9)
-            }
-            .disabled(isReadOnly)
-        }
-    }
-
-    // MARK: - Grain Section
-
-    private var grainSection: some View {
-        collapsibleSection(title: "grain", section: .grain) {
-            VStack(spacing: 14) {
-                parameterSlider(title: "amount", value: $parameters.grain.amount, range: 0...100)
-                parameterSlider(title: "size", value: $parameters.grain.size, range: 0...1, format: "%.2f")
-                parameterSlider(title: "roughness", value: $parameters.grain.roughness, range: 0...1, format: "%.2f")
-
-                Toggle("monochromatic", isOn: $parameters.grain.monochromatic)
-                    .font(.system(.body, design: .monospaced))
-                    .tint(.yellow)
-                    .foregroundStyle(.white.opacity(0.7))
-            }
-            .disabled(isReadOnly)
-        }
-    }
-
-    // MARK: - Vignette Section
-
-    private var vignetteSection: some View {
-        collapsibleSection(title: "vignette", section: .vignette) {
-            VStack(spacing: 14) {
-                parameterSlider(title: "amount", value: $parameters.vignette.amount, range: -100...100)
-                parameterSlider(title: "midpoint", value: $parameters.vignette.midpoint, range: 0...1, format: "%.2f")
-                parameterSlider(title: "roundness", value: $parameters.vignette.roundness, range: -100...100)
-                parameterSlider(title: "feather", value: $parameters.vignette.feather, range: 0...1, format: "%.2f")
-            }
-            .disabled(isReadOnly)
-        }
-    }
-
-    // MARK: - Collapsible Section
-
-    private func collapsibleSection<Content: View>(
-        title: String,
-        section: FilterEditorSection,
-        @ViewBuilder content: () -> Content
-    ) -> some View {
-        VStack(spacing: 0) {
-            // Header
-            Button {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    if expandedSections.contains(section) {
-                        expandedSections.remove(section)
+        Button(action: onTap) {
+            VStack(spacing: 8) {
+                // Filter preview image
+                ZStack {
+                    // Background / Preview image
+                    if let cgImage = previewLoader.image {
+                        Image(decorative: cgImage, scale: 1.0)
+                            .resizable()
+                            .aspectRatio(1, contentMode: .fill)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .transition(.opacity.combined(with: .scale(scale: 0.95)))
                     } else {
-                        expandedSections.insert(section)
+                        // Loading placeholder with gradient
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(
+                                LinearGradient(
+                                    colors: gradientColors,
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .aspectRatio(1, contentMode: .fit)
+                            .overlay(
+                                ProgressView()
+                                    .tint(.white.opacity(0.5))
+                            )
+                    }
+
+                    // Selection indicator
+                    if isSelected {
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.yellow, lineWidth: 3)
+                    }
+
+                    // Favorite star
+                    if isFavorite {
+                        VStack {
+                            HStack {
+                                Spacer()
+                                Image(systemName: "star.fill")
+                                    .font(.system(size: 12, weight: .bold))
+                                    .foregroundStyle(.yellow)
+                                    .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 1)
+                                    .padding(6)
+                            }
+                            Spacer()
+                        }
+                    }
+
+                    // User filter badge
+                    if filter.source != .builtIn {
+                        VStack {
+                            Spacer()
+                            HStack {
+                                Image(systemName: "person.fill")
+                                    .font(.system(size: 10))
+                                    .foregroundStyle(.white.opacity(0.8))
+                                    .padding(4)
+                                    .background(
+                                        Circle()
+                                            .fill(.black.opacity(0.5))
+                                    )
+                                    .padding(6)
+                                Spacer()
+                            }
+                        }
                     }
                 }
-            } label: {
-                HStack {
-                    Text(title)
-                        .font(.system(.headline, design: .monospaced))
-                        .foregroundStyle(.white)
 
-                    Spacer()
-
-                    Image(systemName: expandedSections.contains(section) ? "chevron.up" : "chevron.down")
-                        .font(.caption)
-                        .foregroundStyle(.white.opacity(0.5))
-                }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 12)
-                .background(Color.white.opacity(0.05))
-            }
-            .buttonStyle(.plain)
-
-            // Content
-            if expandedSections.contains(section) {
-                VStack(spacing: 14) {
-                    content()
-                }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 16)
-                .background(Color.white.opacity(0.02))
+                // Filter name
+                Text(filter.name)
+                    .font(.system(size: 12, weight: .medium, design: .monospaced))
+                    .foregroundStyle(.white.opacity(0.9))
+                    .lineLimit(1)
             }
         }
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.1), lineWidth: 1)
+        .buttonStyle(.plain)
+        .simultaneousGesture(
+            LongPressGesture(minimumDuration: 0.5)
+                .onEnded { _ in
+                    onLongPress()
+                }
         )
-        .padding(.horizontal, 16)
-    }
-
-    // MARK: - Parameter Controls
-
-    private func parameterSlider(
-        title: String,
-        value: Binding<Float>,
-        range: ClosedRange<Float>,
-        format: String = "%.0f"
-    ) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Text(title)
-                    .font(.system(.subheadline, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.7))
-                Spacer()
-                Text(String(format: format, value.wrappedValue))
-                    .font(.system(.subheadline, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.5))
-                    .frame(minWidth: 50, alignment: .trailing)
-            }
-
-            Slider(value: value, in: range)
-                .tint(.yellow)
+        .onAppear {
+            previewLoader.load(preset: filter)
         }
-    }
-
-    private func intSlider(title: String, value: Binding<Int>, range: ClosedRange<Int>) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Text(title)
-                    .font(.system(.subheadline, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.7))
-                Spacer()
-                Text("\(value.wrappedValue > 0 ? "+" : "")\(value.wrappedValue)")
-                    .font(.system(.subheadline, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.5))
-                    .frame(minWidth: 40, alignment: .trailing)
-            }
-
-            Slider(
-                value: Binding(
-                    get: { Double(value.wrappedValue) },
-                    set: { value.wrappedValue = Int($0) }
-                ),
-                in: Double(range.lowerBound)...Double(range.upperBound),
-                step: 1
-            )
-            .tint(.yellow)
+        .onDisappear {
+            previewLoader.cancel()
         }
+        .animation(.easeInOut(duration: 0.2), value: previewLoader.image != nil)
     }
 
-    private func pickerRow<Content: View>(title: String, @ViewBuilder picker: () -> Content) -> some View {
-        HStack {
-            Text(title)
-                .font(.system(.subheadline, design: .monospaced))
-                .foregroundStyle(.white.opacity(0.7))
-            Spacer()
-            picker()
-        }
-    }
-
-    // MARK: - Save
-
-    private func saveFilter() {
-        let savedFilter = FilterPreset(
-            id: filter?.id ?? UUID(),
-            name: filterName,
-            category: .custom,
-            source: .userCreated,
-            parameters: parameters,
-            metadata: filter?.metadata ?? FilterPreset.FilterMetadata()
-        )
-
-        Task {
-            do {
-                if isNewFilter {
-                    // New filter - save
-                    try await FilterStorage.shared.save(savedFilter)
-
-                    // Track filter creation
-                    Analytics.shared.trackFilterCreate(name: savedFilter.name, source: "manual")
-                } else {
-                    // Existing filter - update
-                    try await FilterStorage.shared.update(savedFilter)
-
-                    // Track filter update
-                    Analytics.shared.trackEvent(
-                        category: .filter,
-                        action: "update",
-                        name: savedFilter.name
-                    )
-                }
-                onSave(savedFilter)
-                dismiss()
-            } catch {
-                print("Failed to save filter: \(error)")
-            }
+    private var gradientColors: [Color] {
+        switch filter.category {
+        case .cool:
+            return [Color.blue.opacity(0.6), Color.cyan.opacity(0.4)]
+        case .warm:
+            return [Color.orange.opacity(0.6), Color.red.opacity(0.4)]
+        case .bw:
+            return [Color.gray.opacity(0.6), Color.black.opacity(0.8)]
+        case .vintage:
+            return [Color.brown.opacity(0.5), Color.orange.opacity(0.3)]
+        case .film:
+            return [Color.purple.opacity(0.4), Color.pink.opacity(0.3)]
+        case .portrait:
+            return [Color.pink.opacity(0.4), Color.orange.opacity(0.3)]
+        case .urban:
+            return [Color.gray.opacity(0.5), Color.blue.opacity(0.3)]
+        case .pro:
+            return [Color.indigo.opacity(0.5), Color.purple.opacity(0.3)]
+        case .custom:
+            return [Color.yellow.opacity(0.4), Color.orange.opacity(0.3)]
+        case .fujiRecipes:
+            return [Color.green.opacity(0.4), Color.teal.opacity(0.3)]
+        default:
+            return [Color.gray.opacity(0.4), Color.gray.opacity(0.6)]
         }
     }
 }
