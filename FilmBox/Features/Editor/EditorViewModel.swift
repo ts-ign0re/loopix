@@ -796,7 +796,12 @@ final class EditorViewModel {
 
     private func applyRadialBlur(_ blur: RadialBlurData, to image: CIImage) async -> CIImage {
         let extent = image.extent
-        let maxBlurRadius = CGFloat(blur.amount) * 0.8
+
+        // Scale blur radius relative to reference preview size for consistent look across resolutions
+        let imageSize = min(extent.width, extent.height)
+        let referenceSize: CGFloat = 1024  // Medium preview resolution as reference
+        let scaleFactor = imageSize / referenceSize
+        let maxBlurRadius = CGFloat(blur.amount) * 0.8 * scaleFactor
 
         guard maxBlurRadius > 0 else { return image }
 
@@ -806,7 +811,6 @@ final class EditorViewModel {
         let center = CIVector(x: centerX, y: centerY)
 
         // Focus radius in pixels (relative to image size)
-        let imageSize = min(extent.width, extent.height)
         let focusRadius = imageSize * CGFloat(blur.radius)
         let featherWidth = imageSize * CGFloat(blur.feather) * 0.5
 
@@ -919,7 +923,12 @@ final class EditorViewModel {
 
     private func applyLinearBlur(_ blur: LinearBlurData, to image: CIImage) async -> CIImage {
         let extent = image.extent
-        let maxBlurRadius = CGFloat(blur.amount) * 0.8
+
+        // Scale blur radius relative to reference preview size for consistent look across resolutions
+        let imageSize = min(extent.width, extent.height)
+        let referenceSize: CGFloat = 1024  // Medium preview resolution as reference
+        let scaleFactor = imageSize / referenceSize
+        let maxBlurRadius = CGFloat(blur.amount) * 0.8 * scaleFactor
 
         guard maxBlurRadius > 0 else { return image }
 

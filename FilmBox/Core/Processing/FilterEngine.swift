@@ -1138,7 +1138,12 @@ actor FilterEngine {
     /// Uses CIMaskedVariableBlur for distance-based blur that mimics real lens DOF
     private func applyRadialBlur(to image: CIImage, data: RadialBlurData) -> CIImage {
         let extent = image.extent
-        let maxBlurRadius = CGFloat(data.amount) * 0.8
+
+        // Scale blur radius relative to reference preview size for consistent look across resolutions
+        let imageSize = min(extent.width, extent.height)
+        let referenceSize: CGFloat = 1024  // Medium preview resolution as reference
+        let scaleFactor = imageSize / referenceSize
+        let maxBlurRadius = CGFloat(data.amount) * 0.8 * scaleFactor
 
         guard maxBlurRadius > 0 else { return image }
 
@@ -1148,7 +1153,6 @@ actor FilterEngine {
         let center = CIVector(x: centerX, y: centerY)
 
         // Focus radius in pixels
-        let imageSize = min(extent.width, extent.height)
         let focusRadius = imageSize * CGFloat(data.radius)
         let featherWidth = imageSize * CGFloat(data.feather) * 0.5
 
@@ -1162,52 +1166,43 @@ actor FilterEngine {
 
         guard let depthMask = radialGradient.outputImage?.cropped(to: extent) else { return image }
 
-        // Enhance highlights for bokeh
-        var processedImage = image
-        if data.bokehIntensity > 0 {
-            guard let highlightBoost = CIFilter(name: "CIColorControls") else { return image }
-            highlightBoost.setValue(image, forKey: kCIInputImageKey)
-            highlightBoost.setValue(1.0 + CGFloat(data.bokehIntensity) * 0.3, forKey: kCIInputContrastKey)
-            highlightBoost.setValue(CGFloat(data.bokehIntensity) * 0.1, forKey: kCIInputBrightnessKey)
-            processedImage = highlightBoost.outputImage ?? image
+        // Clamp edges to prevent square corners
+        guard let clampFilter = CIFilter(name: "CIAffineClamp") else { return image }
+        clampFilter.setValue(image, forKey: kCIInputImageKey)
+        clampFilter.setValue(CGAffineTransform.identity, forKey: kCIInputTransformKey)
+        guard let clampedImage = clampFilter.outputImage else { return image }
+
+        // Use Metal bokeh kernel for realistic optical blur (same as preview)
+        do {
+            let bokehResult = try MetalFilterLoader.shared.applyBokeh(
+                to: clampedImage.cropped(to: extent),
+                mask: depthMask,
+                maxRadius: Float(maxBlurRadius),
+                highlightThreshold: 0.65,
+                highlightBoost: Float(data.bokehIntensity) * 2.0,
+                apertureBlades: 0.0,  // Circular aperture
+                fast: false
+            )
+            return bokehResult.cropped(to: extent)
+        } catch {
+            // Fallback to CIMaskedVariableBlur if Metal fails
+            guard let variableBlur = CIFilter(name: "CIMaskedVariableBlur") else { return image }
+            variableBlur.setValue(clampedImage.cropped(to: extent), forKey: kCIInputImageKey)
+            variableBlur.setValue(depthMask, forKey: "inputMask")
+            variableBlur.setValue(maxBlurRadius, forKey: kCIInputRadiusKey)
+            return variableBlur.outputImage?.cropped(to: extent) ?? image
         }
-
-        // Use CIMaskedVariableBlur for realistic DOF
-        guard let variableBlur = CIFilter(name: "CIMaskedVariableBlur") else {
-            // Fallback to disc blur
-            guard let discBlur = CIFilter(name: "CIDiscBlur") else { return image }
-            discBlur.setValue(processedImage, forKey: kCIInputImageKey)
-            discBlur.setValue(maxBlurRadius, forKey: kCIInputRadiusKey)
-            guard let blurred = discBlur.outputImage?.cropped(to: extent) else { return image }
-            guard let blend = CIFilter(name: "CIBlendWithMask") else { return image }
-            blend.setValue(image, forKey: kCIInputImageKey)
-            blend.setValue(blurred, forKey: kCIInputBackgroundImageKey)
-            blend.setValue(depthMask, forKey: kCIInputMaskImageKey)
-            return blend.outputImage?.cropped(to: extent) ?? image
-        }
-
-        variableBlur.setValue(processedImage, forKey: kCIInputImageKey)
-        variableBlur.setValue(depthMask, forKey: "inputMask")
-        variableBlur.setValue(maxBlurRadius, forKey: kCIInputRadiusKey)
-
-        guard var result = variableBlur.outputImage?.cropped(to: extent) else { return image }
-
-        // Add bloom for bokeh glow
-        if data.bokehIntensity > 0.3 {
-            guard let bloom = CIFilter(name: "CIBloom") else { return result }
-            bloom.setValue(result, forKey: kCIInputImageKey)
-            bloom.setValue(CGFloat(data.bokehIntensity) * 0.5, forKey: kCIInputIntensityKey)
-            bloom.setValue(maxBlurRadius * 0.5, forKey: kCIInputRadiusKey)
-            result = bloom.outputImage?.cropped(to: extent) ?? result
-        }
-
-        return result
     }
 
     /// Apply linear blur with realistic tilt-shift bokeh effect
     private func applyLinearBlur(to image: CIImage, data: LinearBlurData) -> CIImage {
         let extent = image.extent
-        let maxBlurRadius = CGFloat(data.amount) * 0.8
+
+        // Scale blur radius relative to reference preview size for consistent look across resolutions
+        let imageSize = min(extent.width, extent.height)
+        let referenceSize: CGFloat = 1024  // Medium preview resolution as reference
+        let scaleFactor = imageSize / referenceSize
+        let maxBlurRadius = CGFloat(data.amount) * 0.8 * scaleFactor
 
         guard maxBlurRadius > 0 else { return image }
 
@@ -1244,44 +1239,32 @@ actor FilterEngine {
 
         guard let depthMask = maxFilter.outputImage?.cropped(to: extent) else { return image }
 
-        // Enhance highlights
-        var processedImage = image
-        if data.bokehIntensity > 0 {
-            guard let highlightBoost = CIFilter(name: "CIColorControls") else { return image }
-            highlightBoost.setValue(image, forKey: kCIInputImageKey)
-            highlightBoost.setValue(1.0 + CGFloat(data.bokehIntensity) * 0.3, forKey: kCIInputContrastKey)
-            highlightBoost.setValue(CGFloat(data.bokehIntensity) * 0.1, forKey: kCIInputBrightnessKey)
-            processedImage = highlightBoost.outputImage ?? image
+        // Clamp edges to prevent square corners
+        guard let clampFilter = CIFilter(name: "CIAffineClamp") else { return image }
+        clampFilter.setValue(image, forKey: kCIInputImageKey)
+        clampFilter.setValue(CGAffineTransform.identity, forKey: kCIInputTransformKey)
+        guard let clampedImage = clampFilter.outputImage else { return image }
+
+        // Use Metal bokeh kernel for realistic optical blur (same as preview)
+        do {
+            let bokehResult = try MetalFilterLoader.shared.applyBokeh(
+                to: clampedImage.cropped(to: extent),
+                mask: depthMask,
+                maxRadius: Float(maxBlurRadius),
+                highlightThreshold: 0.65,
+                highlightBoost: Float(data.bokehIntensity) * 2.0,
+                apertureBlades: 0.0,  // Circular aperture
+                fast: false
+            )
+            return bokehResult.cropped(to: extent)
+        } catch {
+            // Fallback to CIMaskedVariableBlur if Metal fails
+            guard let variableBlur = CIFilter(name: "CIMaskedVariableBlur") else { return image }
+            variableBlur.setValue(clampedImage.cropped(to: extent), forKey: kCIInputImageKey)
+            variableBlur.setValue(depthMask, forKey: "inputMask")
+            variableBlur.setValue(maxBlurRadius, forKey: kCIInputRadiusKey)
+            return variableBlur.outputImage?.cropped(to: extent) ?? image
         }
-
-        // Use CIMaskedVariableBlur
-        guard let variableBlur = CIFilter(name: "CIMaskedVariableBlur") else {
-            guard let discBlur = CIFilter(name: "CIDiscBlur") else { return image }
-            discBlur.setValue(processedImage, forKey: kCIInputImageKey)
-            discBlur.setValue(maxBlurRadius, forKey: kCIInputRadiusKey)
-            guard let blurred = discBlur.outputImage?.cropped(to: extent) else { return image }
-            guard let blend = CIFilter(name: "CIBlendWithMask") else { return image }
-            blend.setValue(image, forKey: kCIInputImageKey)
-            blend.setValue(blurred, forKey: kCIInputBackgroundImageKey)
-            blend.setValue(depthMask, forKey: kCIInputMaskImageKey)
-            return blend.outputImage?.cropped(to: extent) ?? image
-        }
-
-        variableBlur.setValue(processedImage, forKey: kCIInputImageKey)
-        variableBlur.setValue(depthMask, forKey: "inputMask")
-        variableBlur.setValue(maxBlurRadius, forKey: kCIInputRadiusKey)
-
-        guard var result = variableBlur.outputImage?.cropped(to: extent) else { return image }
-
-        if data.bokehIntensity > 0.3 {
-            guard let bloom = CIFilter(name: "CIBloom") else { return result }
-            bloom.setValue(result, forKey: kCIInputImageKey)
-            bloom.setValue(CGFloat(data.bokehIntensity) * 0.5, forKey: kCIInputIntensityKey)
-            bloom.setValue(maxBlurRadius * 0.4, forKey: kCIInputRadiusKey)
-            result = bloom.outputImage?.cropped(to: extent) ?? result
-        }
-
-        return result
     }
 
     // MARK: - Grain & Other Effects
