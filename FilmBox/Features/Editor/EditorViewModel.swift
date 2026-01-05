@@ -648,6 +648,26 @@ final class EditorViewModel {
             }
         }
 
+        // Apply Fuji-style white balance R/B shift
+        if parameters.whiteBalanceShift.isActive {
+            output = applyWhiteBalanceShift(parameters.whiteBalanceShift, to: output)
+        }
+
+        // Apply dynamic range (highlight compression)
+        if parameters.dynamicRange != .dr100 {
+            output = applyDynamicRange(parameters.dynamicRange, to: output)
+        }
+
+        // Apply film simulation (Fuji-style tone curves and color)
+        if parameters.filmSimulation != .none {
+            output = await applyFilmSimulation(parameters.filmSimulation, to: output)
+        }
+
+        // Apply Color Chrome (deep color enhancement)
+        if parameters.colorChrome.isActive {
+            output = applyColorChrome(parameters.colorChrome, to: output)
+        }
+
         // Apply HSL adjustments (per-channel hue, saturation, luminance)
         if !parameters.hsl.isIdentity {
             output = FilterEngine.shared.applyHSLAdjustments(to: output, hsl: parameters.hsl)
@@ -1242,6 +1262,97 @@ final class EditorViewModel {
         blendFilter.setValue(image, forKey: kCIInputBackgroundImageKey)
 
         return blendFilter.outputImage ?? image
+    }
+
+    // MARK: - Fuji Simulation Effects
+
+    /// Apply Fuji-style white balance R/B shift
+    private func applyWhiteBalanceShift(_ shift: WhiteBalanceShift, to image: CIImage) -> CIImage {
+        guard shift.isActive else { return image }
+
+        // Convert -9...+9 shifts to color matrix adjustments
+        // Positive red shift = warmer, positive blue shift = cooler
+        let rFactor = 1.0 + Float(shift.redShift) * 0.015   // ±13.5% per unit
+        let bFactor = 1.0 + Float(shift.blueShift) * 0.015
+
+        guard let filter = CIFilter(name: "CIColorMatrix") else {
+            return image
+        }
+
+        // Color matrix to adjust R and B channels
+        filter.setValue(image, forKey: kCIInputImageKey)
+        filter.setValue(CIVector(x: CGFloat(rFactor), y: 0, z: 0, w: 0), forKey: "inputRVector")
+        filter.setValue(CIVector(x: 0, y: 1, z: 0, w: 0), forKey: "inputGVector")
+        filter.setValue(CIVector(x: 0, y: 0, z: CGFloat(bFactor), w: 0), forKey: "inputBVector")
+        filter.setValue(CIVector(x: 0, y: 0, z: 0, w: 1), forKey: "inputAVector")
+        filter.setValue(CIVector(x: 0, y: 0, z: 0, w: 0), forKey: "inputBiasVector")
+
+        return filter.outputImage ?? image
+    }
+
+    /// Apply Dynamic Range mode - compresses highlights for better recovery
+    private func applyDynamicRange(_ mode: DynamicRangeMode, to image: CIImage) -> CIImage {
+        guard mode != .dr100 else { return image }
+
+        let compression = mode.highlightCompression
+
+        // Use highlight/shadow adjustment to compress highlights
+        guard let filter = CIFilter(name: "CIHighlightShadowAdjust") else {
+            return image
+        }
+
+        let highlightReduction = compression * 50
+        let highlightAmount = 1.0 + (highlightReduction / 100.0)
+        let shadowAmount = compression * 15 / 100.0
+
+        filter.setValue(image, forKey: kCIInputImageKey)
+        filter.setValue(highlightAmount, forKey: "inputHighlightAmount")
+        filter.setValue(shadowAmount, forKey: "inputShadowAmount")
+
+        return filter.outputImage ?? image
+    }
+
+    /// Apply Fuji-style film simulation
+    private func applyFilmSimulation(_ simulation: FilmSimulationType, to image: CIImage) async -> CIImage {
+        guard simulation != .none else { return image }
+
+        // Use FilterEngine's implementation for consistency
+        return await FilterEngine.shared.apply(
+            FilterParameters(filmSimulation: simulation),
+            to: image
+        )
+    }
+
+    /// Apply Color Chrome effect - enhances deep colors
+    private func applyColorChrome(_ data: ColorChromeData, to image: CIImage) -> CIImage {
+        guard data.isActive else { return image }
+
+        var result = image
+
+        // Color Chrome Effect - boosts saturation of already saturated colors
+        if data.effect != .off {
+            let intensity = data.effect.intensity
+            // Increase vibrance for deep color enhancement
+            if let vibranceFilter = CIFilter(name: "CIVibrance") {
+                vibranceFilter.setValue(result, forKey: kCIInputImageKey)
+                vibranceFilter.setValue(intensity * 0.3, forKey: "inputAmount")
+                result = vibranceFilter.outputImage ?? result
+            }
+        }
+
+        // Color Chrome FX Blue - enhances deep blues (simplified)
+        if data.fxBlue != .off {
+            let intensity = data.fxBlue.intensity
+            // HSL adjustment for blues would require FilterEngine
+            // For now, use a simplified vibrance boost
+            if let vibranceFilter = CIFilter(name: "CIVibrance") {
+                vibranceFilter.setValue(result, forKey: kCIInputImageKey)
+                vibranceFilter.setValue(intensity * 0.2, forKey: "inputAmount")
+                result = vibranceFilter.outputImage ?? result
+            }
+        }
+
+        return result
     }
 
     // MARK: - Save
