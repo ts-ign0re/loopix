@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// Main filters tab view in VSCO style
-struct VSCOFiltersTabView: View {
+/// Main filters tab view in Loopix style
+struct LoopixFiltersTabView: View {
     @Bindable var viewModel: EditorV2ViewModel
     @State private var filters: [FilterPreset] = []
     @State private var isLoadingFilters: Bool = false
@@ -13,10 +13,10 @@ struct VSCOFiltersTabView: View {
         ZStack {
             VStack(spacing: 8) {
                 // Category bar
-                VSCOFilterCategoryBar(selectedCategory: $viewModel.selectedFilterCategory)
+                LoopixFilterCategoryBar(selectedCategory: $viewModel.selectedFilterCategory)
 
                 // Filter preview strip
-                VSCOFilterPreviewStrip(
+                LoopixFilterPreviewStrip(
                     filters: filteredPresets,
                     selectedFilter: Binding(
                         get: { viewModel.editor.selectedPreset },
@@ -215,7 +215,7 @@ struct StarBurstAnimation: View {
 // MARK: - Preview
 
 #Preview {
-    VSCOFiltersTabView(viewModel: EditorV2ViewModel())
+    LoopixFiltersTabView(viewModel: EditorV2ViewModel())
         .frame(height: 200)
         .background(Color.black)
 }

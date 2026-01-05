@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// Main tools tab view in VSCO style - shows tools for a specific category
-struct VSCOToolsTabView: View {
+/// Main tools tab view in Loopix style - shows tools for a specific category
+struct LoopixToolsTabView: View {
     @Bindable var viewModel: EditorV2ViewModel
     let category: ToolDefinition.ToolCategory
 
@@ -24,7 +24,7 @@ struct VSCOToolsTabView: View {
 // MARK: - Preview
 
 #Preview {
-    VSCOToolsTabView(
+    LoopixToolsTabView(
         viewModel: EditorV2ViewModel(),
         category: .effects
     )

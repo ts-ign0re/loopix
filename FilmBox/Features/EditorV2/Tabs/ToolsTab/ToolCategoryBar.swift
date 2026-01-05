@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// VSCO-style tool category bar with flat text and underline selection
+/// Loopix-style tool category bar with flat text and underline selection
 struct ToolCategoryBar: View {
     @Binding var selectedCategory: ToolDefinition.ToolCategory
     @Namespace private var underlineNamespace

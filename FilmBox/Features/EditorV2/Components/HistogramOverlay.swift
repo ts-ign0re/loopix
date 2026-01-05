@@ -1,7 +1,7 @@
 import SwiftUI
 import CoreImage
 
-/// Semi-transparent RGB histogram overlay in VSCO style
+/// Semi-transparent RGB histogram overlay in Loopix style
 struct HistogramOverlay: View {
     @Bindable var viewModel: EditorV2ViewModel
     @State private var histogramData: HistogramDataV2?

@@ -33,7 +33,7 @@ enum EditorV2Mode: Equatable, Sendable {
 
     /// Whether the histogram overlay should be visible
     var showHistogram: Bool {
-        true // Always show histogram in VSCO style
+        true // Always show histogram in Loopix style
     }
 
     static func == (lhs: EditorV2Mode, rhs: EditorV2Mode) -> Bool {

@@ -2,8 +2,8 @@ import SwiftUI
 import Photos
 import CoreImage
 
-/// VSCO-style filter preview cell (64x96 vertical rectangle)
-struct VSCOFilterPreviewCell: View {
+/// Loopix-style filter preview cell (64x96 vertical rectangle)
+struct LoopixFilterPreviewCell: View {
     let filter: FilterPreset?
     let sourceImage: CIImage?
     let isSelected: Bool
@@ -12,7 +12,7 @@ struct VSCOFilterPreviewCell: View {
     let onDoubleTap: () -> Void
     var onLongPress: (() -> Void)? = nil
 
-    /// Cell dimensions (VSCO style - vertical rectangle)
+    /// Cell dimensions (Loopix style - vertical rectangle)
     static let cellWidth: CGFloat = 64
     static let cellHeight: CGFloat = 96
     static let imageHeight: CGFloat = 80
@@ -161,8 +161,8 @@ struct VSCOFilterPreviewCell: View {
 // MARK: - Preview
 
 #Preview {
-    HStack(spacing: VSCOFilterPreviewCell.spacing) {
-        VSCOFilterPreviewCell(
+    HStack(spacing: LoopixFilterPreviewCell.spacing) {
+        LoopixFilterPreviewCell(
             filter: nil,
             sourceImage: nil,
             isSelected: false,
@@ -170,7 +170,7 @@ struct VSCOFilterPreviewCell: View {
             onDoubleTap: {}
         )
 
-        VSCOFilterPreviewCell(
+        LoopixFilterPreviewCell(
             filter: FilterPreset.original,
             sourceImage: nil,
             isSelected: true,
@@ -178,7 +178,7 @@ struct VSCOFilterPreviewCell: View {
             onDoubleTap: {}
         )
 
-        VSCOFilterPreviewCell(
+        LoopixFilterPreviewCell(
             filter: FilterPreset.original,
             sourceImage: nil,
             isSelected: false,

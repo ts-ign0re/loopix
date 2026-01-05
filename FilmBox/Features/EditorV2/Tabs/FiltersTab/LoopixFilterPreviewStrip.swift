@@ -2,8 +2,8 @@ import SwiftUI
 import Photos
 import CoreImage
 
-/// Horizontal scrolling strip of filter previews in VSCO style
-struct VSCOFilterPreviewStrip: View {
+/// Horizontal scrolling strip of filter previews in Loopix style
+struct LoopixFilterPreviewStrip: View {
     let filters: [FilterPreset]
     @Binding var selectedFilter: FilterPreset?
     let sourceImage: CIImage?
@@ -16,14 +16,14 @@ struct VSCOFilterPreviewStrip: View {
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView(.horizontal, showsIndicators: false) {
-                LazyHStack(spacing: VSCOFilterPreviewCell.spacing) {
+                LazyHStack(spacing: LoopixFilterPreviewCell.spacing) {
                     // Add recipe button (replaces original)
                     addRecipeButton
                         .id("addRecipe")
 
                     // Filter cells
                     ForEach(filters) { filter in
-                        VSCOFilterPreviewCell(
+                        LoopixFilterPreviewCell(
                             filter: filter,
                             sourceImage: sourceImage,
                             isSelected: selectedFilter?.id == filter.id,
@@ -51,7 +51,7 @@ struct VSCOFilterPreviewStrip: View {
                 }
             }
         }
-        .frame(height: VSCOFilterPreviewCell.cellHeight + 8)
+        .frame(height: LoopixFilterPreviewCell.cellHeight + 8)
     }
 
     // MARK: - Add Recipe Button
@@ -64,7 +64,7 @@ struct VSCOFilterPreviewStrip: View {
                 // Plus icon in rounded rect
                 RoundedRectangle(cornerRadius: 4)
                     .fill(Color.white.opacity(0.1))
-                    .frame(width: VSCOFilterPreviewCell.cellWidth, height: VSCOFilterPreviewCell.imageHeight)
+                    .frame(width: LoopixFilterPreviewCell.cellWidth, height: LoopixFilterPreviewCell.imageHeight)
                     .overlay {
                         Image(systemName: "plus")
                             .font(.system(size: 24, weight: .medium))
@@ -80,7 +80,7 @@ struct VSCOFilterPreviewStrip: View {
                     .font(.system(size: 10, weight: .medium, design: .monospaced))
                     .foregroundColor(.yellow.opacity(0.8))
             }
-            .frame(width: VSCOFilterPreviewCell.cellWidth)
+            .frame(width: LoopixFilterPreviewCell.cellWidth)
         }
         .buttonStyle(.plain)
     }
@@ -101,7 +101,7 @@ struct VSCOFilterPreviewStrip: View {
 
 #Preview {
     VStack {
-        VSCOFilterPreviewStrip(
+        LoopixFilterPreviewStrip(
             filters: [],
             selectedFilter: .constant(nil),
             sourceImage: nil,

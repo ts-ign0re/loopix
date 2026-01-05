@@ -6,7 +6,7 @@ extension Notification.Name {
     static let photoSavedFromEditor = Notification.Name("photoSavedFromEditor")
 }
 
-/// Main VSCO-style editor view
+/// Main Loopix-style editor view
 struct EditorV2View: View {
     @Bindable var viewModel: EditorV2ViewModel
     @Environment(\.dismiss) private var dismiss
@@ -40,7 +40,7 @@ struct EditorV2View: View {
 
                     // Tab bar (hidden in detail modes)
                     if viewModel.showTabBar {
-                        VSCOTabBar(selectedTab: $viewModel.selectedTab)
+                        LoopixTabBar(selectedTab: $viewModel.selectedTab)
                             .transition(.move(edge: .bottom).combined(with: .opacity))
                     }
                 }
@@ -183,7 +183,7 @@ struct EditorV2View: View {
                 CropTabView(viewModel: viewModel, geometry: geometry)
             } else {
                 // Image preview with histogram overlay (fills all available space)
-                VSCOImagePreview(viewModel: viewModel)
+                LoopixImagePreview(viewModel: viewModel)
                     .layoutPriority(1)
 
                 // Tool panel based on selected tab (fixed height at bottom)
@@ -199,11 +199,11 @@ struct EditorV2View: View {
     private func toolPanel(geometry: GeometryProxy) -> some View {
         switch viewModel.selectedTab {
         case .filters:
-            VSCOFiltersTabView(viewModel: viewModel)
+            LoopixFiltersTabView(viewModel: viewModel)
         case .crop:
             EmptyView() // Handled in browseContent
         case .light, .effects:
-            VSCOToolsTabView(
+            LoopixToolsTabView(
                 viewModel: viewModel,
                 category: mapTabToCategory(viewModel.selectedTab)
             )

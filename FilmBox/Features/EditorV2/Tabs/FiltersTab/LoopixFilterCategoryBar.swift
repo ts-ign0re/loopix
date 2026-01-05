@@ -1,11 +1,11 @@
 import SwiftUI
 
-/// VSCO-style filter category bar with flat text and underline selection
-struct VSCOFilterCategoryBar: View {
+/// Loopix-style filter category bar with flat text and underline selection
+struct LoopixFilterCategoryBar: View {
     @Binding var selectedCategory: FilterCategory
     @Namespace private var underlineNamespace
 
-    /// Categories to display (VSCO-style order) - removed .all since we don't show "filters" label
+    /// Categories to display (Loopix-style order) - removed .all since we don't show "filters" label
     private let categories: [FilterCategory] = [
         .favorites,
         .custom,
@@ -53,7 +53,7 @@ struct VSCOFilterCategoryBar: View {
                         .font(.system(size: 12))
                         .foregroundColor(selectedCategory == category ? .white : .gray)
                 } else {
-                    Text(category.vscoDisplayName)
+                    Text(category.loopixDisplayName)
                         .font(.system(size: 11, weight: .medium, design: .monospaced))
                         .foregroundColor(selectedCategory == category ? .white : .gray)
                 }
@@ -79,8 +79,8 @@ struct VSCOFilterCategoryBar: View {
 // MARK: - FilterCategory Extension
 
 extension FilterCategory {
-    /// VSCO-style display name (lowercase monospace)
-    var vscoDisplayName: String {
+    /// Loopix-style display name (lowercase monospace)
+    var loopixDisplayName: String {
         switch self {
         case .all:
             return "" // Not displayed
@@ -100,8 +100,8 @@ extension FilterCategory {
 
 #Preview {
     VStack {
-        VSCOFilterCategoryBar(selectedCategory: .constant(.favorites))
-        VSCOFilterCategoryBar(selectedCategory: .constant(.cool))
+        LoopixFilterCategoryBar(selectedCategory: .constant(.favorites))
+        LoopixFilterCategoryBar(selectedCategory: .constant(.cool))
     }
     .background(Color.black)
 }
