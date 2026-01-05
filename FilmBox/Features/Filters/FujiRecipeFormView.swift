@@ -34,11 +34,11 @@ enum GrainEffectOption: String, CaseIterable {
         case .weakSmall:
             return GrainData(amount: 22, size: 0.3, roughness: 0.4, monochromatic: true)
         case .weakLarge:
-            return GrainData(amount: 22, size: 0.7, roughness: 0.4, monochromatic: true)
+            return GrainData(amount: 22, size: 0.6, roughness: 0.4, monochromatic: true)
         case .strongSmall:
             return GrainData(amount: 52, size: 0.3, roughness: 0.6, monochromatic: true)
         case .strongLarge:
-            return GrainData(amount: 52, size: 0.7, roughness: 0.6, monochromatic: true)
+            return GrainData(amount: 52, size: 0.6, roughness: 0.6, monochromatic: true)
         }
     }
 
