@@ -7,18 +7,16 @@ struct HistogramOverlay: View {
     @State private var histogramData: HistogramDataV2?
 
     var body: some View {
-        GeometryReader { _ in
-            Canvas { context, size in
-                guard let data = histogramData else { return }
+        Canvas { context, size in
+            guard let data = histogramData else { return }
 
-                let width = size.width
-                let height = size.height
+            let width = size.width
+            let height = size.height
 
-                // Draw each channel
-                drawChannel(context: context, data: data.green, color: .green, width: width, height: height)
-                drawChannel(context: context, data: data.blue, color: .blue, width: width, height: height)
-                drawChannel(context: context, data: data.red, color: .red, width: width, height: height)
-            }
+            // Draw each channel
+            drawChannel(context: context, data: data.green, color: .green, width: width, height: height)
+            drawChannel(context: context, data: data.blue, color: .blue, width: width, height: height)
+            drawChannel(context: context, data: data.red, color: .red, width: width, height: height)
         }
         .opacity(0.65)
         .task(id: viewModel.editor.currentImage) {

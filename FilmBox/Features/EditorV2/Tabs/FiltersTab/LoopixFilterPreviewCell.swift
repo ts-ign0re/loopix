@@ -157,8 +157,12 @@ struct LoopixFilterPreviewCell: View {
             result = await FilterEngine.shared.apply(filter, to: scaledImage)
         }
 
-        // Render to CGImage
-        let context = CIContext(options: [.useSoftwareRenderer: false])
+        // Render to CGImage with consistent color space
+        let context = CIContext(options: [
+            .workingColorSpace: CGColorSpace(name: CGColorSpace.linearSRGB)!,
+            .outputColorSpace: CGColorSpace(name: CGColorSpace.sRGB)!,
+            .useSoftwareRenderer: false
+        ])
         return context.createCGImage(result, from: result.extent)
     }
 }

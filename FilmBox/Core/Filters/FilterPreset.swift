@@ -273,11 +273,12 @@ extension FilterParameters {
         result.sharpness = a.sharpness + (b.sharpness - a.sharpness) * t
         result.sharpenRadius = a.sharpenRadius + (b.sharpenRadius - a.sharpenRadius) * t
 
-        // Grain
+        // Grain - only interpolate amount, keep size/roughness from target
+        // Size and roughness define the grain CHARACTER, amount defines visibility
         result.grain.amount = a.grain.amount + (b.grain.amount - a.grain.amount) * t
-        result.grain.size = a.grain.size + (b.grain.size - a.grain.size) * t
-        result.grain.roughness = a.grain.roughness + (b.grain.roughness - a.grain.roughness) * t
-        result.grain.monochromatic = t > 0.5 ? b.grain.monochromatic : a.grain.monochromatic
+        result.grain.size = b.grain.size  // Don't interpolate - use target's grain character
+        result.grain.roughness = b.grain.roughness  // Don't interpolate
+        result.grain.monochromatic = b.grain.monochromatic  // Use target's setting
 
         // Vignette
         result.vignette.amount = a.vignette.amount + (b.vignette.amount - a.vignette.amount) * t

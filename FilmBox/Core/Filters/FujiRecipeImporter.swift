@@ -287,11 +287,11 @@ final class FujiRecipeImporter {
         case "off", "none":
             return .none
         case "weak":
-            amount = 4
+            amount = 3
         case "strong":
-            amount = 9
+            amount = 7
         default:
-            amount = 6
+            amount = 4
         }
 
         // Parse size

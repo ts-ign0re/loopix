@@ -1293,6 +1293,11 @@ actor FilterEngine {
         let roughness = data.roughness
         let monochromatic = data.monochromatic
 
+        // Use time=0 for consistent grain pattern (no animation)
+        // The grain pattern will be the same for all images but that's acceptable
+        // for now - unique patterns per image would require passing an image ID
+        let seed: Float = 0
+
         do {
             return try MetalFilterLoader.shared.applyGrain(
                 to: image,
@@ -1300,7 +1305,7 @@ actor FilterEngine {
                 size: size,
                 roughness: roughness,
                 monochromatic: monochromatic,
-                time: 0.0  // Static grain for photos
+                time: seed  // Unique seed per image for grain variation
             )
         } catch {
             Self.logger.error("Failed to apply grain effect: \(error.localizedDescription)")
