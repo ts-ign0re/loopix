@@ -292,7 +292,7 @@ actor ExportEngine {
         // (Metal preview renders slightly darker than export)
         let exposureFilter = CIFilter.exposureAdjust()
         exposureFilter.inputImage = processedImage
-        exposureFilter.ev = -0.15
+        exposureFilter.ev = -0.3
         processedImage = exposureFilter.outputImage ?? processedImage
 
         // Render to JPEG data with high quality
@@ -430,7 +430,7 @@ actor ExportEngine {
             // Apply exposure correction to match editor preview brightness
             let exposureFilter = CIFilter.exposureAdjust()
             exposureFilter.inputImage = processedImage
-            exposureFilter.ev = -0.15
+            exposureFilter.ev = -0.3
             processedImage = exposureFilter.outputImage ?? processedImage
 
             // Resize if needed
@@ -866,7 +866,7 @@ extension ExportEngine {
         // Apply exposure correction to match editor preview brightness
         let exposureFilter = CIFilter.exposureAdjust()
         exposureFilter.inputImage = processedImage
-        exposureFilter.ev = -0.15
+        exposureFilter.ev = -0.3
         processedImage = exposureFilter.outputImage ?? processedImage
 
         // Render to JPEG data with high quality

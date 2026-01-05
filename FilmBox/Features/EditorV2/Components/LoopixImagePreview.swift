@@ -290,6 +290,7 @@ class MetalImageUIView: UIView {
         metalLayer = layer as? CAMetalLayer
         metalLayer?.device = device
         metalLayer?.pixelFormat = .bgra8Unorm
+        metalLayer?.colorspace = CGColorSpace(name: CGColorSpace.sRGB)
         metalLayer?.framebufferOnly = false
         metalLayer?.contentsScale = traitCollection.displayScale
 
