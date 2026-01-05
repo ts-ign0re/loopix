@@ -10,7 +10,7 @@ struct FilterDetailView: View {
     var body: some View {
         VStack(spacing: 0) {
             // Image preview with histogram
-            VSCOImagePreview(
+            LoopixImagePreview(
                 viewModel: viewModel,
                 showHistogram: true,
                 showIntensitySlider: false

@@ -3,7 +3,7 @@ import CoreImage
 import SwiftUI
 import Photos
 
-/// ViewModel wrapper for EditorV2 that adds VSCO-style mode management
+/// ViewModel wrapper for EditorV2 that adds Loopix-style mode management
 /// Delegates core editing logic to the existing EditorViewModel
 @Observable
 @MainActor
@@ -14,12 +14,12 @@ final class EditorV2ViewModel {
     /// The underlying editor view model that handles actual image processing
     let editor: EditorViewModel
 
-    // MARK: - VSCO-Style State
+    // MARK: - Loopix-Style State
 
     /// Current mode of the editor (browse, filterDetail, toolDetail)
     var mode: EditorV2Mode = .browse
 
-    /// Currently selected tab in the VSCO tab bar
+    /// Currently selected tab in the Loopix tab bar
     var selectedTab: EditorV2Tab = .filters
 
     /// Selected tool category when in tools view

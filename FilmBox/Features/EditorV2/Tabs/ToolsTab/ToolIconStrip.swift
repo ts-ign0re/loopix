@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Horizontal strip of tool icons in VSCO style
+/// Horizontal strip of tool icons in Loopix style
 struct ToolIconStrip: View {
     let tools: [ToolDefinition]
     let onToolTap: (ToolDefinition) -> Void

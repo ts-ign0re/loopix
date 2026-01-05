@@ -53,19 +53,19 @@
 		CE0757132F08A00300C53D17 /* RecentlyUsedFiltersManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0757142F08A00300C53D17 /* RecentlyUsedFiltersManager.swift */; };
 		CE6526192F079245008466F6 /* Icon.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CE6526182F079245008466F6 /* Icon.jpg */; };
 		CE6526352F07936C008466F6 /* ToolCategoryBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE65262D2F07936C008466F6 /* ToolCategoryBar.swift */; };
-		CE6526362F07936C008466F6 /* VSCOFiltersTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE6526292F07936C008466F6 /* VSCOFiltersTabView.swift */; };
-		CE6526372F07936C008466F6 /* VSCOFilterPreviewStrip.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE6526282F07936C008466F6 /* VSCOFilterPreviewStrip.swift */; };
-		CE6526382F07936C008466F6 /* VSCOFilterCategoryBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE6526262F07936C008466F6 /* VSCOFilterCategoryBar.swift */; };
-		CE6526392F07936C008466F6 /* VSCOToolsTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE65262F2F07936C008466F6 /* VSCOToolsTabView.swift */; };
+		CE6526362F07936C008466F6 /* LoopixFiltersTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE6526292F07936C008466F6 /* LoopixFiltersTabView.swift */; };
+		CE6526372F07936C008466F6 /* LoopixFilterPreviewStrip.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE6526282F07936C008466F6 /* LoopixFilterPreviewStrip.swift */; };
+		CE6526382F07936C008466F6 /* LoopixFilterCategoryBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE6526262F07936C008466F6 /* LoopixFilterCategoryBar.swift */; };
+		CE6526392F07936C008466F6 /* LoopixToolsTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE65262F2F07936C008466F6 /* LoopixToolsTabView.swift */; };
 		CE65263A2F07936C008466F6 /* ToolIconStrip.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE65262E2F07936C008466F6 /* ToolIconStrip.swift */; };
-		CE65263B2F07936C008466F6 /* VSCOFilterPreviewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE6526272F07936C008466F6 /* VSCOFilterPreviewCell.swift */; };
+		CE65263B2F07936C008466F6 /* LoopixFilterPreviewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE6526272F07936C008466F6 /* LoopixFilterPreviewCell.swift */; };
 		CE65263C2F07936C008466F6 /* ToolDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE65261C2F07936C008466F6 /* ToolDetailView.swift */; };
-		CE65263D2F07936C008466F6 /* VSCOTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE65262B2F07936C008466F6 /* VSCOTabBar.swift */; };
+		CE65263D2F07936C008466F6 /* LoopixTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE65262B2F07936C008466F6 /* LoopixTabBar.swift */; };
 		CE65263E2F07936C008466F6 /* FilterParameterBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE6526252F07936C008466F6 /* FilterParameterBar.swift */; };
 		CE65263F2F07936C008466F6 /* HistogramOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE65261B2F07936C008466F6 /* HistogramOverlay.swift */; };
 		CE6526402F07936C008466F6 /* EditorV2Mode.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE6526202F07936C008466F6 /* EditorV2Mode.swift */; };
 		CE6526412F07936C008466F6 /* EditorV2ViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE6526332F07936C008466F6 /* EditorV2ViewModel.swift */; };
-		CE6526422F07936C008466F6 /* VSCOImagePreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE65261E2F07936C008466F6 /* VSCOImagePreview.swift */; };
+		CE6526422F07936C008466F6 /* LoopixImagePreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE65261E2F07936C008466F6 /* LoopixImagePreview.swift */; };
 		CE6526432F07936C008466F6 /* EditorV2View.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE6526322F07936C008466F6 /* EditorV2View.swift */; };
 		CE6526442F07936C008466F6 /* ToolDefinition.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE6526222F07936C008466F6 /* ToolDefinition.swift */; };
 		CE6526452F07936C008466F6 /* FilterDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE6526242F07936C008466F6 /* FilterDetailView.swift */; };
@@ -171,20 +171,20 @@
 		CE65261B2F07936C008466F6 /* HistogramOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistogramOverlay.swift; sourceTree = "<group>"; };
 		CE65261C2F07936C008466F6 /* ToolDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolDetailView.swift; sourceTree = "<group>"; };
 		CE65261D2F07936C008466F6 /* VerticalIntensitySlider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VerticalIntensitySlider.swift; sourceTree = "<group>"; };
-		CE65261E2F07936C008466F6 /* VSCOImagePreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VSCOImagePreview.swift; sourceTree = "<group>"; };
+		CE65261E2F07936C008466F6 /* LoopixImagePreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoopixImagePreview.swift; sourceTree = "<group>"; };
 		CE6526202F07936C008466F6 /* EditorV2Mode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorV2Mode.swift; sourceTree = "<group>"; };
 		CE6526212F07936C008466F6 /* EditorV2Tab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorV2Tab.swift; sourceTree = "<group>"; };
 		CE6526222F07936C008466F6 /* ToolDefinition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolDefinition.swift; sourceTree = "<group>"; };
 		CE6526242F07936C008466F6 /* FilterDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterDetailView.swift; sourceTree = "<group>"; };
 		CE6526252F07936C008466F6 /* FilterParameterBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterParameterBar.swift; sourceTree = "<group>"; };
-		CE6526262F07936C008466F6 /* VSCOFilterCategoryBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VSCOFilterCategoryBar.swift; sourceTree = "<group>"; };
-		CE6526272F07936C008466F6 /* VSCOFilterPreviewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VSCOFilterPreviewCell.swift; sourceTree = "<group>"; };
-		CE6526282F07936C008466F6 /* VSCOFilterPreviewStrip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VSCOFilterPreviewStrip.swift; sourceTree = "<group>"; };
-		CE6526292F07936C008466F6 /* VSCOFiltersTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VSCOFiltersTabView.swift; sourceTree = "<group>"; };
-		CE65262B2F07936C008466F6 /* VSCOTabBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VSCOTabBar.swift; sourceTree = "<group>"; };
+		CE6526262F07936C008466F6 /* LoopixFilterCategoryBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoopixFilterCategoryBar.swift; sourceTree = "<group>"; };
+		CE6526272F07936C008466F6 /* LoopixFilterPreviewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoopixFilterPreviewCell.swift; sourceTree = "<group>"; };
+		CE6526282F07936C008466F6 /* LoopixFilterPreviewStrip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoopixFilterPreviewStrip.swift; sourceTree = "<group>"; };
+		CE6526292F07936C008466F6 /* LoopixFiltersTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoopixFiltersTabView.swift; sourceTree = "<group>"; };
+		CE65262B2F07936C008466F6 /* LoopixTabBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoopixTabBar.swift; sourceTree = "<group>"; };
 		CE65262D2F07936C008466F6 /* ToolCategoryBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolCategoryBar.swift; sourceTree = "<group>"; };
 		CE65262E2F07936C008466F6 /* ToolIconStrip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolIconStrip.swift; sourceTree = "<group>"; };
-		CE65262F2F07936C008466F6 /* VSCOToolsTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VSCOToolsTabView.swift; sourceTree = "<group>"; };
+		CE65262F2F07936C008466F6 /* LoopixToolsTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoopixToolsTabView.swift; sourceTree = "<group>"; };
 		CE6526322F07936C008466F6 /* EditorV2View.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorV2View.swift; sourceTree = "<group>"; };
 		CE6526332F07936C008466F6 /* EditorV2ViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorV2ViewModel.swift; sourceTree = "<group>"; };
 		CE6526492F079BF0008466F6 /* CropTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CropTabView.swift; sourceTree = "<group>"; };
@@ -502,7 +502,7 @@
 				CE65261B2F07936C008466F6 /* HistogramOverlay.swift */,
 				CE65261C2F07936C008466F6 /* ToolDetailView.swift */,
 				CE65261D2F07936C008466F6 /* VerticalIntensitySlider.swift */,
-				CE65261E2F07936C008466F6 /* VSCOImagePreview.swift */,
+				CE65261E2F07936C008466F6 /* LoopixImagePreview.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -522,10 +522,10 @@
 			children = (
 				CE6526242F07936C008466F6 /* FilterDetailView.swift */,
 				CE6526252F07936C008466F6 /* FilterParameterBar.swift */,
-				CE6526262F07936C008466F6 /* VSCOFilterCategoryBar.swift */,
-				CE6526272F07936C008466F6 /* VSCOFilterPreviewCell.swift */,
-				CE6526282F07936C008466F6 /* VSCOFilterPreviewStrip.swift */,
-				CE6526292F07936C008466F6 /* VSCOFiltersTabView.swift */,
+				CE6526262F07936C008466F6 /* LoopixFilterCategoryBar.swift */,
+				CE6526272F07936C008466F6 /* LoopixFilterPreviewCell.swift */,
+				CE6526282F07936C008466F6 /* LoopixFilterPreviewStrip.swift */,
+				CE6526292F07936C008466F6 /* LoopixFiltersTabView.swift */,
 			);
 			path = FiltersTab;
 			sourceTree = "<group>";
@@ -533,7 +533,7 @@
 		CE65262C2F07936C008466F6 /* Shared */ = {
 			isa = PBXGroup;
 			children = (
-				CE65262B2F07936C008466F6 /* VSCOTabBar.swift */,
+				CE65262B2F07936C008466F6 /* LoopixTabBar.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -543,7 +543,7 @@
 			children = (
 				CE65262D2F07936C008466F6 /* ToolCategoryBar.swift */,
 				CE65262E2F07936C008466F6 /* ToolIconStrip.swift */,
-				CE65262F2F07936C008466F6 /* VSCOToolsTabView.swift */,
+				CE65262F2F07936C008466F6 /* LoopixToolsTabView.swift */,
 			);
 			path = ToolsTab;
 			sourceTree = "<group>";
@@ -780,20 +780,20 @@
 				CE0756FD2F05800300C53D17 /* FilterPreviewCache.swift in Sources */,
 				CE07570B2F05900100C53D17 /* AppSettings.swift in Sources */,
 				CE6526352F07936C008466F6 /* ToolCategoryBar.swift in Sources */,
-				CE6526362F07936C008466F6 /* VSCOFiltersTabView.swift in Sources */,
+				CE6526362F07936C008466F6 /* LoopixFiltersTabView.swift in Sources */,
 				CE65264B2F079BF0008466F6 /* CropTabView.swift in Sources */,
-				CE6526372F07936C008466F6 /* VSCOFilterPreviewStrip.swift in Sources */,
-				CE6526382F07936C008466F6 /* VSCOFilterCategoryBar.swift in Sources */,
-				CE6526392F07936C008466F6 /* VSCOToolsTabView.swift in Sources */,
+				CE6526372F07936C008466F6 /* LoopixFilterPreviewStrip.swift in Sources */,
+				CE6526382F07936C008466F6 /* LoopixFilterCategoryBar.swift in Sources */,
+				CE6526392F07936C008466F6 /* LoopixToolsTabView.swift in Sources */,
 				CE65263A2F07936C008466F6 /* ToolIconStrip.swift in Sources */,
-				CE65263B2F07936C008466F6 /* VSCOFilterPreviewCell.swift in Sources */,
+				CE65263B2F07936C008466F6 /* LoopixFilterPreviewCell.swift in Sources */,
 				CE65263C2F07936C008466F6 /* ToolDetailView.swift in Sources */,
-				CE65263D2F07936C008466F6 /* VSCOTabBar.swift in Sources */,
+				CE65263D2F07936C008466F6 /* LoopixTabBar.swift in Sources */,
 				CE65263E2F07936C008466F6 /* FilterParameterBar.swift in Sources */,
 				CE65263F2F07936C008466F6 /* HistogramOverlay.swift in Sources */,
 				CE6526402F07936C008466F6 /* EditorV2Mode.swift in Sources */,
 				CE6526412F07936C008466F6 /* EditorV2ViewModel.swift in Sources */,
-				CE6526422F07936C008466F6 /* VSCOImagePreview.swift in Sources */,
+				CE6526422F07936C008466F6 /* LoopixImagePreview.swift in Sources */,
 				CE6526432F07936C008466F6 /* EditorV2View.swift in Sources */,
 				CE6526442F07936C008466F6 /* ToolDefinition.swift in Sources */,
 				CE6526452F07936C008466F6 /* FilterDetailView.swift in Sources */,

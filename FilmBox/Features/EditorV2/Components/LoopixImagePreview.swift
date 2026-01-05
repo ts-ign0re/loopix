@@ -2,8 +2,8 @@ import SwiftUI
 import CoreImage
 import Metal
 
-/// Image preview with VSCO-style histogram overlay
-struct VSCOImagePreview: View {
+/// Image preview with Loopix-style histogram overlay
+struct LoopixImagePreview: View {
     @Bindable var viewModel: EditorV2ViewModel
 
     /// Whether to show the histogram overlay
@@ -377,7 +377,7 @@ class MetalImageUIView: UIView {
 // MARK: - Preview
 
 #Preview {
-    VSCOImagePreview(viewModel: EditorV2ViewModel())
+    LoopixImagePreview(viewModel: EditorV2ViewModel())
         .frame(height: 400)
         .background(Color.black)
 }

@@ -1,13 +1,13 @@
 import SwiftUI
 
-/// VSCO-style bottom tab bar with 5 icons
-struct VSCOTabBar: View {
+/// Loopix-style bottom tab bar with 5 icons
+struct LoopixTabBar: View {
     @Binding var selectedTab: EditorV2Tab
 
     var body: some View {
         HStack(spacing: 0) {
             ForEach(EditorV2Tab.allCases) { tab in
-                VSCOTabBarItem(
+                LoopixTabBarItem(
                     tab: tab,
                     isSelected: selectedTab == tab
                 ) {
@@ -28,7 +28,7 @@ struct VSCOTabBar: View {
 }
 
 /// Single tab bar item
-struct VSCOTabBarItem: View {
+struct LoopixTabBarItem: View {
     let tab: EditorV2Tab
     let isSelected: Bool
     let action: () -> Void
@@ -53,7 +53,7 @@ struct VSCOTabBarItem: View {
 #Preview {
     VStack {
         Spacer()
-        VSCOTabBar(selectedTab: .constant(.filters))
+        LoopixTabBar(selectedTab: .constant(.filters))
     }
     .background(Color.black)
 }

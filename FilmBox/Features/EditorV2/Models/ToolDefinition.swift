@@ -39,7 +39,7 @@ struct ToolDefinition: Identifiable, Hashable, Sendable {
         }
     }
 
-    /// Tool categories matching VSCO style
+    /// Tool categories matching Loopix style
     enum ToolCategory: String, CaseIterable, Sendable {
         case all = "ALL TOOLS"
         case essential = "ESSENTIAL"

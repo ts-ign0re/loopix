@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUI
 
-/// Available tabs in the VSCO-style editor interface
+/// Available tabs in the Loopix-style editor interface
 enum EditorV2Tab: String, CaseIterable, Identifiable, Sendable {
     case filters
     case light
