@@ -57,4 +57,22 @@ enum FilterCategory: String, Codable, CaseIterable, Sendable {
     var showAsIcon: Bool {
         self == .favorites
     }
+
+    /// Consistent display order for category bars in both FiltersManagementView and EditorV2
+    /// Order: favorites, my, film, fuji recipes, then remaining sorted alphabetically
+    static var displayOrder: [FilterCategory] {
+        // Fixed order categories
+        let fixedOrder: [FilterCategory] = [
+            .favorites,
+            .custom,
+            .film,
+            .fujiRecipes
+        ]
+
+        // Remaining categories sorted alphabetically by displayName
+        let remainingCategories: [FilterCategory] = [.bw, .cool, .portrait, .pro, .urban, .vintage, .warm]
+            .sorted { $0.displayName.lowercased() < $1.displayName.lowercased() }
+
+        return fixedOrder + remainingCategories
+    }
 }

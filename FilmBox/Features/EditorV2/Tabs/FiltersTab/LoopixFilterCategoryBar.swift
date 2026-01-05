@@ -5,26 +5,11 @@ struct LoopixFilterCategoryBar: View {
     @Binding var selectedCategory: FilterCategory
     @Namespace private var underlineNamespace
 
-    /// Categories to display (Loopix-style order) - removed .all since we don't show "filters" label
-    private let categories: [FilterCategory] = [
-        .favorites,
-        .custom,
-        .fujiRecipes,
-        .cool,
-        .warm,
-        .pro,
-        .portrait,
-        .urban,
-        .film,
-        .bw,
-        .vintage
-    ]
-
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 20) {
-                    ForEach(categories, id: \.self) { category in
+                    ForEach(FilterCategory.displayOrder, id: \.self) { category in
                         categoryButton(for: category)
                     }
                 }

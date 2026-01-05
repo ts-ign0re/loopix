@@ -8,6 +8,7 @@ struct FiltersManagementView: View {
     // MARK: - Environment
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     // MARK: - State
 
@@ -291,7 +292,7 @@ struct FiltersManagementView: View {
     private var categoryBar: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                ForEach(FilterCategory.allCases, id: \.self) { category in
+                ForEach(FilterCategory.displayOrder, id: \.self) { category in
                     categoryChip(category)
                 }
             }
@@ -337,14 +338,16 @@ struct FiltersManagementView: View {
 
     // MARK: - Filters Grid
 
+    /// Adaptive column count for iPad
+    private var gridColumns: [GridItem] {
+        let columnCount = horizontalSizeClass == .regular ? 5 : 3
+        return Array(repeating: GridItem(.flexible(), spacing: 12), count: columnCount)
+    }
+
     private var filtersGrid: some View {
         ScrollView {
             LazyVGrid(
-                columns: [
-                    GridItem(.flexible(), spacing: 12),
-                    GridItem(.flexible(), spacing: 12),
-                    GridItem(.flexible(), spacing: 12)
-                ],
+                columns: gridColumns,
                 spacing: 16
             ) {
                 ForEach(filteredFilters) { filter in

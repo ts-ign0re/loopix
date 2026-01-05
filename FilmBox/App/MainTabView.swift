@@ -72,8 +72,12 @@ struct LibraryContentView: View {
     @State private var showMoreMenu = false
     @State private var showPermissionDeniedAlert = false
 
-    // Grid configuration
-    private let columns = 3
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
+    // Grid configuration - adaptive for iPad
+    private var columns: Int {
+        horizontalSizeClass == .regular ? 5 : 3
+    }
     private let spacing: CGFloat = 2
 
     private var hasSelection: Bool {
@@ -134,10 +138,10 @@ struct LibraryContentView: View {
                     }
             }
         }
-        .sheet(isPresented: $showSettings) {
+        .fullScreenCover(isPresented: $showSettings) {
             SettingsView()
         }
-        .sheet(isPresented: $showFilters) {
+        .fullScreenCover(isPresented: $showFilters) {
             FiltersManagementView()
         }
         .alert(L10n.Home.storageLimit, isPresented: $showStorageLimitAlert) {
