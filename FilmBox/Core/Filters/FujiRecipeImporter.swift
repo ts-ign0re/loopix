@@ -134,9 +134,10 @@ final class FujiRecipeImporter {
         params.shadows = clamp(shadow * 25, min: -100, max: 100)
 
         // Color (Fuji -4...+4 → saturation + vibrance)
-        let colorBoost = Float(color) * 12.5
+        // Reduced multiplier for more subtle, natural color adjustments
+        let colorBoost = Float(color) * 6.0  // color: 4 → saturation: 24 (was 50)
         params.saturation = clamp(colorBoost, min: -100, max: 100)
-        params.vibrance = clamp(colorBoost * 0.3, min: -100, max: 100)
+        params.vibrance = clamp(colorBoost * 0.4, min: -100, max: 100)
 
         // Clarity (Fuji -5...+5 → App -100...+100)
         params.clarity = Float(clarity) * 20
@@ -206,11 +207,11 @@ final class FujiRecipeImporter {
         params.highlights = clamp(recipe.highlight * 25, min: -100, max: 100)
         params.shadows = clamp(recipe.shadow * 25, min: -100, max: 100)
 
-        // Color (Fuji 0-4 → saturation + vibrance)
-        // color=0 → 0, color=4 → +50 saturation
-        let colorBoost = Float(recipe.color) * 12.5
+        // Color (Fuji -4...+4 → saturation + vibrance)
+        // Reduced multiplier for more subtle, natural color adjustments
+        let colorBoost = Float(recipe.color) * 6.0  // color: 4 → saturation: 24 (was 50)
         params.saturation = clamp(colorBoost, min: -100, max: 100)
-        params.vibrance = clamp(colorBoost * 0.3, min: -100, max: 100)
+        params.vibrance = clamp(colorBoost * 0.4, min: -100, max: 100)
 
         // Clarity (Fuji -4...+4 → App -100...+100)
         // Apply clarity FIRST, before sharpness modifies it

@@ -354,6 +354,16 @@ enum FilmSimulationType: String, Codable, CaseIterable, Sendable {
     case reala = "Reala Ace"
 
     var displayName: String { rawValue }
+
+    /// Returns true for B&W film simulations that should force grayscale
+    var isMonochrome: Bool {
+        switch self {
+        case .acros:
+            return true
+        default:
+            return false
+        }
+    }
 }
 
 // MARK: - Color Chrome

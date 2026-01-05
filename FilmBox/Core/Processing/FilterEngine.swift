@@ -492,7 +492,27 @@ actor FilterEngine {
             result = applyHSLAdjustments(to: result, hsl: params.hsl)
         }
 
-        // 2.5. RGB Channel Curves (for orthochromatic B&W etc.)
+        // 2.3. Fuji White Balance Shift (R/B channel adjustment)
+        if params.whiteBalanceShift.isActive {
+            result = applyWhiteBalanceShift(to: result, shift: params.whiteBalanceShift)
+        }
+
+        // 2.4. Dynamic Range (highlight compression)
+        if params.dynamicRange != .dr100 {
+            result = applyDynamicRange(to: result, mode: params.dynamicRange)
+        }
+
+        // 2.5. Film Simulation (Fuji-style tone curves)
+        if params.filmSimulation != .none {
+            result = applyFilmSimulation(to: result, simulation: params.filmSimulation)
+        }
+
+        // 2.6. Color Chrome (deep color enhancement)
+        if params.colorChrome.isActive {
+            result = applyColorChrome(to: result, data: params.colorChrome)
+        }
+
+        // 2.7. RGB Channel Curves (for orthochromatic B&W etc.)
         // Applied BEFORE saturation so darkened red channel affects grayscale conversion
         if hasRGBCurves(params.toneCurve) {
             result = applyRGBCurves(to: result, curve: params.toneCurve)
@@ -1587,34 +1607,30 @@ actor FilterEngine {
 
     // MARK: - Fuji Simulation Effects
 
-    /// Apply Fuji-style film simulation using tone curves and color adjustments
-    /// Each simulation has unique characteristics that define its look
+    /// Apply Fuji-style film simulation using tone curves
+    /// Saturation/contrast come from preset parameters, except for B&W simulations
+    /// which force grayscale conversion
     private func applyFilmSimulation(to image: CIImage, simulation: FilmSimulationType) -> CIImage {
         guard simulation != .none else { return image }
 
         var result = image
 
-        // Get simulation-specific adjustments
-        let (curve, satAdjust, contrastAdjust, tintAdjust) = getFilmSimulationParams(simulation)
+        // Get simulation-specific tone curve and tint
+        let (curve, _, _, tintAdjust) = getFilmSimulationParams(simulation)
 
-        // Apply tone curve
+        // Apply tone curve (defines the film's tonal response)
         if !curve.isIdentity {
             result = applyToneCurve(to: result, curve: curve)
         }
 
-        // Apply saturation adjustment
-        if abs(satAdjust) > kFilterEpsilon {
-            result = applySaturation(to: result, amount: satAdjust)
-        }
-
-        // Apply contrast adjustment
-        if abs(contrastAdjust) > kFilterEpsilon {
-            result = applyContrast(to: result, amount: contrastAdjust)
-        }
-
-        // Apply tint adjustment (green-magenta shift)
+        // Apply tint adjustment (green-magenta shift characteristic of the film)
         if abs(tintAdjust) > kFilterEpsilon {
             result = applyWhiteBalance(to: result, temperature: 0, tint: tintAdjust)
+        }
+
+        // B&W simulations force grayscale conversion
+        if simulation.isMonochrome {
+            result = applySaturation(to: result, amount: -100)
         }
 
         return result
@@ -1828,8 +1844,9 @@ actor FilterEngine {
 
         // Convert -9...+9 shifts to color matrix adjustments
         // Positive red shift = warmer, positive blue shift = cooler
-        let rFactor = 1.0 + Float(shift.redShift) * 0.015   // ±13.5% per unit
-        let bFactor = 1.0 + Float(shift.blueShift) * 0.015
+        // Using 0.008 multiplier for subtle, natural color shifts (±7.2% at max)
+        let rFactor = 1.0 + Float(shift.redShift) * 0.008
+        let bFactor = 1.0 + Float(shift.blueShift) * 0.008
 
         guard let filter = CIFilter(name: "CIColorMatrix") else {
             return image

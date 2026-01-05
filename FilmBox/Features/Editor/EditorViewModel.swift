@@ -658,9 +658,9 @@ final class EditorViewModel {
             output = applyDynamicRange(parameters.dynamicRange, to: output)
         }
 
-        // Apply film simulation (Fuji-style tone curves and color)
+        // Apply film simulation (Fuji-style tone curves only - saturation comes from params)
         if parameters.filmSimulation != .none {
-            output = await applyFilmSimulation(parameters.filmSimulation, to: output)
+            output = applyFilmSimulation(parameters.filmSimulation, to: output)
         }
 
         // Apply Color Chrome (deep color enhancement)
@@ -1272,8 +1272,9 @@ final class EditorViewModel {
 
         // Convert -9...+9 shifts to color matrix adjustments
         // Positive red shift = warmer, positive blue shift = cooler
-        let rFactor = 1.0 + Float(shift.redShift) * 0.015   // ±13.5% per unit
-        let bFactor = 1.0 + Float(shift.blueShift) * 0.015
+        // Using 0.008 multiplier for subtle, natural color shifts (±7.2% at max)
+        let rFactor = 1.0 + Float(shift.redShift) * 0.008
+        let bFactor = 1.0 + Float(shift.blueShift) * 0.008
 
         guard let filter = CIFilter(name: "CIColorMatrix") else {
             return image
@@ -1312,15 +1313,71 @@ final class EditorViewModel {
         return filter.outputImage ?? image
     }
 
-    /// Apply Fuji-style film simulation
-    private func applyFilmSimulation(_ simulation: FilmSimulationType, to image: CIImage) async -> CIImage {
+    /// Apply Fuji-style film simulation (tone curves + B&W for monochrome types)
+    /// Color saturation comes from preset params, except B&W simulations force grayscale
+    private func applyFilmSimulation(_ simulation: FilmSimulationType, to image: CIImage) -> CIImage {
         guard simulation != .none else { return image }
 
-        // Use FilterEngine's implementation for consistency
-        return await FilterEngine.shared.apply(
-            FilterParameters(filmSimulation: simulation),
-            to: image
-        )
+        var result = image
+
+        // Get simulation-specific tone curve
+        let curve = getFilmSimulationCurve(simulation)
+
+        // Apply tone curve
+        if !curve.isIdentity {
+            guard let filter = CIFilter(name: "CIToneCurve") else { return image }
+            filter.setValue(result, forKey: kCIInputImageKey)
+            let points = curve.composite
+            filter.setValue(CIVector(x: CGFloat(points[0].x), y: CGFloat(points[0].y)), forKey: "inputPoint0")
+            filter.setValue(CIVector(x: CGFloat(points[1].x), y: CGFloat(points[1].y)), forKey: "inputPoint1")
+            filter.setValue(CIVector(x: CGFloat(points[2].x), y: CGFloat(points[2].y)), forKey: "inputPoint2")
+            filter.setValue(CIVector(x: CGFloat(points[3].x), y: CGFloat(points[3].y)), forKey: "inputPoint3")
+            filter.setValue(CIVector(x: CGFloat(points[4].x), y: CGFloat(points[4].y)), forKey: "inputPoint4")
+            result = filter.outputImage ?? result
+        }
+
+        // B&W simulations (like Acros) force grayscale
+        if simulation.isMonochrome {
+            if let filter = CIFilter(name: "CIColorControls") {
+                filter.setValue(result, forKey: kCIInputImageKey)
+                filter.setValue(0.0, forKey: kCIInputSaturationKey)  // Full desaturation
+                result = filter.outputImage ?? result
+            }
+        }
+
+        return result
+    }
+
+    /// Get tone curve for film simulation
+    private func getFilmSimulationCurve(_ sim: FilmSimulationType) -> ToneCurveData {
+        switch sim {
+        case .none:
+            return .identity
+        case .classicNegative:
+            return ToneCurveData(
+                composite: [
+                    .init(x: 0, y: 0.06), .init(x: 0.25, y: 0.18),
+                    .init(x: 0.5, y: 0.48), .init(x: 0.75, y: 0.78), .init(x: 1, y: 0.96)
+                ], red: [], green: [], blue: []
+            )
+        case .classicChrome:
+            return ToneCurveData(
+                composite: [
+                    .init(x: 0, y: 0.04), .init(x: 0.25, y: 0.21),
+                    .init(x: 0.5, y: 0.46), .init(x: 0.75, y: 0.73), .init(x: 1, y: 0.95)
+                ], red: [], green: [], blue: []
+            )
+        case .acros:
+            return ToneCurveData(
+                composite: [
+                    .init(x: 0, y: 0.0), .init(x: 0.25, y: 0.20),
+                    .init(x: 0.5, y: 0.50), .init(x: 0.75, y: 0.80), .init(x: 1, y: 1.0)
+                ], red: [], green: [], blue: []
+            )
+        default:
+            // For other simulations, use identity (subtle curve)
+            return .identity
+        }
     }
 
     /// Apply Color Chrome effect - enhances deep colors
