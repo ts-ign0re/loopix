@@ -47,7 +47,7 @@ actor CloudBackupManager {
 
     // MARK: - Constants
 
-    private let containerID = "iCloud.redroom.truebloom.ltd"
+    private let containerID = "iCloud.loopix.truebloom.ltd"
     private let backupFileName = "backup.json"
     private let localVersionKey = "com.filmbox.cloudBackupVersion"
     private let localCreatedAtKey = "com.filmbox.cloudBackupCreatedAt"
@@ -187,7 +187,9 @@ actor CloudBackupManager {
     // MARK: - Cloud URL
 
     private func getCloudBackupURL() -> URL? {
-        guard let containerURL = FileManager.default.url(forUbiquityContainerIdentifier: containerID) else {
+        guard
+            let containerURL = FileManager.default.url(forUbiquityContainerIdentifier: containerID)
+        else {
             return nil
         }
 
@@ -195,7 +197,8 @@ actor CloudBackupManager {
 
         // Ensure Documents directory exists
         if !FileManager.default.fileExists(atPath: documentsURL.path) {
-            try? FileManager.default.createDirectory(at: documentsURL, withIntermediateDirectories: true)
+            try? FileManager.default.createDirectory(
+                at: documentsURL, withIntermediateDirectories: true)
         }
 
         return documentsURL.appendingPathComponent(backupFileName)

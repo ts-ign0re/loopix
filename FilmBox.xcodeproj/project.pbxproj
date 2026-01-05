@@ -900,7 +900,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = redroom.truebloom.ltd;
+				PRODUCT_BUNDLE_IDENTIFIER = loopix.truebloom.ltd;
 				PRODUCT_NAME = FilmBox;
 				SDKROOT = iphoneos;
 				SWIFT_EMIT_LOC_STRINGS = YES;
