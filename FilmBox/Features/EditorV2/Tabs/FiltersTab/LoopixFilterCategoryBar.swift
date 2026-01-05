@@ -68,9 +68,9 @@ extension FilterCategory {
     var loopixDisplayName: String {
         switch self {
         case .all:
-            return "" // Not displayed
+            return ""  // Not displayed
         case .favorites:
-            return "" // Shows star icon instead
+            return ""  // Shows star icon instead
         case .custom:
             return "my filters"
         case .fujiRecipes:

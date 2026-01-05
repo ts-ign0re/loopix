@@ -37,7 +37,7 @@ enum FujiRecipes {
         id: uuid(for: "Classic Cuban Neg"),
         name: "Classic Cuban Neg",
         category: .fujiRecipes,
-        source: .imported(sourceName: "Fuji Recipe"),
+        source: .builtIn,
         parameters: FujiRecipeImporter.convertRecipe(
             filmSimulation: "Classic Negative",
             grainEffect: "Strong / Large",
@@ -66,7 +66,7 @@ enum FujiRecipes {
         id: uuid(for: "Cinematic Gold"),
         name: "Cinematic Gold",
         category: .fujiRecipes,
-        source: .imported(sourceName: "Fuji Recipe"),
+        source: .builtIn,
         parameters: FujiRecipeImporter.convertRecipe(
             filmSimulation: "Classic Negative",
             grainEffect: "Strong / Small",
@@ -95,7 +95,7 @@ enum FujiRecipes {
         id: uuid(for: "Summer Chrome"),
         name: "Summer Chrome",
         category: .fujiRecipes,
-        source: .imported(sourceName: "Fuji Recipe"),
+        source: .builtIn,
         parameters: FujiRecipeImporter.convertRecipe(
             filmSimulation: "Classic Chrome",
             grainEffect: "Strong / Large",
@@ -124,7 +124,7 @@ enum FujiRecipes {
         id: uuid(for: "Last Summer Roll"),
         name: "Last Summer Roll",
         category: .fujiRecipes,
-        source: .imported(sourceName: "Fuji Recipe"),
+        source: .builtIn,
         parameters: FujiRecipeImporter.convertRecipe(
             filmSimulation: "Classic Negative",
             grainEffect: "Strong / Small",
@@ -153,7 +153,7 @@ enum FujiRecipes {
         id: uuid(for: "Classic Continental"),
         name: "Classic Continental",
         category: .fujiRecipes,
-        source: .imported(sourceName: "Fuji Recipe"),
+        source: .builtIn,
         parameters: FujiRecipeImporter.convertRecipe(
             filmSimulation: "Classic Negative",
             grainEffect: "Weak / Small",
@@ -182,7 +182,7 @@ enum FujiRecipes {
         id: uuid(for: "Savanna Chrome"),
         name: "Savanna Chrome",
         category: .fujiRecipes,
-        source: .imported(sourceName: "Fuji Recipe"),
+        source: .builtIn,
         parameters: FujiRecipeImporter.convertRecipe(
             filmSimulation: "Classic Chrome",
             grainEffect: "Strong / Small",
@@ -211,7 +211,7 @@ enum FujiRecipes {
         id: uuid(for: "7 Iron"),
         name: "7 Iron",
         category: .fujiRecipes,
-        source: .imported(sourceName: "Fuji Recipe"),
+        source: .builtIn,
         parameters: FujiRecipeImporter.convertRecipe(
             filmSimulation: "Classic Negative",
             grainEffect: "Weak / Small",
@@ -240,7 +240,7 @@ enum FujiRecipes {
         id: uuid(for: "Kodak Gold 200"),
         name: "Kodak Gold 200",
         category: .fujiRecipes,
-        source: .imported(sourceName: "Fuji Recipe"),
+        source: .builtIn,
         parameters: FujiRecipeImporter.convertRecipe(
             filmSimulation: "Classic Negative",
             grainEffect: "Weak / Small",
@@ -269,7 +269,7 @@ enum FujiRecipes {
         id: uuid(for: "Portra 400"),
         name: "Portra 400",
         category: .fujiRecipes,
-        source: .imported(sourceName: "Fuji Recipe"),
+        source: .builtIn,
         parameters: FujiRecipeImporter.convertRecipe(
             filmSimulation: "Nostalgic Neg",
             grainEffect: "Weak / Small",
@@ -298,7 +298,7 @@ enum FujiRecipes {
         id: uuid(for: "Tokyo Streets"),
         name: "Tokyo Streets",
         category: .fujiRecipes,
-        source: .imported(sourceName: "Fuji Recipe"),
+        source: .builtIn,
         parameters: FujiRecipeImporter.convertRecipe(
             filmSimulation: "Classic Chrome",
             grainEffect: "Strong / Small",
@@ -327,7 +327,7 @@ enum FujiRecipes {
         id: uuid(for: "Nordic Light"),
         name: "Nordic Light",
         category: .fujiRecipes,
-        source: .imported(sourceName: "Fuji Recipe"),
+        source: .builtIn,
         parameters: FujiRecipeImporter.convertRecipe(
             filmSimulation: "Provia",
             grainEffect: "Off",
@@ -356,7 +356,7 @@ enum FujiRecipes {
         id: uuid(for: "Warm Nostalgia"),
         name: "Warm Nostalgia",
         category: .fujiRecipes,
-        source: .imported(sourceName: "Fuji Recipe"),
+        source: .builtIn,
         parameters: FujiRecipeImporter.convertRecipe(
             filmSimulation: "Classic Negative",
             grainEffect: "Strong / Large",
@@ -385,7 +385,7 @@ enum FujiRecipes {
         id: uuid(for: "Eterna Cinema"),
         name: "Eterna Cinema",
         category: .fujiRecipes,
-        source: .imported(sourceName: "Fuji Recipe"),
+        source: .builtIn,
         parameters: FujiRecipeImporter.convertRecipe(
             filmSimulation: "Eterna",
             grainEffect: "Off",
@@ -414,7 +414,7 @@ enum FujiRecipes {
         id: uuid(for: "Acros Street"),
         name: "Acros Street",
         category: .fujiRecipes,
-        source: .imported(sourceName: "Fuji Recipe"),
+        source: .builtIn,
         parameters: FujiRecipeImporter.convertRecipe(
             filmSimulation: "Acros",
             grainEffect: "Strong / Small",
@@ -443,7 +443,7 @@ enum FujiRecipes {
         id: uuid(for: "Velvia Landscape"),
         name: "Velvia Landscape",
         category: .fujiRecipes,
-        source: .imported(sourceName: "Fuji Recipe"),
+        source: .builtIn,
         parameters: FujiRecipeImporter.convertRecipe(
             filmSimulation: "Velvia",
             grainEffect: "Off",
