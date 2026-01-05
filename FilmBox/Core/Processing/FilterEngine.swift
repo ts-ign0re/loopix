@@ -492,6 +492,12 @@ actor FilterEngine {
             result = applyHSLAdjustments(to: result, hsl: params.hsl)
         }
 
+        // 2.5. RGB Channel Curves (for orthochromatic B&W etc.)
+        // Applied BEFORE saturation so darkened red channel affects grayscale conversion
+        if hasRGBCurves(params.toneCurve) {
+            result = applyRGBCurves(to: result, curve: params.toneCurve)
+        }
+
         // 3. Saturation & Vibrance
         if params.saturation != 0 {
             result = applySaturation(to: result, amount: params.saturation)
@@ -727,7 +733,8 @@ actor FilterEngine {
     /// - Returns: Adjusted image
     private func applyRGBCurves(to image: CIImage, curve: ToneCurveData) -> CIImage {
         // Build 1D LUTs for each channel
-        let lutSize = 256
+        // Use 33x33x33 cube (same as professional LUTs) - 143K values vs 67M for 256^3
+        let lutSize = 33
         var cubeData = [Float](repeating: 0, count: lutSize * lutSize * lutSize * 4)
 
         // Get interpolated values for each channel

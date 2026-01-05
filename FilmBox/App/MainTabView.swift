@@ -655,15 +655,24 @@ struct LibraryContentView: View {
                 if let ciImage = ImportedPhotosManager.shared.loadCIImage(for: item.photo) {
                     var processedImage = ciImage
 
-                    // Apply filter preset (CLUT) if selected
+                    // Apply filter preset if selected
                     if let presetID = item.snapshot?.selectedPresetID {
                         let allPresets = await FilterStorage.shared.allPresets
                         if var preset = allPresets.first(where: { $0.id == presetID }) {
-                            // Apply preset with intensity
                             let intensity = item.snapshot?.filterIntensity ?? 100
-                            preset.clutIntensity = intensity
-                            processedImage = await FilterEngine.shared.apply(
-                                preset, to: processedImage)
+
+                            // For CLUT-based presets, use clutIntensity
+                            // For parameter-based presets, interpolate parameters by intensity
+                            if preset.clutPath != nil {
+                                preset.clutIntensity = intensity
+                                processedImage = await FilterEngine.shared.apply(
+                                    preset, to: processedImage)
+                            } else {
+                                // Parameter-based preset: apply interpolated parameters
+                                let filterParams = preset.parameters(at: intensity)
+                                processedImage = await FilterEngine.shared.apply(
+                                    filterParams, to: processedImage)
+                            }
                             hasFilter = true
                         }
                     }

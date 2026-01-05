@@ -326,6 +326,26 @@ extension FilterParameters {
                 let bY = b.toneCurve.composite[i].y
                 newCurve.composite[i].y = aY + (bY - aY) * t
             }
+
+            // RGB channel curves - interpolate or copy from target
+            // For RGB curves, if target has them, use them (scaled by t for smooth transition)
+            if !b.toneCurve.red.isEmpty {
+                newCurve.red = b.toneCurve.red.map { point in
+                    // Interpolate Y values from identity (x=y) to target
+                    ToneCurveData.CurvePoint(x: point.x, y: point.x + (point.y - point.x) * t)
+                }
+            }
+            if !b.toneCurve.green.isEmpty {
+                newCurve.green = b.toneCurve.green.map { point in
+                    ToneCurveData.CurvePoint(x: point.x, y: point.x + (point.y - point.x) * t)
+                }
+            }
+            if !b.toneCurve.blue.isEmpty {
+                newCurve.blue = b.toneCurve.blue.map { point in
+                    ToneCurveData.CurvePoint(x: point.x, y: point.x + (point.y - point.x) * t)
+                }
+            }
+
             result.toneCurve = newCurve
         }
 
