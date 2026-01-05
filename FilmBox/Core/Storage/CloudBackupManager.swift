@@ -49,7 +49,7 @@ actor CloudBackupManager {
 
     private let containerID = "iCloud.loopix.truebloom.ltd"
     private let backupFileName = "backup.json"
-    private let localVersionKey = "com.filmbox.cloudBackupVersion"
+    private let localVersionKey = "ltd.truebloom.loopix.cloudBackupVersion"
     private let localCreatedAtKey = "com.filmbox.cloudBackupCreatedAt"
 
     // MARK: - State
