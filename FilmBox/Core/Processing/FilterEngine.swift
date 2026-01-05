@@ -221,7 +221,14 @@ actor FilterEngine {
             result = applyHSLAdjustments(to: result, hsl: parameters.hsl)
         }
 
+        // 5.5. RGB Channel Curves (for orthochromatic B&W etc.)
+        // Applied BEFORE saturation so darkened red channel affects grayscale conversion
+        if hasRGBCurves(parameters.toneCurve) {
+            result = applyRGBCurves(to: result, curve: parameters.toneCurve)
+        }
+
         // 6. Saturation & Vibrance
+        // Now uses standard grayscale conversion - RGB curves already modified the channels
         if parameters.saturation != 0 {
             result = applySaturation(to: result, amount: parameters.saturation)
         }
@@ -693,6 +700,8 @@ actor FilterEngine {
     ///   - curve: Tone curve data with control points
     /// - Returns: Adjusted image
     func applyToneCurve(to image: CIImage, curve: ToneCurveData) -> CIImage {
+        // Note: RGB channel curves are now used in applyBWChannelMixer for B&W conversion
+        // Apply composite curve only here
         guard let filter = getCachedFilter(name: "CIToneCurve") else {
             return image
         }
@@ -709,6 +718,211 @@ actor FilterEngine {
         filter.setValue(CIVector(x: CGFloat(points[4].x), y: CGFloat(points[4].y)), forKey: "inputPoint4")
 
         return filter.outputImage ?? image
+    }
+
+    /// Apply individual RGB channel curves using color cube LUT (kept for potential future use)
+    /// - Parameters:
+    ///   - image: Source image
+    ///   - curve: Tone curve data with R, G, B channel curves
+    /// - Returns: Adjusted image
+    private func applyRGBCurves(to image: CIImage, curve: ToneCurveData) -> CIImage {
+        // Build 1D LUTs for each channel
+        let lutSize = 256
+        var cubeData = [Float](repeating: 0, count: lutSize * lutSize * lutSize * 4)
+
+        // Get interpolated values for each channel
+        let redLUT = buildChannelLUT(from: curve.red, size: lutSize)
+        let greenLUT = buildChannelLUT(from: curve.green, size: lutSize)
+        let blueLUT = buildChannelLUT(from: curve.blue, size: lutSize)
+
+        // Fill 3D cube - for each input RGB, output the curved value
+        for b in 0..<lutSize {
+            for g in 0..<lutSize {
+                for r in 0..<lutSize {
+                    let index = (b * lutSize * lutSize + g * lutSize + r) * 4
+                    cubeData[index + 0] = redLUT[r]
+                    cubeData[index + 1] = greenLUT[g]
+                    cubeData[index + 2] = blueLUT[b]
+                    cubeData[index + 3] = 1.0
+                }
+            }
+        }
+
+        let data = Data(bytes: cubeData, count: cubeData.count * MemoryLayout<Float>.size)
+
+        guard let filter = CIFilter(name: "CIColorCubeWithColorSpace") else {
+            return image
+        }
+
+        filter.setValue(image, forKey: kCIInputImageKey)
+        filter.setValue(lutSize, forKey: "inputCubeDimension")
+        filter.setValue(data, forKey: "inputCubeData")
+        filter.setValue(CGColorSpaceCreateDeviceRGB(), forKey: "inputColorSpace")
+
+        return filter.outputImage ?? image
+    }
+
+    /// Build a 1D lookup table from curve control points
+    /// - Parameters:
+    ///   - points: Control points for the curve
+    ///   - size: Size of the LUT (typically 256)
+    /// - Returns: Array of output values for each input level
+    private func buildChannelLUT(from points: [ToneCurveData.CurvePoint], size: Int) -> [Float] {
+        // If no points, return identity LUT
+        if points.isEmpty {
+            return (0..<size).map { Float($0) / Float(size - 1) }
+        }
+
+        // Ensure we have at least 2 points
+        var curvePoints = points
+        if curvePoints.count < 2 {
+            curvePoints = [.init(x: 0, y: 0), .init(x: 1, y: 1)]
+        }
+
+        // Sort by x
+        curvePoints.sort { $0.x < $1.x }
+
+        // Ensure start and end points
+        if curvePoints.first!.x > 0 {
+            curvePoints.insert(.init(x: 0, y: curvePoints.first!.y), at: 0)
+        }
+        if curvePoints.last!.x < 1 {
+            curvePoints.append(.init(x: 1, y: curvePoints.last!.y))
+        }
+
+        // Build LUT with linear interpolation
+        var lut = [Float](repeating: 0, count: size)
+        for i in 0..<size {
+            let x = Float(i) / Float(size - 1)
+            lut[i] = interpolateCurve(x: x, points: curvePoints)
+        }
+
+        return lut
+    }
+
+    /// Check if tone curve has RGB channel adjustments
+    private func hasRGBCurves(_ curve: ToneCurveData) -> Bool {
+        return !curve.red.isEmpty || !curve.green.isEmpty || !curve.blue.isEmpty
+    }
+
+    /// Apply B&W conversion using channel weights derived from RGB curves
+    /// This allows orthochromatic film simulation where red is suppressed
+    private func applyBWChannelMixer(to image: CIImage, curve: ToneCurveData) -> CIImage {
+        // Standard luminance weights
+        let stdR: Float = 0.299
+        let stdG: Float = 0.587
+        let stdB: Float = 0.114
+
+        // Calculate multiplier from curve at midpoint (0.5)
+        // If curve outputs 0.35 at input 0.5, multiplier = 0.35/0.5 = 0.7
+        let redMult = getMidpointMultiplier(from: curve.red)
+        let greenMult = getMidpointMultiplier(from: curve.green)
+        let blueMult = getMidpointMultiplier(from: curve.blue)
+
+        // Apply multipliers to standard weights
+        var weightR = stdR * redMult
+        var weightG = stdG * greenMult
+        var weightB = stdB * blueMult
+
+        // Normalize to sum to 1.0
+        let total = weightR + weightG + weightB
+        if total > 0.001 {
+            weightR /= total
+            weightG /= total
+            weightB /= total
+        }
+
+        // Use CIColorMatrix to convert to grayscale with custom weights
+        guard let filter = CIFilter(name: "CIColorMatrix") else {
+            return image
+        }
+
+        // For grayscale: output R=G=B = weightR*R + weightG*G + weightB*B
+        filter.setValue(image, forKey: kCIInputImageKey)
+        filter.setValue(CIVector(x: CGFloat(weightR), y: CGFloat(weightG), z: CGFloat(weightB), w: 0), forKey: "inputRVector")
+        filter.setValue(CIVector(x: CGFloat(weightR), y: CGFloat(weightG), z: CGFloat(weightB), w: 0), forKey: "inputGVector")
+        filter.setValue(CIVector(x: CGFloat(weightR), y: CGFloat(weightG), z: CGFloat(weightB), w: 0), forKey: "inputBVector")
+        filter.setValue(CIVector(x: 0, y: 0, z: 0, w: 1), forKey: "inputAVector")
+        filter.setValue(CIVector(x: 0, y: 0, z: 0, w: 0), forKey: "inputBiasVector")
+
+        return filter.outputImage ?? image
+    }
+
+    /// Get multiplier from curve at midpoint (0.5) relative to identity
+    /// If curve outputs 0.35 at input 0.5, returns 0.7 (= 0.35/0.5)
+    private func getMidpointMultiplier(from points: [ToneCurveData.CurvePoint]) -> Float {
+        if points.isEmpty {
+            return 1.0  // Identity
+        }
+
+        let midpointOutput = interpolateCurveSimple(x: 0.5, points: points)
+        // Multiplier = output / expected (0.5 for identity)
+        return midpointOutput / 0.5
+    }
+
+    /// Simple linear interpolation for curve
+    private func interpolateCurveSimple(x: Float, points: [ToneCurveData.CurvePoint]) -> Float {
+        guard points.count >= 2 else {
+            return points.first?.y ?? x
+        }
+
+        var sortedPoints = points.sorted { $0.x < $1.x }
+
+        // Ensure we have endpoints
+        if sortedPoints.first!.x > 0 {
+            sortedPoints.insert(.init(x: 0, y: sortedPoints.first!.y), at: 0)
+        }
+        if sortedPoints.last!.x < 1 {
+            sortedPoints.append(.init(x: 1, y: sortedPoints.last!.y))
+        }
+
+        // Find segment
+        for i in 0..<sortedPoints.count - 1 {
+            if x >= sortedPoints[i].x && x <= sortedPoints[i + 1].x {
+                let p1 = sortedPoints[i]
+                let p2 = sortedPoints[i + 1]
+                let t = (p2.x - p1.x) > 0.0001 ? (x - p1.x) / (p2.x - p1.x) : 0
+                return p1.y + t * (p2.y - p1.y)
+            }
+        }
+
+        return x
+    }
+
+    /// Interpolate a value on the curve using catmull-rom spline
+    private func interpolateCurve(x: Float, points: [ToneCurveData.CurvePoint]) -> Float {
+        // Find the segment
+        var lowerIndex = 0
+        for i in 0..<points.count - 1 {
+            if x >= points[i].x && x <= points[i + 1].x {
+                lowerIndex = i
+                break
+            }
+        }
+
+        let p0 = points[max(0, lowerIndex - 1)]
+        let p1 = points[lowerIndex]
+        let p2 = points[min(points.count - 1, lowerIndex + 1)]
+        let p3 = points[min(points.count - 1, lowerIndex + 2)]
+
+        // Catmull-Rom parameter
+        let t: Float
+        if p2.x - p1.x > 0.0001 {
+            t = (x - p1.x) / (p2.x - p1.x)
+        } else {
+            t = 0
+        }
+
+        // Catmull-Rom spline
+        let t2 = t * t
+        let t3 = t2 * t
+
+        let y = 0.5 * ((2 * p1.y) +
+                       (-p0.y + p2.y) * t +
+                       (2 * p0.y - 5 * p1.y + 4 * p2.y - p3.y) * t2 +
+                       (-p0.y + 3 * p1.y - 3 * p2.y + p3.y) * t3)
+
+        return max(0, min(1, y))
     }
 
     /// Apply clarity adjustment using unsharp mask with low radius
@@ -863,7 +1077,10 @@ actor FilterEngine {
 
     /// Apply per-channel HSL adjustments using CIColorCubeWithColorSpace
     /// This creates a 3D LUT that maps input colors to adjusted colors
-    private func applyHSLAdjustments(to image: CIImage, hsl: HSLAdjustments) -> CIImage {
+    /// Apply HSL adjustments using a 3D color cube LUT
+    /// This is used for per-channel hue, saturation, and luminance control
+    /// Made non-isolated so it can be called from EditorViewModel synchronously
+    nonisolated func applyHSLAdjustments(to image: CIImage, hsl: HSLAdjustments) -> CIImage {
         // Create color cube data for HSL adjustments
         let cubeSize = 17  // 17x17x17 LUT - 7x faster than 32 (4913 vs 32768 iterations)
         let cubeData = generateHSLColorCube(size: cubeSize, adjustments: hsl)
@@ -881,7 +1098,7 @@ actor FilterEngine {
     }
 
     /// Generate 3D color cube data for HSL adjustments
-    private func generateHSLColorCube(size: Int, adjustments: HSLAdjustments) -> Data {
+    private nonisolated func generateHSLColorCube(size: Int, adjustments: HSLAdjustments) -> Data {
         var cubeData = [Float]()
         cubeData.reserveCapacity(size * size * size * 4)
 
@@ -919,7 +1136,7 @@ actor FilterEngine {
     }
 
     /// Get HSL adjustments for a specific hue based on which color channel it belongs to
-    private func getChannelAdjustments(hue: Float, adjustments: HSLAdjustments) -> (Float, Float, Float) {
+    private nonisolated func getChannelAdjustments(hue: Float, adjustments: HSLAdjustments) -> (Float, Float, Float) {
         // Define hue ranges for each channel (0-1 range, where 0 and 1 are both red)
         // Red: 0.0 (345°-15° = 0.958-0.042)
         // Orange: 0.083 (15°-45° = 0.042-0.125)
@@ -970,7 +1187,7 @@ actor FilterEngine {
     }
 
     /// Convert RGB to HSL
-    private func rgbToHSL(r: Float, g: Float, b: Float) -> (h: Float, s: Float, l: Float) {
+    private nonisolated func rgbToHSL(r: Float, g: Float, b: Float) -> (h: Float, s: Float, l: Float) {
         let maxC = max(r, max(g, b))
         let minC = min(r, min(g, b))
         let delta = maxC - minC
@@ -997,7 +1214,7 @@ actor FilterEngine {
     }
 
     /// Convert HSL to RGB
-    private func hslToRGB(h: Float, s: Float, l: Float) -> (r: Float, g: Float, b: Float) {
+    private nonisolated func hslToRGB(h: Float, s: Float, l: Float) -> (r: Float, g: Float, b: Float) {
         if s < kFilterEpsilon {
             return (l, l, l)
         }

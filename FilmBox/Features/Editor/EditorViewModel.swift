@@ -648,7 +648,21 @@ final class EditorViewModel {
             }
         }
 
-        // Apply saturation adjustment
+        // Apply HSL adjustments (per-channel hue, saturation, luminance)
+        if !parameters.hsl.isIdentity {
+            output = FilterEngine.shared.applyHSLAdjustments(to: output, hsl: parameters.hsl)
+        }
+
+        // Apply RGB channel curves (for orthochromatic B&W etc.)
+        // Applied BEFORE saturation so modified channels affect grayscale conversion
+        let hasRGBCurves = !parameters.toneCurve.red.isEmpty ||
+                          !parameters.toneCurve.green.isEmpty ||
+                          !parameters.toneCurve.blue.isEmpty
+        if hasRGBCurves {
+            output = applyRGBCurves(output, toneCurve: parameters.toneCurve)
+        }
+
+        // Apply saturation adjustment (standard grayscale conversion)
         if parameters.saturation != 0 {
             if let filter = CIFilter(name: "CIColorControls") {
                 filter.setValue(output, forKey: kCIInputImageKey)
@@ -1040,6 +1054,88 @@ final class EditorViewModel {
         filter.setValue(CGFloat(vignette.feather), forKey: "inputFalloff")
 
         return filter.outputImage ?? image
+    }
+
+    // MARK: - RGB Channel Curves
+
+    /// Apply RGB channel curves using 3D color cube LUT
+    /// This directly modifies R, G, B channels before grayscale conversion
+    private func applyRGBCurves(_ image: CIImage, toneCurve: ToneCurveData) -> CIImage {
+        let lutSize = 64  // Smaller than FilterEngine's 256 for performance
+        var cubeData = [Float](repeating: 0, count: lutSize * lutSize * lutSize * 4)
+
+        // Build 1D LUTs for each channel
+        let redLUT = buildChannelLUT(from: toneCurve.red, size: lutSize)
+        let greenLUT = buildChannelLUT(from: toneCurve.green, size: lutSize)
+        let blueLUT = buildChannelLUT(from: toneCurve.blue, size: lutSize)
+
+        // Fill 3D cube
+        for b in 0..<lutSize {
+            for g in 0..<lutSize {
+                for r in 0..<lutSize {
+                    let index = (b * lutSize * lutSize + g * lutSize + r) * 4
+                    cubeData[index + 0] = redLUT[r]
+                    cubeData[index + 1] = greenLUT[g]
+                    cubeData[index + 2] = blueLUT[b]
+                    cubeData[index + 3] = 1.0
+                }
+            }
+        }
+
+        let data = Data(bytes: cubeData, count: cubeData.count * MemoryLayout<Float>.size)
+
+        guard let filter = CIFilter(name: "CIColorCubeWithColorSpace") else {
+            return image
+        }
+
+        filter.setValue(image, forKey: kCIInputImageKey)
+        filter.setValue(lutSize, forKey: "inputCubeDimension")
+        filter.setValue(data, forKey: "inputCubeData")
+        filter.setValue(CGColorSpaceCreateDeviceRGB(), forKey: "inputColorSpace")
+
+        return filter.outputImage ?? image
+    }
+
+    /// Build 1D LUT from curve points
+    private func buildChannelLUT(from points: [ToneCurveData.CurvePoint], size: Int) -> [Float] {
+        if points.isEmpty {
+            return (0..<size).map { Float($0) / Float(size - 1) }
+        }
+
+        var curvePoints = points
+        curvePoints.sort { $0.x < $1.x }
+
+        // Ensure start and end points
+        if curvePoints.first!.x > 0 {
+            curvePoints.insert(.init(x: 0, y: curvePoints.first!.y), at: 0)
+        }
+        if curvePoints.last!.x < 1 {
+            curvePoints.append(.init(x: 1, y: curvePoints.last!.y))
+        }
+
+        var lut = [Float](repeating: 0, count: size)
+        for i in 0..<size {
+            let x = Float(i) / Float(size - 1)
+            lut[i] = interpolateCurve(x: x, points: curvePoints)
+        }
+
+        return lut
+    }
+
+    /// Linear interpolation for curve
+    private func interpolateCurve(x: Float, points: [ToneCurveData.CurvePoint]) -> Float {
+        guard points.count >= 2 else {
+            return points.first?.y ?? x
+        }
+
+        for i in 0..<(points.count - 1) {
+            if x >= points[i].x && x <= points[i + 1].x {
+                let t = (x - points[i].x) / (points[i + 1].x - points[i].x)
+                return points[i].y + t * (points[i + 1].y - points[i].y)
+            }
+        }
+
+        return points.last?.y ?? x
     }
 
     // MARK: - Grain

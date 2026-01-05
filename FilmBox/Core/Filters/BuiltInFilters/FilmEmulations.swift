@@ -733,24 +733,30 @@ enum FilmEmulations {
                     .init(x: 0.9, y: 0.94),
                     .init(x: 1, y: 1)
                 ],
-                red: [],
-                green: [],
-                blue: []
+                red: [
+                    // Tri-X: boosted red for skin tones
+                    .init(x: 0, y: 0),
+                    .init(x: 0.5, y: 0.58),   // Boosted (mult = 1.16)
+                    .init(x: 1, y: 1)
+                ],
+                green: [
+                    // Standard green
+                    .init(x: 0, y: 0),
+                    .init(x: 0.5, y: 0.50),   // Neutral
+                    .init(x: 1, y: 1)
+                ],
+                blue: [
+                    // Suppressed blue for dark skies
+                    .init(x: 0, y: 0),
+                    .init(x: 0.5, y: 0.38),   // Suppressed (mult = 0.76)
+                    .init(x: 1, y: 0.85)
+                ]
             ),
             temperature: 0,
             tint: 0,
             saturation: -100,
             vibrance: 0,
-            hsl: HSLAdjustments(
-                red: .init(hue: 0, saturation: 0, luminance: -10),
-                orange: .init(hue: 0, saturation: 0, luminance: 15),
-                yellow: .init(hue: 0, saturation: 0, luminance: 20),
-                green: .init(hue: 0, saturation: 0, luminance: -5),
-                aqua: .init(hue: 0, saturation: 0, luminance: -15),
-                blue: .init(hue: 0, saturation: 0, luminance: -25),
-                purple: .init(hue: 0, saturation: 0, luminance: -15),
-                magenta: .init(hue: 0, saturation: 0, luminance: -10)
-            ),
+            hsl: .identity,
             splitTone: .identity,
             skinToneHue: 0,
             skinToneSaturation: 0,
@@ -795,24 +801,30 @@ enum FilmEmulations {
                     .init(x: 0.75, y: 0.78),
                     .init(x: 1, y: 0.99)
                 ],
-                red: [],
-                green: [],
-                blue: []
+                red: [
+                    // HP5: slightly boosted red, classic balanced look
+                    .init(x: 0, y: 0),
+                    .init(x: 0.5, y: 0.54),   // Slightly boosted
+                    .init(x: 1, y: 1)
+                ],
+                green: [
+                    // Neutral green
+                    .init(x: 0, y: 0),
+                    .init(x: 0.5, y: 0.52),
+                    .init(x: 1, y: 1)
+                ],
+                blue: [
+                    // Slightly suppressed blue
+                    .init(x: 0, y: 0),
+                    .init(x: 0.5, y: 0.44),
+                    .init(x: 1, y: 0.92)
+                ]
             ),
             temperature: 0,
             tint: 0,
             saturation: -100,
             vibrance: 0,
-            hsl: HSLAdjustments(
-                red: .init(hue: 0, saturation: 0, luminance: -5),
-                orange: .init(hue: 0, saturation: 0, luminance: 10),
-                yellow: .init(hue: 0, saturation: 0, luminance: 15),
-                green: .init(hue: 0, saturation: 0, luminance: 5),
-                aqua: .init(hue: 0, saturation: 0, luminance: -5),
-                blue: .init(hue: 0, saturation: 0, luminance: -15),
-                purple: .init(hue: 0, saturation: 0, luminance: -10),
-                magenta: .init(hue: 0, saturation: 0, luminance: -5)
-            ),
+            hsl: .identity,
             splitTone: .identity,
             skinToneHue: 0,
             skinToneSaturation: 0,
@@ -857,24 +869,30 @@ enum FilmEmulations {
                     .init(x: 0.75, y: 0.79),
                     .init(x: 1, y: 0.99)
                 ],
-                red: [],
-                green: [],
-                blue: []
+                red: [
+                    // T-Max: slightly suppressed red, technical neutral
+                    .init(x: 0, y: 0),
+                    .init(x: 0.5, y: 0.46),
+                    .init(x: 1, y: 0.95)
+                ],
+                green: [
+                    // Boosted green for tonal separation
+                    .init(x: 0, y: 0),
+                    .init(x: 0.5, y: 0.56),
+                    .init(x: 1, y: 1)
+                ],
+                blue: [
+                    // Moderately suppressed blue
+                    .init(x: 0, y: 0),
+                    .init(x: 0.5, y: 0.40),
+                    .init(x: 1, y: 0.88)
+                ]
             ),
             temperature: 0,
             tint: 0,
             saturation: -100,
             vibrance: 0,
-            hsl: HSLAdjustments(
-                red: .init(hue: 0, saturation: 0, luminance: -8),
-                orange: .init(hue: 0, saturation: 0, luminance: 12),
-                yellow: .init(hue: 0, saturation: 0, luminance: 18),
-                green: .init(hue: 0, saturation: 0, luminance: 0),
-                aqua: .init(hue: 0, saturation: 0, luminance: -10),
-                blue: .init(hue: 0, saturation: 0, luminance: -20),
-                purple: .init(hue: 0, saturation: 0, luminance: -12),
-                magenta: .init(hue: 0, saturation: 0, luminance: -8)
-            ),
+            hsl: .identity,
             splitTone: .identity,
             skinToneHue: 0,
             skinToneSaturation: 0,
@@ -921,24 +939,30 @@ enum FilmEmulations {
                     .init(x: 0.9, y: 0.96),
                     .init(x: 1, y: 1)
                 ],
-                red: [],
-                green: [],
-                blue: []
+                red: [
+                    // Delta 3200: boosted red for low-light skin
+                    .init(x: 0, y: 0),
+                    .init(x: 0.5, y: 0.60),   // Boosted
+                    .init(x: 1, y: 1)
+                ],
+                green: [
+                    // Standard green
+                    .init(x: 0, y: 0),
+                    .init(x: 0.5, y: 0.50),
+                    .init(x: 1, y: 1)
+                ],
+                blue: [
+                    // Suppressed blue for dramatic contrast
+                    .init(x: 0, y: 0),
+                    .init(x: 0.5, y: 0.35),
+                    .init(x: 1, y: 0.80)
+                ]
             ),
             temperature: 0,
             tint: 0,
             saturation: -100,
             vibrance: 0,
-            hsl: HSLAdjustments(
-                red: .init(hue: 0, saturation: 0, luminance: -12),
-                orange: .init(hue: 0, saturation: 0, luminance: 18),
-                yellow: .init(hue: 0, saturation: 0, luminance: 22),
-                green: .init(hue: 0, saturation: 0, luminance: -8),
-                aqua: .init(hue: 0, saturation: 0, luminance: -18),
-                blue: .init(hue: 0, saturation: 0, luminance: -28),
-                purple: .init(hue: 0, saturation: 0, luminance: -18),
-                magenta: .init(hue: 0, saturation: 0, luminance: -12)
-            ),
+            hsl: .identity,
             splitTone: .identity,
             skinToneHue: 0,
             skinToneSaturation: 0,
@@ -983,24 +1007,30 @@ enum FilmEmulations {
                     .init(x: 0.75, y: 0.77),
                     .init(x: 1, y: 0.99)
                 ],
-                red: [],
-                green: [],
-                blue: []
+                red: [
+                    // Delta 100: neutral-to-slightly-suppressed red
+                    .init(x: 0, y: 0),
+                    .init(x: 0.5, y: 0.48),
+                    .init(x: 1, y: 0.98)
+                ],
+                green: [
+                    // Slightly boosted green for smooth tones
+                    .init(x: 0, y: 0),
+                    .init(x: 0.5, y: 0.54),
+                    .init(x: 1, y: 1)
+                ],
+                blue: [
+                    // Balanced blue
+                    .init(x: 0, y: 0),
+                    .init(x: 0.5, y: 0.46),
+                    .init(x: 1, y: 0.94)
+                ]
             ),
             temperature: 0,
             tint: 0,
             saturation: -100,
             vibrance: 0,
-            hsl: HSLAdjustments(
-                red: .init(hue: 0, saturation: 0, luminance: -5),
-                orange: .init(hue: 0, saturation: 0, luminance: 8),
-                yellow: .init(hue: 0, saturation: 0, luminance: 12),
-                green: .init(hue: 0, saturation: 0, luminance: 5),
-                aqua: .init(hue: 0, saturation: 0, luminance: -3),
-                blue: .init(hue: 0, saturation: 0, luminance: -12),
-                purple: .init(hue: 0, saturation: 0, luminance: -8),
-                magenta: .init(hue: 0, saturation: 0, luminance: -5)
-            ),
+            hsl: .identity,
             splitTone: .identity,
             skinToneHue: 0,
             skinToneSaturation: 0,
@@ -1019,6 +1049,134 @@ enum FilmEmulations {
             filmStock: "Ilford Delta 100",
             era: nil,
             characteristics: ["ultra-fine grain", "smooth tones", "exceptional sharpness", "studio quality"],
+            author: "FilmBox"
+        )
+    )
+
+    /// Rollei Ortho 25 - Orthochromatic B&W film, red-blind
+    /// Red channel is suppressed - red objects render dark, blue/green render lighter
+    /// Known for smooth tonal transitions and exceptional sharpness
+    static let bw6 = FilterPreset(
+        id: UUID(uuidString: "10000000-0002-0000-0000-000000000006")!,
+        name: "Rollei Ortho 25",
+        category: .bw,
+        source: .builtIn,
+        parameters: FilterParameters(
+            exposure: 0.5,
+            contrast: 0,
+            highlights: 0,
+            shadows: -12,
+            whites: -70,
+            blacks: 25,
+            toneCurve: ToneCurveData(
+                composite: [
+                    .init(x: 0, y: 0.08),
+                    .init(x: 0.25, y: 0.28),
+                    .init(x: 0.5, y: 0.50),
+                    .init(x: 0.75, y: 0.72),
+                    .init(x: 1, y: 0.94)
+                ],
+                // Orthochromatic: RED channel reduced (film is red-blind)
+                red: [
+                    .init(x: 0, y: 0),
+                    .init(x: 0.25, y: 0.05),
+                    .init(x: 0.5, y: 0.12),
+                    .init(x: 0.75, y: 0.22),
+                    .init(x: 1, y: 0.35)
+                ],
+                green: [],
+                blue: []
+            ),
+            temperature: 0,
+            tint: 0,
+            saturation: -100,
+            vibrance: 0,
+            hsl: .identity,
+            splitTone: .identity,
+            skinToneHue: 0,
+            skinToneSaturation: 0,
+            clarity: 3,
+            grain: GrainData(amount: 8, size: 0.50, roughness: 0.5, monochromatic: true),
+            vignette: VignetteData(amount: 8, midpoint: 0.55, roundness: 0, feather: 0.65),
+            fade: 10,
+            bloom: .none,
+            halation: .none,
+            sharpness: 12,
+            sharpenRadius: 0.8,
+            rotation: 0,
+            cropRect: nil
+        ),
+        metadata: FilterPreset.FilterMetadata(
+            filmStock: "Rollei Ortho 25",
+            era: nil,
+            characteristics: ["orthochromatic", "red-blind", "ultra-fine grain", "smooth tones", "architectural"],
+            author: "FilmBox"
+        )
+    )
+
+    /// Svema Type-42 (Exp. 1991) - Soviet aerial film, expired vintage look
+    /// Panchromatic film with slight IR sensitivity, warm tone from Slavich paper
+    /// Expired stock adds fogging, unique character, and vintage feel
+    static let bw7 = FilterPreset(
+        id: UUID(uuidString: "10000000-0002-0000-0000-000000000007")!,
+        name: "Svema Type-42",
+        category: .bw,
+        source: .builtIn,
+        parameters: FilterParameters(
+            exposure: 0.08,
+            contrast: 12,
+            highlights: -8,
+            shadows: 8,
+            whites: -3,
+            blacks: 5,
+            toneCurve: ToneCurveData(
+                composite: [
+                    .init(x: 0, y: 0.05),      // Lifted blacks (expired film fogging)
+                    .init(x: 0.25, y: 0.27),
+                    .init(x: 0.5, y: 0.52),
+                    .init(x: 0.75, y: 0.77),
+                    .init(x: 1, y: 0.95)       // Slightly compressed highlights
+                ],
+                red: [
+                    // Panchromatic - neutral to slightly boosted reds
+                    .init(x: 0, y: 0),
+                    .init(x: 0.25, y: 0.27),
+                    .init(x: 0.5, y: 0.53),
+                    .init(x: 0.75, y: 0.78),
+                    .init(x: 1, y: 1)
+                ],
+                green: [],
+                blue: []
+            ),
+            temperature: 0,
+            tint: 0,
+            saturation: -100,
+            vibrance: 0,
+            hsl: .identity,
+            splitTone: SplitToneData(
+                highlightHue: 40,              // Warm paper tone (Slavich Bromportrait)
+                highlightSaturation: 5,
+                shadowHue: 38,
+                shadowSaturation: 6,
+                balance: -5
+            ),
+            skinToneHue: 0,
+            skinToneSaturation: 0,
+            clarity: 8,
+            grain: GrainData(amount: 2, size: 0.45, roughness: 0.5, monochromatic: true),
+            vignette: VignetteData(amount: 12, midpoint: 0.52, roundness: 0, feather: 0.6),
+            fade: 8,
+            bloom: .none,
+            halation: .none,
+            sharpness: 10,
+            sharpenRadius: 1.0,
+            rotation: 0,
+            cropRect: nil
+        ),
+        metadata: FilterPreset.FilterMetadata(
+            filmStock: "Svema Type-42",
+            era: "1991 (expired)",
+            characteristics: ["soviet film", "aerial reconnaissance", "expired", "warm tone", "vintage", "panchromatic"],
             author: "FilmBox"
         )
     )
@@ -1870,7 +2028,7 @@ enum FilmEmulations {
 
     /// All black & white film presets
     static let blackAndWhite: [FilterPreset] = [
-        bw1, bw2, bw3, bw4, bw5
+        bw1, bw2, bw3, bw4, bw5, bw6, bw7
     ]
 
     /// All cinema film presets
