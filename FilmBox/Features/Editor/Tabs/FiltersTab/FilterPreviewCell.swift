@@ -83,10 +83,11 @@ struct FilterPreviewCell: View {
                 )
 
             Text(displayName)
-                .font(.system(size: 11, weight: isSelected ? .semibold : .regular, design: .monospaced))
+                .font(.system(size: 10, weight: isSelected ? .semibold : .regular))
                 .foregroundStyle(isSelected ? .primary : .secondary)
-                .lineLimit(1)
-                .frame(width: size)
+                .lineLimit(2)
+                .multilineTextAlignment(.center)
+                .frame(width: size, height: 28, alignment: .top)
         }
         .contentShape(Rectangle())
         .onTapGesture {

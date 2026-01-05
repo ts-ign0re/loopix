@@ -57,9 +57,11 @@ struct LoopixFilterPreviewCell: View {
 
             // Filter name
             Text(displayName)
-                .font(.system(size: 10, weight: .medium, design: .monospaced))
+                .font(.system(size: 9, weight: .medium))
                 .foregroundColor(isSelected ? .yellow : .white.opacity(0.8))
-                .lineLimit(1)
+                .lineLimit(2)
+                .multilineTextAlignment(.center)
+                .frame(height: 24, alignment: .top)
         }
         .frame(width: Self.cellWidth)
         .contentShape(Rectangle())
@@ -109,14 +111,9 @@ struct LoopixFilterPreviewCell: View {
 
     private var displayName: String {
         if isOriginal {
-            return "orig"
+            return "Original"
         }
-        // Shorten long names
-        let name = filter?.name ?? ""
-        if name.count > 8 {
-            return String(name.prefix(6)).lowercased() + ".."
-        }
-        return name.lowercased()
+        return filter?.name ?? ""
     }
 
     // MARK: - Thumbnail Loading
