@@ -2,12 +2,63 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- MARK: - Privacy Usage Descriptions (Required by Apple) -->
 	<key>NSCameraUsageDescription</key>
 	<string>Loopix needs camera access to scan recipe QR codes for importing filter presets.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Loopix needs access to your photo library to browse and edit photos.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Loopix needs permission to save edited photos to your photo library.</string>
+
+	<!-- MARK: - Launch Screen Configuration -->
 	<key>UILaunchScreen</key>
 	<dict>
 		<key>UIColorName</key>
 		<string>BrandYellow</string>
 	</dict>
+
+	<!-- MARK: - App Transport Security -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<false/>
+	</dict>
+
+	<!-- MARK: - Encryption Export Compliance -->
+	<!--
+		ITSAppUsesNonExemptEncryption: Indicates whether the app uses encryption.
+		Set to NO because:
+		- The app uses only standard iOS system encryption (HTTPS, Keychain)
+		- No custom cryptographic algorithms are implemented
+		- This qualifies for exemption under Category 5, Part 2 of EAR
+
+		Note: Full encryption declaration is submitted via App Store Connect
+		during the app submission process (Self-Classification Report).
+	-->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+
+	<!-- MARK: - Supported Interface Orientations -->
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+
+	<!-- MARK: - App Capabilities -->
+	<key>UIRequiresFullScreen</key>
+	<true/>
+	<key>UIStatusBarStyle</key>
+	<string>UIStatusBarStyleLightContent</string>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<true/>
 </dict>
 </plist>
