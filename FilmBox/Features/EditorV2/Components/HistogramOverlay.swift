@@ -148,6 +148,12 @@ struct HistogramDataV2: Sendable {
             }
         }
 
+        // Apply logarithmic scaling for better visualization of dark/bright images
+        redBins = redBins.map { log1p($0) }
+        greenBins = greenBins.map { log1p($0) }
+        blueBins = blueBins.map { log1p($0) }
+        lumBins = lumBins.map { log1p($0) }
+
         // Normalize bins
         let maxRed = redBins.max() ?? 1
         let maxGreen = greenBins.max() ?? 1

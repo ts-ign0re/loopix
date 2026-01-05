@@ -108,6 +108,8 @@ actor ExportEngine {
     init(concurrencyLimit: Int = 4) {
         self.concurrencyLimit = concurrencyLimit
         self.ciContext = CIContext(options: [
+            .workingColorSpace: CGColorSpace(name: CGColorSpace.linearSRGB)!,
+            .outputColorSpace: CGColorSpace(name: CGColorSpace.sRGB)!,
             .useSoftwareRenderer: false,
             .highQualityDownsample: true,
             .priorityRequestLow: false
@@ -265,7 +267,7 @@ actor ExportEngine {
         ciImage = ciImage.oriented(forExifOrientation: Int32(CGImagePropertyOrientation.up.rawValue))
 
         // Apply filter using FilterEngine if available
-        let processedImage: CIImage
+        var processedImage: CIImage
         if #available(iOS 17.0, *) {
             if let filter = filter {
                 processedImage = await FilterEngine.shared.apply(filter, to: ciImage)
@@ -285,6 +287,13 @@ actor ExportEngine {
                 processedImage = ciImage
             }
         }
+
+        // Apply exposure correction to match editor preview brightness
+        // (Metal preview renders slightly darker than export)
+        let exposureFilter = CIFilter.exposureAdjust()
+        exposureFilter.inputImage = processedImage
+        exposureFilter.ev = -0.15
+        processedImage = exposureFilter.outputImage ?? processedImage
 
         // Render to JPEG data with high quality
         guard var jpegData = ciContext.jpegRepresentation(
@@ -402,7 +411,7 @@ actor ExportEngine {
             ciImage = ciImage.oriented(forExifOrientation: Int32(CGImagePropertyOrientation.up.rawValue))
 
             // Apply parameters or filter if specified
-            let processedImage: CIImage
+            var processedImage: CIImage
             if let params = parameters, params.hasAdjustments {
                 // Use per-asset parameters if available
                 if #available(iOS 17.0, *) {
@@ -417,6 +426,12 @@ actor ExportEngine {
             } else {
                 processedImage = ciImage
             }
+
+            // Apply exposure correction to match editor preview brightness
+            let exposureFilter = CIFilter.exposureAdjust()
+            exposureFilter.inputImage = processedImage
+            exposureFilter.ev = -0.15
+            processedImage = exposureFilter.outputImage ?? processedImage
 
             // Resize if needed
             let resizedImage = resizeImage(processedImage, settings: settings)
@@ -841,12 +856,18 @@ extension ExportEngine {
         }
 
         // Apply filter parameters if available
-        let processedImage: CIImage
+        var processedImage: CIImage
         if let params = parameters, params.hasAdjustments {
             processedImage = await FilterEngine.shared.apply(params, to: ciImage)
         } else {
             processedImage = ciImage
         }
+
+        // Apply exposure correction to match editor preview brightness
+        let exposureFilter = CIFilter.exposureAdjust()
+        exposureFilter.inputImage = processedImage
+        exposureFilter.ev = -0.15
+        processedImage = exposureFilter.outputImage ?? processedImage
 
         // Render to JPEG data with high quality
         guard var jpegData = ciContext.jpegRepresentation(

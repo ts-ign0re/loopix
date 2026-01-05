@@ -295,6 +295,8 @@ class MetalImageUIView: UIView {
 
         commandQueue = device.makeCommandQueue()
         ciContext = CIContext(mtlDevice: device, options: [
+            .workingColorSpace: CGColorSpace(name: CGColorSpace.linearSRGB)!,
+            .outputColorSpace: CGColorSpace(name: CGColorSpace.sRGB)!,
             .cacheIntermediates: false,
             .priorityRequestLow: false
         ])
@@ -302,7 +304,6 @@ class MetalImageUIView: UIView {
 
     override func layoutSubviews() {
         super.layoutSubviews()
-        // Guard against zero/negative dimensions
         guard bounds.width > 0, bounds.height > 0 else { return }
 
         metalLayer?.drawableSize = CGSize(
@@ -323,14 +324,12 @@ class MetalImageUIView: UIView {
               let commandQueue = commandQueue else { return }
 
         let drawableSize = metalLayer.drawableSize
-
-        // Guard against invalid dimensions
         guard drawableSize.width > 0, drawableSize.height > 0 else { return }
 
         guard let drawable = metalLayer.nextDrawable(),
               let commandBuffer = commandQueue.makeCommandBuffer() else { return }
 
-        // Clear the drawable texture to black before rendering
+        // Clear to black
         let renderPassDescriptor = MTLRenderPassDescriptor()
         renderPassDescriptor.colorAttachments[0].texture = drawable.texture
         renderPassDescriptor.colorAttachments[0].loadAction = .clear
@@ -360,7 +359,6 @@ class MetalImageUIView: UIView {
 
         let transformedImage = image.transformed(by: transform)
 
-        // Render to drawable
         ciContext.render(
             transformedImage,
             to: drawable.texture,

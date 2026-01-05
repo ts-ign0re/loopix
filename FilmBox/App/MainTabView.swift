@@ -152,7 +152,9 @@ struct LibraryContentView: View {
         } message: {
             let usedGB = Double(manager.calculateStorageUsed()) / 1024 / 1024 / 1024
             let limitGB = AppSettings.shared.storageLimitGB
-            Text(L10n.Home.storageFull(used: String(format: "%.1f", usedGB), limit: String(format: "%.0f", limitGB)))
+            Text(
+                L10n.Home.storageFull(
+                    used: String(format: "%.1f", usedGB), limit: String(format: "%.0f", limitGB)))
         }
         .alert(L10n.Home.photoAccess, isPresented: $showPermissionDeniedAlert) {
             Button(L10n.Action.cancel, role: .cancel) {}
@@ -660,7 +662,8 @@ struct LibraryContentView: View {
                             // Apply preset with intensity
                             let intensity = item.snapshot?.filterIntensity ?? 100
                             preset.clutIntensity = intensity
-                            processedImage = await FilterEngine.shared.apply(preset, to: processedImage)
+                            processedImage = await FilterEngine.shared.apply(
+                                preset, to: processedImage)
                             hasFilter = true
                         }
                     }
@@ -671,18 +674,28 @@ struct LibraryContentView: View {
                         hasToolEdits = params.hasAdjustments
                     }
 
+                    // Apply exposure correction to match editor preview brightness
+                    // (Metal preview renders slightly darker than export)
+                    let exposureCorrection = CIFilter.exposureAdjust()
+                    exposureCorrection.inputImage = processedImage
+                    exposureCorrection.ev = -0.3
+                    processedImage = exposureCorrection.outputImage ?? processedImage
+
                     // Use Metal-backed CIContext to properly render Metal kernel effects (grain, etc.)
                     let context: CIContext
                     if let metalDevice = MTLCreateSystemDefaultDevice() {
-                        context = CIContext(mtlDevice: metalDevice, options: [
-                            .workingColorSpace: CGColorSpace(name: CGColorSpace.linearSRGB)!,
-                            .outputColorSpace: CGColorSpace(name: CGColorSpace.sRGB)!
-                        ])
+                        context = CIContext(
+                            mtlDevice: metalDevice,
+                            options: [
+                                .workingColorSpace: CGColorSpace(name: CGColorSpace.linearSRGB)!,
+                                .outputColorSpace: CGColorSpace(name: CGColorSpace.sRGB)!,
+                            ])
                     } else {
                         context = CIContext()
                     }
                     let tempURL = FileManager.default.temporaryDirectory
-                        .appendingPathComponent("\(item.photo.id.uuidString).\(format.fileExtension)")
+                        .appendingPathComponent(
+                            "\(item.photo.id.uuidString).\(format.fileExtension)")
 
                     var imageData: Data?
 
@@ -691,7 +704,10 @@ struct LibraryContentView: View {
                         imageData = context.jpegRepresentation(
                             of: processedImage,
                             colorSpace: colorSpace,
-                            options: [kCGImageDestinationLossyCompressionQuality as CIImageRepresentationOption: 0.95]
+                            options: [
+                                kCGImageDestinationLossyCompressionQuality
+                                    as CIImageRepresentationOption: 0.95
+                            ]
                         )
                     case .png:
                         imageData = context.pngRepresentation(
