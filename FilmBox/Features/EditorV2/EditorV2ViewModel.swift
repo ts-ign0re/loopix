@@ -275,6 +275,8 @@ final class EditorV2ViewModel {
                     await MainActor.run {
                         editor.selectedPreset = preset
                         editor.filterIntensity = snapshot?.filterIntensity ?? 100
+                        // Restore the category selection to show the preset's category
+                        selectedFilterCategory = preset.category
                     }
                 }
             }

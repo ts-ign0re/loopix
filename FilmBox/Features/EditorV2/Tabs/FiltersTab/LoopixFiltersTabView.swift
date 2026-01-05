@@ -58,7 +58,7 @@ struct LoopixFiltersTabView: View {
         .onChange(of: viewModel.selectedFilterCategory) { _, _ in
             // Filters are recalculated via filteredPresets
         }
-        .sheet(isPresented: $showFujiRecipeForm) {
+        .fullScreenCover(isPresented: $showFujiRecipeForm) {
             FujiRecipeFormView { newPreset in
                 // Add to filters and select it
                 filters.append(newPreset)
@@ -72,8 +72,14 @@ struct LoopixFiltersTabView: View {
     private var filteredPresets: [FilterPreset] {
         switch viewModel.selectedFilterCategory {
         case .all:
-            // All filters sorted alphabetically
-            return filters.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+            // User filters first (newest first), then built-in alphabetically
+            let userFilters = filters
+                .filter { $0.source != .builtIn }
+                .sorted { $0.createdAt > $1.createdAt }
+            let builtInFilters = filters
+                .filter { $0.source == .builtIn }
+                .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+            return userFilters + builtInFilters
         case .favorites:
             // Favorites sorted by modifiedAt (newest first)
             return filters

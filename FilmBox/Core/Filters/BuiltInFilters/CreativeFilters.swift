@@ -1279,7 +1279,7 @@ enum CreativeFilters {
             skinToneHue: 8,
             skinToneSaturation: 8,
             clarity: -8,
-            grain: GrainData(amount: 35, size: 0.65, roughness: 0.7, monochromatic: true),
+            grain: GrainData(amount: 35, size: 0.6, roughness: 0.65, monochromatic: true),
             vignette: VignetteData(amount: 30, midpoint: 0.4, roundness: 0, feather: 0.5),
             fade: 20,
             bloom: BloomData(intensity: 5, radius: 0.35, threshold: 0.82),

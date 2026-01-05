@@ -59,8 +59,8 @@ final class EditorViewModel {
     var selectedPreset: FilterPreset? {
         didSet {
             if let preset = selectedPreset {
-                // B&W filters always use 100% intensity for proper desaturation
-                if preset.category == .bw {
+                // B&W and Fuji Recipes always use 100% intensity for consistent results
+                if preset.category == .bw || preset.category == .fujiRecipes {
                     filterIntensity = 100
                 } else {
                     filterIntensity = preset.clutIntensity

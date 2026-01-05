@@ -14,8 +14,9 @@ struct LoopixFilterPreviewCell: View {
 
     /// Cell dimensions (Loopix style - vertical rectangle)
     static let cellWidth: CGFloat = 64
-    static let cellHeight: CGFloat = 96
+    static let cellHeight: CGFloat = 112  // 80 (image) + 4 (spacing) + 24 (2-line label) + 4 (padding)
     static let imageHeight: CGFloat = 80
+    static let labelHeight: CGFloat = 24
     static let spacing: CGFloat = 8
 
     @State private var thumbnailImage: CGImage?
@@ -52,6 +53,13 @@ struct LoopixFilterPreviewCell: View {
                             .foregroundStyle(.yellow)
                             .shadow(color: .black.opacity(0.5), radius: 1, x: 0, y: 1)
                             .padding(4)
+                    }
+                }
+                .overlay {
+                    // Selection border (inside, no layout shift)
+                    if isSelected {
+                        RoundedRectangle(cornerRadius: 4)
+                            .strokeBorder(Color.yellow, lineWidth: 2)
                     }
                 }
 

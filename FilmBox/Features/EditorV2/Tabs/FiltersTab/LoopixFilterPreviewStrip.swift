@@ -75,10 +75,11 @@ struct LoopixFilterPreviewStrip: View {
                             .strokeBorder(Color.yellow.opacity(0.3), lineWidth: 1)
                     )
 
-                // Label
+                // Label - same height as filter cell labels for alignment
                 Text("new")
-                    .font(.system(size: 10, weight: .medium, design: .monospaced))
+                    .font(.system(size: 9, weight: .medium))
                     .foregroundColor(.yellow.opacity(0.8))
+                    .frame(height: LoopixFilterPreviewCell.labelHeight, alignment: .top)
             }
             .frame(width: LoopixFilterPreviewCell.cellWidth)
         }

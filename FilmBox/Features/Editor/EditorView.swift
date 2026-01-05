@@ -198,7 +198,7 @@ struct EditorView: View {
             }
             syncCropRectFromParameters()
         }
-        .sheet(isPresented: $showFilterEditor) {
+        .fullScreenCover(isPresented: $showFilterEditor) {
             FujiRecipeFormView(
                 existingFilter: nil,
                 onSave: { savedFilter in

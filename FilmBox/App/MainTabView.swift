@@ -48,7 +48,7 @@ struct MainTabView: View {
 
     var body: some View {
         LibraryContentView(showPhotoPicker: $showPhotoPicker)
-            .sheet(isPresented: $showPhotoPicker) {
+            .fullScreenCover(isPresented: $showPhotoPicker) {
                 PhotoPickerView { assets in
                     manager.importPhotos(assets)
                 }

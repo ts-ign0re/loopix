@@ -145,7 +145,7 @@ struct SettingsView: View {
                 copiedToast
             }
         }
-        .sheet(isPresented: $showSecurityHelp) {
+        .fullScreenCover(isPresented: $showSecurityHelp) {
             securityHelpSheet
         }
     }

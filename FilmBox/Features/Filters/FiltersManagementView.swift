@@ -264,19 +264,19 @@ struct FiltersManagementView: View {
                 }
             )
         }
-        .sheet(isPresented: $showFujiRecipeForm) {
+        .fullScreenCover(isPresented: $showFujiRecipeForm) {
             FujiRecipeFormView { newPreset in
                 Task {
                     await handleFilterSaved(newPreset)
                 }
             }
         }
-        .sheet(isPresented: $showQRExport) {
+        .fullScreenCover(isPresented: $showQRExport) {
             if let filter = singleSelectedFilter {
                 RecipeQRCodeView(filter: filter)
             }
         }
-        .sheet(isPresented: $showQRScanner) {
+        .fullScreenCover(isPresented: $showQRScanner) {
             RecipeScannerView(
                 existingNames: Set(allFilters.map { $0.name })
             ) { importedFilter in
