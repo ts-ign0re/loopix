@@ -90,7 +90,28 @@ struct FiltersManagementView: View {
             result = result.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
         }
 
+        // Sort FILM category by brand: Kodak → Fuji → Cinestill → others, then alphabetically
+        if selectedCategory == .film {
+            result = result.sorted { a, b in
+                let priorityA = brandPriority(a.name)
+                let priorityB = brandPriority(b.name)
+                if priorityA != priorityB {
+                    return priorityA < priorityB
+                }
+                return a.name.localizedCaseInsensitiveCompare(b.name) == .orderedAscending
+            }
+        }
+
         return result
+    }
+
+    /// Brand priority for FILM category sorting: Kodak (0) → Fuji (1) → Cinestill (2) → others (3)
+    private func brandPriority(_ name: String) -> Int {
+        let lowercased = name.lowercased()
+        if lowercased.hasPrefix("kodak") { return 0 }
+        if lowercased.hasPrefix("fuji") { return 1 }
+        if lowercased.hasPrefix("cinestill") { return 2 }
+        return 3
     }
 
     /// Get selected filters

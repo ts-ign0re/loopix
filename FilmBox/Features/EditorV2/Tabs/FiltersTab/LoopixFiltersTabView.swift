@@ -91,11 +91,32 @@ struct LoopixFiltersTabView: View {
                 .filter { $0.source != .builtIn }
                 .sorted { $0.createdAt > $1.createdAt }
         default:
-            // Category filters sorted alphabetically
-            return filters
-                .filter { $0.category == viewModel.selectedFilterCategory }
-                .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+            // Category filters with brand-priority sorting for FILM category
+            let categoryFilters = filters.filter { $0.category == viewModel.selectedFilterCategory }
+
+            if viewModel.selectedFilterCategory == .film {
+                // Sort by brand: Kodak → Fuji → Cinestill → others, then alphabetically within each brand
+                return categoryFilters.sorted { a, b in
+                    let priorityA = brandPriority(a.name)
+                    let priorityB = brandPriority(b.name)
+                    if priorityA != priorityB {
+                        return priorityA < priorityB
+                    }
+                    return a.name.localizedCaseInsensitiveCompare(b.name) == .orderedAscending
+                }
+            } else {
+                return categoryFilters.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+            }
         }
+    }
+
+    /// Brand priority for FILM category sorting: Kodak (0) → Fuji (1) → Cinestill (2) → others (3)
+    private func brandPriority(_ name: String) -> Int {
+        let lowercased = name.lowercased()
+        if lowercased.hasPrefix("kodak") { return 0 }
+        if lowercased.hasPrefix("fuji") { return 1 }
+        if lowercased.hasPrefix("cinestill") { return 2 }
+        return 3
     }
 
     // MARK: - Data Loading
