@@ -228,17 +228,15 @@ final class ImportedPhotosManager {
 
                 let imageURL = self.imagesDirectory.appendingPathComponent(photo.localFileName)
                 do {
-                    // Optimize image before saving
-                    let optimizedData = self.optimizeImageData(
+                    // Convert to full-quality JPEG with proper orientation
+                    let fullResData = self.convertToFullResJPEG(
                         imageData,
-                        orientation: orientation,
-                        maxDimension: 3000,
-                        maxFileSize: 2 * 1024 * 1024  // 2MB
+                        orientation: orientation
                     )
 
-                    try optimizedData.write(to: imageURL)
-                    let sizeMB = Double(optimizedData.count) / (1024 * 1024)
-                    print("✅ Saved optimized image: \(photo.localFileName) (\(String(format: "%.2f", sizeMB)) MB)")
+                    try fullResData.write(to: imageURL)
+                    let sizeMB = Double(fullResData.count) / (1024 * 1024)
+                    print("✅ Saved full-res image: \(photo.localFileName) (\(String(format: "%.2f", sizeMB)) MB)")
 
                     // Generate and save thumbnail
                     self.generateThumbnail(from: imageURL, for: photo)
@@ -262,57 +260,31 @@ final class ImportedPhotosManager {
         }
     }
 
-    /// Optimize image data: resize if needed and compress to target size
-    private func optimizeImageData(
+    /// Convert image data to full-resolution JPEG with maximum quality
+    /// Preserves original dimensions, only applies orientation correction
+    private func convertToFullResJPEG(
         _ data: Data,
-        orientation: CGImagePropertyOrientation,
-        maxDimension: CGFloat,
-        maxFileSize: Int
+        orientation: CGImagePropertyOrientation
     ) -> Data {
         guard var ciImage = CIImage(data: data) else {
             return data  // Return original if can't process
         }
 
-        // Apply EXIF orientation
+        // Apply EXIF orientation to bake it into pixel data
         ciImage = ciImage.oriented(orientation)
-
-        let width = ciImage.extent.width
-        let height = ciImage.extent.height
-        let maxSide = max(width, height)
-
-        // Resize if larger than maxDimension
-        if maxSide > maxDimension {
-            let scale = maxDimension / maxSide
-            ciImage = ciImage.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
-            print("📐 Resized image from \(Int(maxSide))px to \(Int(maxDimension))px")
-        }
 
         let context = CIContext()
         let colorSpace = CGColorSpace(name: CGColorSpace.sRGB)!
 
-        // Try different quality levels to hit target file size
-        let qualityLevels: [CGFloat] = [0.9, 0.85, 0.8, 0.7, 0.6, 0.5]
-
-        for quality in qualityLevels {
-            if let jpegData = context.jpegRepresentation(
-                of: ciImage,
-                colorSpace: colorSpace,
-                options: [kCGImageDestinationLossyCompressionQuality as CIImageRepresentationOption: quality]
-            ) {
-                if jpegData.count <= maxFileSize {
-                    print("📦 Compressed to \(String(format: "%.0f", quality * 100))% quality")
-                    return jpegData
-                }
-            }
-        }
-
-        // If still too large, use lowest quality
+        // Maximum quality JPEG (0.95 is effectively lossless for photos)
         if let jpegData = context.jpegRepresentation(
             of: ciImage,
             colorSpace: colorSpace,
-            options: [kCGImageDestinationLossyCompressionQuality as CIImageRepresentationOption: 0.4]
+            options: [kCGImageDestinationLossyCompressionQuality as CIImageRepresentationOption: 0.95]
         ) {
-            print("📦 Used minimum quality (40%)")
+            let width = Int(ciImage.extent.width)
+            let height = Int(ciImage.extent.height)
+            print("📐 Stored full-res: \(width)×\(height)px")
             return jpegData
         }
 

@@ -2,6 +2,7 @@
 import CoreGraphics
 import Foundation
 import Accelerate
+import os.log
 
 // MARK: - HALD CLUT Loader
 
@@ -50,10 +51,14 @@ actor HALDCLUTLoader {
 
     // MARK: - Properties
 
+    /// Logger for CLUT operations
+    private static let logger = Logger(subsystem: "com.filmbox", category: "HALDCLUTLoader")
+
     /// Cache for loaded color cube data to avoid re-parsing
     private var dataCache: [URL: (data: Data, info: CLUTInfo)] = [:]
 
     /// Maximum LUT size supported by CIColorCube on iOS
+    /// Note: 64³ cube matches recommended level 8 (512×512) HALD for 8-bit images
     private let maxCubeSize: Int = 64
 
     // MARK: - Public API
@@ -158,6 +163,9 @@ actor HALDCLUTLoader {
         // Convert to color cube format
         let cubeData: Data
         if needsDownsampling {
+            // Log warning about precision loss when downsampling high-resolution CLUTs
+            // Recommended HALD sizes: 512×512 (level 64) for 8-bit, up to 4096×4096 for HDR
+            Self.logger.warning("CLUT '\(url.lastPathComponent)' downsampled: \(level) → \(effectiveLevel), \(width)×\(height)px")
             cubeData = try downsampleCLUT(
                 pixelData: pixelData,
                 originalLevel: level,
@@ -179,6 +187,8 @@ actor HALDCLUTLoader {
             wasDownsampled: needsDownsampling
         )
 
+        Self.logger.debug("Loaded CLUT '\(url.lastPathComponent)': \(width)×\(height) → \(effectiveLevel)³ cube")
+
         return (cubeData, info)
     }
 
@@ -193,7 +203,7 @@ actor HALDCLUTLoader {
 
         var pixelData = [UInt8](repeating: 0, count: totalBytes)
 
-        guard let colorSpace = CGColorSpace(name: CGColorSpace.linearSRGB) else {
+        guard let colorSpace = CGColorSpace(name: CGColorSpace.sRGB) else {
             return nil
         }
 
@@ -386,10 +396,10 @@ actor HALDCLUTLoader {
     // MARK: - Filter Creation
 
     /// Create a CIColorCube filter from cube data
-    /// Uses CIColorCubeWithColorSpace to ensure proper color management with FilterEngine's linearSRGB working space
+    /// Uses CIColorCubeWithColorSpace to ensure proper color management
+    /// Cube data is in sRGB (matches HALD file format), Core Image handles conversion to working space
     private func createColorCubeFilter(from data: Data, size: Int) -> CIFilter? {
         // Prefer CIColorCubeWithColorSpace for proper color management
-        // This ensures the LUT is applied correctly when FilterEngine works in linearSRGB
         guard let filter = CIFilter(name: "CIColorCubeWithColorSpace") else {
             // Fallback to basic CIColorCube if CIColorCubeWithColorSpace unavailable
             guard let basicFilter = CIFilter(name: "CIColorCube") else {
@@ -400,14 +410,14 @@ actor HALDCLUTLoader {
             return basicFilter
         }
 
-        // Use linearSRGB to match FilterEngine's working color space
-        guard let linearColorSpace = CGColorSpace(name: CGColorSpace.linearSRGB) else {
+        // Use sRGB to match HALD file format - Core Image converts to working space automatically
+        guard let srgbColorSpace = CGColorSpace(name: CGColorSpace.sRGB) else {
             return nil
         }
 
         filter.setValue(size, forKey: "inputCubeDimension")
         filter.setValue(data, forKey: "inputCubeData")
-        filter.setValue(linearColorSpace, forKey: "inputColorSpace")
+        filter.setValue(srgbColorSpace, forKey: "inputColorSpace")
 
         return filter
     }

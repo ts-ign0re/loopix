@@ -295,29 +295,54 @@ actor ExportEngine {
         exposureFilter.ev = -0.3
         processedImage = exposureFilter.outputImage ?? processedImage
 
-        // Render to JPEG data with high quality
-        guard var jpegData = ciContext.jpegRepresentation(
-            of: processedImage,
-            colorSpace: processedImage.colorSpace ?? CGColorSpace(name: CGColorSpace.sRGB)!,
-            options: [
-                CIImageRepresentationOption(rawValue: kCGImageDestinationLossyCompressionQuality as String): 0.95
-            ]
-        ) else {
-            throw ExportError.encodingFailed(format: .jpeg)
+        // Get export settings from AppSettings
+        let (exportFormat, exportQuality) = await MainActor.run {
+            (AppSettings.shared.exportFormat, AppSettings.shared.exportQuality)
         }
+
+        // Render to configured format and quality
+        let colorSpace = processedImage.colorSpace ?? CGColorSpace(name: CGColorSpace.sRGB)!
+        let outputData: Data
+
+        switch exportFormat {
+        case .jpeg:
+            guard let jpegData = ciContext.jpegRepresentation(
+                of: processedImage,
+                colorSpace: colorSpace,
+                options: [
+                    CIImageRepresentationOption(rawValue: kCGImageDestinationLossyCompressionQuality as String): exportQuality
+                ]
+            ) else {
+                throw ExportError.encodingFailed(format: .jpeg)
+            }
+            outputData = jpegData
+
+        case .png:
+            guard let pngData = ciContext.pngRepresentation(
+                of: processedImage,
+                format: .RGBA8,
+                colorSpace: colorSpace,
+                options: [:]
+            ) else {
+                throw ExportError.encodingFailed(format: .png)
+            }
+            outputData = pngData
+        }
+
+        var finalData = outputData
 
         // Check security mode
         let securityMode = await MainActor.run { AppSettings.shared.securityMode }
 
         // Add Loopix iOS as source in EXIF (strip all metadata if security mode)
-        jpegData = addSourceMetadata(to: jpegData, securityMode: securityMode) ?? jpegData
+        finalData = addSourceMetadata(to: finalData, securityMode: securityMode) ?? finalData
 
         // Save to Photos Library
         var localIdentifier: String?
 
         try await PHPhotoLibrary.shared().performChanges {
             let creationRequest = PHAssetCreationRequest.forAsset()
-            creationRequest.addResource(with: .photo, data: jpegData, options: nil)
+            creationRequest.addResource(with: .photo, data: finalData, options: nil)
 
             // Always set current date so photo appears as latest in gallery
             creationRequest.creationDate = Date()
@@ -952,29 +977,49 @@ extension ExportEngine {
         exposureFilter.ev = -0.3
         processedImage = exposureFilter.outputImage ?? processedImage
 
-        // Render to JPEG data with high quality
-        guard var jpegData = ciContext.jpegRepresentation(
-            of: processedImage,
-            colorSpace: processedImage.colorSpace ?? CGColorSpace(name: CGColorSpace.sRGB)!,
-            options: [
-                CIImageRepresentationOption(rawValue: kCGImageDestinationLossyCompressionQuality as String): 0.95
-            ]
-        ) else {
-            throw ExportError.encodingFailed(format: .jpeg)
-        }
-
-        // Check security mode
+        // Get export settings from AppSettings
+        let exportFormat = AppSettings.shared.exportFormat
+        let exportQuality = AppSettings.shared.exportQuality
         let securityMode = AppSettings.shared.securityMode
 
+        // Render to configured format and quality
+        let colorSpace = processedImage.colorSpace ?? CGColorSpace(name: CGColorSpace.sRGB)!
+        let outputData: Data
+
+        switch exportFormat {
+        case .jpeg:
+            guard let jpegData = ciContext.jpegRepresentation(
+                of: processedImage,
+                colorSpace: colorSpace,
+                options: [
+                    CIImageRepresentationOption(rawValue: kCGImageDestinationLossyCompressionQuality as String): exportQuality
+                ]
+            ) else {
+                throw ExportError.encodingFailed(format: .jpeg)
+            }
+            outputData = jpegData
+
+        case .png:
+            guard let pngData = ciContext.pngRepresentation(
+                of: processedImage,
+                format: .RGBA8,
+                colorSpace: colorSpace,
+                options: [:]
+            ) else {
+                throw ExportError.encodingFailed(format: .png)
+            }
+            outputData = pngData
+        }
+
         // Add Loopix iOS as source in EXIF (strip all metadata if security mode)
-        jpegData = addSourceMetadata(to: jpegData, securityMode: securityMode) ?? jpegData
+        var finalData = addSourceMetadata(to: outputData, securityMode: securityMode) ?? outputData
 
         // Save to Photos Library
         var localIdentifier: String?
 
         try await PHPhotoLibrary.shared().performChanges {
             let creationRequest = PHAssetCreationRequest.forAsset()
-            creationRequest.addResource(with: .photo, data: jpegData, options: nil)
+            creationRequest.addResource(with: .photo, data: finalData, options: nil)
 
             // Always set current date so photo appears as latest in gallery
             creationRequest.creationDate = Date()
