@@ -1844,9 +1844,9 @@ actor FilterEngine {
 
         // Convert -9...+9 shifts to color matrix adjustments
         // Positive red shift = warmer, positive blue shift = cooler
-        // Using 0.008 multiplier for subtle, natural color shifts (±7.2% at max)
-        let rFactor = 1.0 + Float(shift.redShift) * 0.008
-        let bFactor = 1.0 + Float(shift.blueShift) * 0.008
+        // Using 0.025 multiplier for visible color shifts (±22.5% at max)
+        let rFactor = 1.0 + Float(shift.redShift) * 0.025
+        let bFactor = 1.0 + Float(shift.blueShift) * 0.025
 
         guard let filter = CIFilter(name: "CIColorMatrix") else {
             return image

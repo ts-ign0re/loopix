@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		L10N0001229E000100000001 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = L10N0001229E000000000001 /* Localizable.strings */; };
 		A1000001229E000100000001 /* FilmBoxApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000001 /* FilmBoxApp.swift */; };
 		A1000001229E000100000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000002 /* ContentView.swift */; };
 		A1000001229E000100000003 /* AppCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000003 /* AppCoordinator.swift */; };
@@ -32,7 +31,6 @@
 		A1000001229E000100000060 /* ExportSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000060 /* ExportSettings.swift */; };
 		A1000001229E000100000080 /* CGImage+WebP.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000080 /* CGImage+WebP.swift */; };
 		A1000001229E000100000081 /* CIImage+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000081 /* CIImage+Extensions.swift */; };
-		L10N0001229E000100000020 /* String+Localization.swift in Sources */ = {isa = PBXBuildFile; fileRef = L10N0001229E000000000020 /* String+Localization.swift */; };
 		A1000001229E000100000090 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E000000000090 /* Theme.swift */; };
 		A1000001229E0001000000A0 /* PhotoLibraryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001229E0000000000A0 /* PhotoLibraryManager.swift */; };
 		A1000001229E0001000000B0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1000001229E0000000000B0 /* Assets.xcassets */; };
@@ -42,8 +40,6 @@
 		CE0756F42F05700200C53D17 /* ImportedPhotosManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0756F32F05700200C53D17 /* ImportedPhotosManager.swift */; };
 		CE0756F52F05700300C53D17 /* EditedPhotoStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0756F62F05700300C53D17 /* EditedPhotoStorage.swift */; };
 		CE0756F82F05800000C53D17 /* FiltersManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0756F72F05800000C53D17 /* FiltersManagementView.swift */; };
-		QRCODE00000000000000001 /* RecipeQRCodeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = QRCODE00000000000000000 /* RecipeQRCodeView.swift */; };
-		SEC0000000000000000001 /* RecipeCrypto.swift in Sources */ = {isa = PBXBuildFile; fileRef = SEC0000000000000000000 /* RecipeCrypto.swift */; };
 		CE0756F92F05800100C53D17 /* FilterStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0756FA2F05800100C53D17 /* FilterStorage.swift */; };
 		CE0756FC2F05800200C53D17 /* FujiRecipeImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0756FB2F05800200C53D17 /* FujiRecipeImporter.swift */; };
 		CE0756FD2F05800300C53D17 /* FilterPreviewCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0756FF2F05800300C53D17 /* FilterPreviewCache.swift */; };
@@ -79,24 +75,37 @@
 		CE6526532F07BC55008466F6 /* Photos.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A1000001229E0000000000C2 /* Photos.framework */; };
 		CE6526552F07BC56008466F6 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A1000001229E0000000000C0 /* SwiftUI.framework */; };
 		CE6526572F07BC57008466F6 /* UniformTypeIdentifiers.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A1000001229E0000000000C5 /* UniformTypeIdentifiers.framework */; };
+		CE9B6BBD2F0D9470005B9AA1 /* MatomoTracker in Frameworks */ = {isa = PBXBuildFile; productRef = MATOMO0000000000000001 /* MatomoTracker */; };
+		CE9B6BC82F0D9490005B9AA1 /* IMG_1254.jpeg in Resources */ = {isa = PBXBuildFile; fileRef = CE9B6BC62F0D9490005B9AA1 /* IMG_1254.jpeg */; };
+		CE9B6BC92F0D9490005B9AA1 /* IMG_1253.jpeg in Resources */ = {isa = PBXBuildFile; fileRef = CE9B6BC52F0D9490005B9AA1 /* IMG_1253.jpeg */; };
+		CE9B6BCA2F0D9490005B9AA1 /* IMG_1247.jpeg in Resources */ = {isa = PBXBuildFile; fileRef = CE9B6BBF2F0D9490005B9AA1 /* IMG_1247.jpeg */; };
+		CE9B6BCB2F0D9490005B9AA1 /* IMG_1248.jpeg in Resources */ = {isa = PBXBuildFile; fileRef = CE9B6BC02F0D9490005B9AA1 /* IMG_1248.jpeg */; };
+		CE9B6BCC2F0D9490005B9AA1 /* IMG_1252.jpeg in Resources */ = {isa = PBXBuildFile; fileRef = CE9B6BC42F0D9490005B9AA1 /* IMG_1252.jpeg */; };
+		CE9B6BCD2F0D9490005B9AA1 /* IMG_1263.jpeg in Resources */ = {isa = PBXBuildFile; fileRef = CE9B6BC72F0D9490005B9AA1 /* IMG_1263.jpeg */; };
+		CE9B6BCE2F0D9490005B9AA1 /* IMG_1250.jpeg in Resources */ = {isa = PBXBuildFile; fileRef = CE9B6BC22F0D9490005B9AA1 /* IMG_1250.jpeg */; };
+		CE9B6BCF2F0D9490005B9AA1 /* IMG_1251.jpeg in Resources */ = {isa = PBXBuildFile; fileRef = CE9B6BC32F0D9490005B9AA1 /* IMG_1251.jpeg */; };
+		CE9B6BD02F0D9490005B9AA1 /* IMG_1249.jpeg in Resources */ = {isa = PBXBuildFile; fileRef = CE9B6BC12F0D9490005B9AA1 /* IMG_1249.jpeg */; };
 		FUJIR00100000000000000001 /* FujiRecipeFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FUJIR00000000000000000001 /* FujiRecipeFormView.swift */; };
+		L10N0001229E000100000001 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = L10N0001229E000000000001 /* Localizable.strings */; };
+		L10N0001229E000100000020 /* String+Localization.swift in Sources */ = {isa = PBXBuildFile; fileRef = L10N0001229E000000000020 /* String+Localization.swift */; };
+		QRCODE00000000000000001 /* RecipeQRCodeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = QRCODE00000000000000000 /* RecipeQRCodeView.swift */; };
+		RECPV00100000000000000001 /* RecipePreviewGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = RECPV00000000000000000001 /* RecipePreviewGrid.swift */; };
+		SEC0000000000000000001 /* RecipeCrypto.swift in Sources */ = {isa = PBXBuildFile; fileRef = SEC0000000000000000000 /* RecipeCrypto.swift */; };
 		SPLASH00000000000000001 /* SplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SPLASH00000000000000000 /* SplashView.swift */; };
-		TEST00000000000000000101 /* FilterParametersTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TEST00000000000000000001 /* FilterParametersTests.swift */; };
-		TEST00000000000000000102 /* FilterPresetTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TEST00000000000000000002 /* FilterPresetTests.swift */; };
-		TEST00000000000000000103 /* FilterEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TEST00000000000000000003 /* FilterEngineTests.swift */; };
-		TEST00000000000000000104 /* HALDCLUTLoaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TEST00000000000000000004 /* HALDCLUTLoaderTests.swift */; };
-		TEST00000000000000000105 /* ImageTestUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = TEST00000000000000000005 /* ImageTestUtilities.swift */; };
-		TEST00000000000000000106 /* CropOperationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TEST00000000000000000006 /* CropOperationTests.swift */; };
-		TEST00000000000000000107 /* RotationOperationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TEST00000000000000000007 /* RotationOperationTests.swift */; };
-		TEST00000000000000000108 /* FlipOperationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TEST00000000000000000008 /* FlipOperationTests.swift */; };
-		TEST00000000000000000109 /* FilterApplicationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TEST00000000000000000009 /* FilterApplicationTests.swift */; };
-		TEST00000000000000000110 /* FilmCalibrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TEST00000000000000000010 /* FilmCalibrationTests.swift */; };
-		TEST00000000000000000111 /* EditorViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TEST00000000000000000011 /* EditorViewModelTests.swift */; };
-		TEST00000000000000000112 /* EditorV2ViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TEST00000000000000000012 /* EditorV2ViewModelTests.swift */; };
-		TEST00000000000000000113 /* ToolDefinitionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TEST00000000000000000013 /* ToolDefinitionTests.swift */; };
-		TEST00000000000000000114 /* FilterCategoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TEST00000000000000000014 /* FilterCategoryTests.swift */; };
-		TEST00000000000000000115 /* FilterStorageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TEST00000000000000000015 /* FilterStorageTests.swift */; };
-		TEST00000000000000000116 /* EditSnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TEST00000000000000000016 /* EditSnapshotTests.swift */; };
+		TEST00000000000000000101 /* FilmBoxTests/Models/FilterParametersTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TEST00000000000000000001 /* FilmBoxTests/Models/FilterParametersTests.swift */; };
+		TEST00000000000000000102 /* FilmBoxTests/Models/FilterPresetTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TEST00000000000000000002 /* FilmBoxTests/Models/FilterPresetTests.swift */; };
+		TEST00000000000000000103 /* FilmBoxTests/Processing/FilterEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TEST00000000000000000003 /* FilmBoxTests/Processing/FilterEngineTests.swift */; };
+		TEST00000000000000000105 /* FilmBoxTests/ImageProcessing/ImageTestUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = TEST00000000000000000005 /* FilmBoxTests/ImageProcessing/ImageTestUtilities.swift */; };
+		TEST00000000000000000106 /* FilmBoxTests/ImageProcessing/CropOperationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TEST00000000000000000006 /* FilmBoxTests/ImageProcessing/CropOperationTests.swift */; };
+		TEST00000000000000000107 /* FilmBoxTests/ImageProcessing/RotationOperationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TEST00000000000000000007 /* FilmBoxTests/ImageProcessing/RotationOperationTests.swift */; };
+		TEST00000000000000000108 /* FilmBoxTests/ImageProcessing/FlipOperationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TEST00000000000000000008 /* FilmBoxTests/ImageProcessing/FlipOperationTests.swift */; };
+		TEST00000000000000000109 /* FilmBoxTests/ImageProcessing/FilterApplicationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TEST00000000000000000009 /* FilmBoxTests/ImageProcessing/FilterApplicationTests.swift */; };
+		TEST00000000000000000111 /* FilmBoxTests/ViewModels/EditorViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TEST00000000000000000011 /* FilmBoxTests/ViewModels/EditorViewModelTests.swift */; };
+		TEST00000000000000000112 /* FilmBoxTests/ViewModels/EditorV2ViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TEST00000000000000000012 /* FilmBoxTests/ViewModels/EditorV2ViewModelTests.swift */; };
+		TEST00000000000000000113 /* FilmBoxTests/Models/ToolDefinitionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TEST00000000000000000013 /* FilmBoxTests/Models/ToolDefinitionTests.swift */; };
+		TEST00000000000000000114 /* FilmBoxTests/Models/FilterCategoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TEST00000000000000000014 /* FilmBoxTests/Models/FilterCategoryTests.swift */; };
+		TEST00000000000000000115 /* FilmBoxTests/Storage/FilterStorageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TEST00000000000000000015 /* FilmBoxTests/Storage/FilterStorageTests.swift */; };
+		TEST00000000000000000116 /* FilmBoxTests/Models/EditSnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TEST00000000000000000016 /* FilmBoxTests/Models/EditSnapshotTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -110,10 +119,6 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		L10N0001229E000000000010 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
-		L10N0001229E000000000011 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
-		L10N0001229E000000000012 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
-		L10N0001229E000000000013 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
 		A1000001229E000000000001 /* FilmBoxApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmBoxApp.swift; sourceTree = "<group>"; };
 		A1000001229E000000000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		A1000001229E000000000003 /* AppCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppCoordinator.swift; sourceTree = "<group>"; };
@@ -138,7 +143,6 @@
 		A1000001229E000000000060 /* ExportSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportSettings.swift; sourceTree = "<group>"; };
 		A1000001229E000000000080 /* CGImage+WebP.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CGImage+WebP.swift"; sourceTree = "<group>"; };
 		A1000001229E000000000081 /* CIImage+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CIImage+Extensions.swift"; sourceTree = "<group>"; };
-		L10N0001229E000000000020 /* String+Localization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Localization.swift"; sourceTree = "<group>"; };
 		A1000001229E000000000090 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		A1000001229E0000000000A0 /* PhotoLibraryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoLibraryManager.swift; sourceTree = "<group>"; };
 		A1000001229E0000000000B0 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -157,8 +161,6 @@
 		CE0756F32F05700200C53D17 /* ImportedPhotosManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportedPhotosManager.swift; sourceTree = "<group>"; };
 		CE0756F62F05700300C53D17 /* EditedPhotoStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditedPhotoStorage.swift; sourceTree = "<group>"; };
 		CE0756F72F05800000C53D17 /* FiltersManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FiltersManagementView.swift; sourceTree = "<group>"; };
-		QRCODE00000000000000000 /* RecipeQRCodeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipeQRCodeView.swift; sourceTree = "<group>"; };
-		SEC0000000000000000000 /* RecipeCrypto.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipeCrypto.swift; sourceTree = "<group>"; };
 		CE0756FA2F05800100C53D17 /* FilterStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterStorage.swift; sourceTree = "<group>"; };
 		CE0756FB2F05800200C53D17 /* FujiRecipeImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FujiRecipeImporter.swift; sourceTree = "<group>"; };
 		CE0756FF2F05800300C53D17 /* FilterPreviewCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterPreviewCache.swift; sourceTree = "<group>"; };
@@ -188,24 +190,39 @@
 		CE6526322F07936C008466F6 /* EditorV2View.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorV2View.swift; sourceTree = "<group>"; };
 		CE6526332F07936C008466F6 /* EditorV2ViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorV2ViewModel.swift; sourceTree = "<group>"; };
 		CE6526492F079BF0008466F6 /* CropTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CropTabView.swift; sourceTree = "<group>"; };
+		CE9B6BBF2F0D9490005B9AA1 /* IMG_1247.jpeg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = IMG_1247.jpeg; sourceTree = "<group>"; };
+		CE9B6BC02F0D9490005B9AA1 /* IMG_1248.jpeg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = IMG_1248.jpeg; sourceTree = "<group>"; };
+		CE9B6BC12F0D9490005B9AA1 /* IMG_1249.jpeg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = IMG_1249.jpeg; sourceTree = "<group>"; };
+		CE9B6BC22F0D9490005B9AA1 /* IMG_1250.jpeg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = IMG_1250.jpeg; sourceTree = "<group>"; };
+		CE9B6BC32F0D9490005B9AA1 /* IMG_1251.jpeg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = IMG_1251.jpeg; sourceTree = "<group>"; };
+		CE9B6BC42F0D9490005B9AA1 /* IMG_1252.jpeg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = IMG_1252.jpeg; sourceTree = "<group>"; };
+		CE9B6BC52F0D9490005B9AA1 /* IMG_1253.jpeg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = IMG_1253.jpeg; sourceTree = "<group>"; };
+		CE9B6BC62F0D9490005B9AA1 /* IMG_1254.jpeg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = IMG_1254.jpeg; sourceTree = "<group>"; };
+		CE9B6BC72F0D9490005B9AA1 /* IMG_1263.jpeg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = IMG_1263.jpeg; sourceTree = "<group>"; };
 		FUJIR00000000000000000001 /* FujiRecipeFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FujiRecipeFormView.swift; sourceTree = "<group>"; };
+		L10N0001229E000000000010 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		L10N0001229E000000000011 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
+		L10N0001229E000000000012 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
+		L10N0001229E000000000013 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
+		L10N0001229E000000000020 /* String+Localization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Localization.swift"; sourceTree = "<group>"; };
+		QRCODE00000000000000000 /* RecipeQRCodeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipeQRCodeView.swift; sourceTree = "<group>"; };
+		RECPV00000000000000000001 /* RecipePreviewGrid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipePreviewGrid.swift; sourceTree = "<group>"; };
+		SEC0000000000000000000 /* RecipeCrypto.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipeCrypto.swift; sourceTree = "<group>"; };
 		SPLASH00000000000000000 /* SplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashView.swift; sourceTree = "<group>"; };
-		TEST00000000000000000001 /* FilterParametersTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FilmBoxTests/Models/FilterParametersTests.swift"; sourceTree = SOURCE_ROOT; };
-		TEST00000000000000000002 /* FilterPresetTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FilmBoxTests/Models/FilterPresetTests.swift"; sourceTree = SOURCE_ROOT; };
-		TEST00000000000000000003 /* FilterEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FilmBoxTests/Processing/FilterEngineTests.swift"; sourceTree = SOURCE_ROOT; };
-		TEST00000000000000000004 /* HALDCLUTLoaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FilmBoxTests/Processing/HALDCLUTLoaderTests.swift"; sourceTree = SOURCE_ROOT; };
-		TEST00000000000000000005 /* ImageTestUtilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FilmBoxTests/ImageProcessing/ImageTestUtilities.swift"; sourceTree = SOURCE_ROOT; };
-		TEST00000000000000000006 /* CropOperationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FilmBoxTests/ImageProcessing/CropOperationTests.swift"; sourceTree = SOURCE_ROOT; };
-		TEST00000000000000000007 /* RotationOperationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FilmBoxTests/ImageProcessing/RotationOperationTests.swift"; sourceTree = SOURCE_ROOT; };
-		TEST00000000000000000008 /* FlipOperationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FilmBoxTests/ImageProcessing/FlipOperationTests.swift"; sourceTree = SOURCE_ROOT; };
-		TEST00000000000000000009 /* FilterApplicationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FilmBoxTests/ImageProcessing/FilterApplicationTests.swift"; sourceTree = SOURCE_ROOT; };
-		TEST00000000000000000010 /* FilmCalibrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FilmBoxTests/Calibration/FilmCalibrationTests.swift"; sourceTree = SOURCE_ROOT; };
-		TEST00000000000000000011 /* EditorViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FilmBoxTests/ViewModels/EditorViewModelTests.swift"; sourceTree = SOURCE_ROOT; };
-		TEST00000000000000000012 /* EditorV2ViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FilmBoxTests/ViewModels/EditorV2ViewModelTests.swift"; sourceTree = SOURCE_ROOT; };
-		TEST00000000000000000013 /* ToolDefinitionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FilmBoxTests/Models/ToolDefinitionTests.swift"; sourceTree = SOURCE_ROOT; };
-		TEST00000000000000000014 /* FilterCategoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FilmBoxTests/Models/FilterCategoryTests.swift"; sourceTree = SOURCE_ROOT; };
-		TEST00000000000000000015 /* FilterStorageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FilmBoxTests/Storage/FilterStorageTests.swift"; sourceTree = SOURCE_ROOT; };
-		TEST00000000000000000016 /* EditSnapshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FilmBoxTests/Models/EditSnapshotTests.swift"; sourceTree = SOURCE_ROOT; };
+		TEST00000000000000000001 /* FilmBoxTests/Models/FilterParametersTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmBoxTests/Models/FilterParametersTests.swift; sourceTree = SOURCE_ROOT; };
+		TEST00000000000000000002 /* FilmBoxTests/Models/FilterPresetTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmBoxTests/Models/FilterPresetTests.swift; sourceTree = SOURCE_ROOT; };
+		TEST00000000000000000003 /* FilmBoxTests/Processing/FilterEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmBoxTests/Processing/FilterEngineTests.swift; sourceTree = SOURCE_ROOT; };
+		TEST00000000000000000005 /* FilmBoxTests/ImageProcessing/ImageTestUtilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmBoxTests/ImageProcessing/ImageTestUtilities.swift; sourceTree = SOURCE_ROOT; };
+		TEST00000000000000000006 /* FilmBoxTests/ImageProcessing/CropOperationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmBoxTests/ImageProcessing/CropOperationTests.swift; sourceTree = SOURCE_ROOT; };
+		TEST00000000000000000007 /* FilmBoxTests/ImageProcessing/RotationOperationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmBoxTests/ImageProcessing/RotationOperationTests.swift; sourceTree = SOURCE_ROOT; };
+		TEST00000000000000000008 /* FilmBoxTests/ImageProcessing/FlipOperationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmBoxTests/ImageProcessing/FlipOperationTests.swift; sourceTree = SOURCE_ROOT; };
+		TEST00000000000000000009 /* FilmBoxTests/ImageProcessing/FilterApplicationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmBoxTests/ImageProcessing/FilterApplicationTests.swift; sourceTree = SOURCE_ROOT; };
+		TEST00000000000000000011 /* FilmBoxTests/ViewModels/EditorViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmBoxTests/ViewModels/EditorViewModelTests.swift; sourceTree = SOURCE_ROOT; };
+		TEST00000000000000000012 /* FilmBoxTests/ViewModels/EditorV2ViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmBoxTests/ViewModels/EditorV2ViewModelTests.swift; sourceTree = SOURCE_ROOT; };
+		TEST00000000000000000013 /* FilmBoxTests/Models/ToolDefinitionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmBoxTests/Models/ToolDefinitionTests.swift; sourceTree = SOURCE_ROOT; };
+		TEST00000000000000000014 /* FilmBoxTests/Models/FilterCategoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmBoxTests/Models/FilterCategoryTests.swift; sourceTree = SOURCE_ROOT; };
+		TEST00000000000000000015 /* FilmBoxTests/Storage/FilterStorageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmBoxTests/Storage/FilterStorageTests.swift; sourceTree = SOURCE_ROOT; };
+		TEST00000000000000000016 /* FilmBoxTests/Models/EditSnapshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmBoxTests/Models/EditSnapshotTests.swift; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -213,6 +230,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CE9B6BBD2F0D9470005B9AA1 /* MatomoTracker in Frameworks */,
 				CE6526572F07BC57008466F6 /* UniformTypeIdentifiers.framework in Frameworks */,
 				CE6526512F07BC54008466F6 /* MetalKit.framework in Frameworks */,
 				CE65264F2F07BC51008466F6 /* Metal.framework in Frameworks */,
@@ -238,6 +256,7 @@
 				A1000001229E000000001000 /* FilmBox */,
 				A1000001229E000000001F00 /* Frameworks */,
 				A1000001229E000000001F10 /* Products */,
+				CE9B6BBE2F0D9470005B9AA1 /* Recovered References */,
 			);
 			sourceTree = "<group>";
 		};
@@ -466,6 +485,7 @@
 				CE0756F72F05800000C53D17 /* FiltersManagementView.swift */,
 				FUJIR00000000000000000001 /* FujiRecipeFormView.swift */,
 				QRCODE00000000000000000 /* RecipeQRCodeView.swift */,
+				RECPV00000000000000000001 /* RecipePreviewGrid.swift */,
 			);
 			path = Filters;
 			sourceTree = "<group>";
@@ -485,14 +505,6 @@
 				CE0757112F08A00100C53D17 /* CloudBackupManager.swift */,
 			);
 			path = Storage;
-			sourceTree = "<group>";
-		};
-		SEC0000000000000000010 /* Security */ = {
-			isa = PBXGroup;
-			children = (
-				SEC0000000000000000000 /* RecipeCrypto.swift */,
-			);
-			path = Security;
 			sourceTree = "<group>";
 		};
 		CE65261F2F07936C008466F6 /* Components */ = {
@@ -579,29 +591,53 @@
 			path = CropTab;
 			sourceTree = "<group>";
 		};
+		CE9B6BBE2F0D9470005B9AA1 /* Recovered References */ = {
+			isa = PBXGroup;
+			children = (
+				TEST00000000000000000001 /* FilmBoxTests/Models/FilterParametersTests.swift */,
+				TEST00000000000000000002 /* FilmBoxTests/Models/FilterPresetTests.swift */,
+				TEST00000000000000000003 /* FilmBoxTests/Processing/FilterEngineTests.swift */,
+				TEST00000000000000000005 /* FilmBoxTests/ImageProcessing/ImageTestUtilities.swift */,
+				TEST00000000000000000006 /* FilmBoxTests/ImageProcessing/CropOperationTests.swift */,
+				TEST00000000000000000007 /* FilmBoxTests/ImageProcessing/RotationOperationTests.swift */,
+				TEST00000000000000000008 /* FilmBoxTests/ImageProcessing/FlipOperationTests.swift */,
+				TEST00000000000000000009 /* FilmBoxTests/ImageProcessing/FilterApplicationTests.swift */,
+				TEST00000000000000000011 /* FilmBoxTests/ViewModels/EditorViewModelTests.swift */,
+				TEST00000000000000000012 /* FilmBoxTests/ViewModels/EditorV2ViewModelTests.swift */,
+				TEST00000000000000000013 /* FilmBoxTests/Models/ToolDefinitionTests.swift */,
+				TEST00000000000000000014 /* FilmBoxTests/Models/FilterCategoryTests.swift */,
+				TEST00000000000000000015 /* FilmBoxTests/Storage/FilterStorageTests.swift */,
+				TEST00000000000000000016 /* FilmBoxTests/Models/EditSnapshotTests.swift */,
+			);
+			name = "Recovered References";
+			sourceTree = "<group>";
+		};
 		CED9E57D2F06F7FF002E41A9 /* Sources */ = {
 			isa = PBXGroup;
 			children = (
+				CE9B6BBF2F0D9490005B9AA1 /* IMG_1247.jpeg */,
+				CE9B6BC02F0D9490005B9AA1 /* IMG_1248.jpeg */,
+				CE9B6BC12F0D9490005B9AA1 /* IMG_1249.jpeg */,
+				CE9B6BC22F0D9490005B9AA1 /* IMG_1250.jpeg */,
+				CE9B6BC32F0D9490005B9AA1 /* IMG_1251.jpeg */,
+				CE9B6BC42F0D9490005B9AA1 /* IMG_1252.jpeg */,
+				CE9B6BC52F0D9490005B9AA1 /* IMG_1253.jpeg */,
+				CE9B6BC62F0D9490005B9AA1 /* IMG_1254.jpeg */,
+				CE9B6BC72F0D9490005B9AA1 /* IMG_1263.jpeg */,
 				CE6526182F079245008466F6 /* Icon.jpg */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
 		};
-/* End PBXGroup section */
-
-/* Begin PBXVariantGroup section */
-		L10N0001229E000000000001 /* Localizable.strings */ = {
-			isa = PBXVariantGroup;
+		SEC0000000000000000010 /* Security */ = {
+			isa = PBXGroup;
 			children = (
-				L10N0001229E000000000010 /* en */,
-				L10N0001229E000000000011 /* es */,
-				L10N0001229E000000000012 /* zh-Hans */,
-				L10N0001229E000000000013 /* ja */,
+				SEC0000000000000000000 /* RecipeCrypto.swift */,
 			);
-			name = Localizable.strings;
+			path = Security;
 			sourceTree = "<group>";
 		};
-/* End PBXVariantGroup section */
+/* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
 		A1000001229E000000000E00 /* FilmBox */ = {
@@ -692,6 +728,15 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CE9B6BC82F0D9490005B9AA1 /* IMG_1254.jpeg in Resources */,
+				CE9B6BC92F0D9490005B9AA1 /* IMG_1253.jpeg in Resources */,
+				CE9B6BCA2F0D9490005B9AA1 /* IMG_1247.jpeg in Resources */,
+				CE9B6BCB2F0D9490005B9AA1 /* IMG_1248.jpeg in Resources */,
+				CE9B6BCC2F0D9490005B9AA1 /* IMG_1252.jpeg in Resources */,
+				CE9B6BCD2F0D9490005B9AA1 /* IMG_1263.jpeg in Resources */,
+				CE9B6BCE2F0D9490005B9AA1 /* IMG_1250.jpeg in Resources */,
+				CE9B6BCF2F0D9490005B9AA1 /* IMG_1251.jpeg in Resources */,
+				CE9B6BD02F0D9490005B9AA1 /* IMG_1249.jpeg in Resources */,
 				A1000001229E0001000000B0 /* Assets.xcassets in Resources */,
 				CE6526192F079245008466F6 /* Icon.jpg in Resources */,
 				L10N0001229E000100000001 /* Localizable.strings in Resources */,
@@ -774,6 +819,7 @@
 				CE0756F82F05800000C53D17 /* FiltersManagementView.swift in Sources */,
 				FUJIR00100000000000000001 /* FujiRecipeFormView.swift in Sources */,
 				QRCODE00000000000000001 /* RecipeQRCodeView.swift in Sources */,
+				RECPV00100000000000000001 /* RecipePreviewGrid.swift in Sources */,
 				SEC0000000000000000001 /* RecipeCrypto.swift in Sources */,
 				CE0756F92F05800100C53D17 /* FilterStorage.swift in Sources */,
 				CE0756FC2F05800200C53D17 /* FujiRecipeImporter.swift in Sources */,
@@ -811,22 +857,20 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				TEST00000000000000000101 /* FilterParametersTests.swift in Sources */,
-				TEST00000000000000000102 /* FilterPresetTests.swift in Sources */,
-				TEST00000000000000000103 /* FilterEngineTests.swift in Sources */,
-				/* TEST00000000000000000104  HALDCLUTLoaderTests.swift in Sources - disabled due to Swift 6 issues */
-				TEST00000000000000000105 /* ImageTestUtilities.swift in Sources */,
-				TEST00000000000000000106 /* CropOperationTests.swift in Sources */,
-				TEST00000000000000000107 /* RotationOperationTests.swift in Sources */,
-				TEST00000000000000000108 /* FlipOperationTests.swift in Sources */,
-				TEST00000000000000000109 /* FilterApplicationTests.swift in Sources */,
-				/* TEST00000000000000000110  FilmCalibrationTests.swift in Sources - disabled due to Swift 6 issues */
-				TEST00000000000000000111 /* EditorViewModelTests.swift in Sources */,
-				TEST00000000000000000112 /* EditorV2ViewModelTests.swift in Sources */,
-				TEST00000000000000000113 /* ToolDefinitionTests.swift in Sources */,
-				TEST00000000000000000114 /* FilterCategoryTests.swift in Sources */,
-				TEST00000000000000000115 /* FilterStorageTests.swift in Sources */,
-				TEST00000000000000000116 /* EditSnapshotTests.swift in Sources */,
+				TEST00000000000000000101 /* FilmBoxTests/Models/FilterParametersTests.swift in Sources */,
+				TEST00000000000000000102 /* FilmBoxTests/Models/FilterPresetTests.swift in Sources */,
+				TEST00000000000000000103 /* FilmBoxTests/Processing/FilterEngineTests.swift in Sources */,
+				TEST00000000000000000105 /* FilmBoxTests/ImageProcessing/ImageTestUtilities.swift in Sources */,
+				TEST00000000000000000106 /* FilmBoxTests/ImageProcessing/CropOperationTests.swift in Sources */,
+				TEST00000000000000000107 /* FilmBoxTests/ImageProcessing/RotationOperationTests.swift in Sources */,
+				TEST00000000000000000108 /* FilmBoxTests/ImageProcessing/FlipOperationTests.swift in Sources */,
+				TEST00000000000000000109 /* FilmBoxTests/ImageProcessing/FilterApplicationTests.swift in Sources */,
+				TEST00000000000000000111 /* FilmBoxTests/ViewModels/EditorViewModelTests.swift in Sources */,
+				TEST00000000000000000112 /* FilmBoxTests/ViewModels/EditorV2ViewModelTests.swift in Sources */,
+				TEST00000000000000000113 /* FilmBoxTests/Models/ToolDefinitionTests.swift in Sources */,
+				TEST00000000000000000114 /* FilmBoxTests/Models/FilterCategoryTests.swift in Sources */,
+				TEST00000000000000000115 /* FilmBoxTests/Storage/FilterStorageTests.swift in Sources */,
+				TEST00000000000000000116 /* FilmBoxTests/Models/EditSnapshotTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -839,6 +883,20 @@
 			targetProxy = A1000001229E000100000F01 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		L10N0001229E000000000001 /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				L10N0001229E000000000010 /* en */,
+				L10N0001229E000000000011 /* es */,
+				L10N0001229E000000000012 /* zh-Hans */,
+				L10N0001229E000000000013 /* ja */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
 		A1000001229E000000000F11 /* Debug */ = {

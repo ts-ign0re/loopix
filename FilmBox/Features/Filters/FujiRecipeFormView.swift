@@ -117,6 +117,52 @@ struct FujiRecipeFormView: View {
         return filter.source == .builtIn
     }
 
+    /// Build current FilterParameters from form state for real-time preview
+    private var currentParameters: FilterParameters {
+        // Build base parameters using FujiRecipeImporter logic
+        var params = FujiRecipeImporter.buildParameters(
+            filmSimulation: filmSimulation,
+            grainEffect: showAdvancedGrain ? GrainEffectOption.off.rawValue : grainEffect.rawValue,
+            colorChrome: colorChrome,
+            colorChromeFxBlue: colorChromeFxBlue,
+            wbRedShift: wbRedShift,
+            wbBlueShift: wbBlueShift,
+            dynamicRange: dynamicRange,
+            highlight: highlight,
+            shadow: shadow,
+            color: color,
+            sharpness: sharpness,
+            noiseReduction: noiseReduction,
+            clarity: clarity
+        )
+
+        // Add advanced grain if enabled
+        if showAdvancedGrain {
+            params.grain = GrainData(
+                amount: grainAmount,
+                size: grainSize,
+                roughness: grainRoughness,
+                monochromatic: grainMonochromatic
+            )
+        }
+
+        // Add vignette
+        if vignetteAmount != 0 {
+            params.vignette = VignetteData(
+                amount: vignetteAmount,
+                midpoint: vignetteMidpoint,
+                roundness: vignetteRoundness,
+                feather: vignetteFeather
+            )
+        }
+
+        // Add effects
+        params.fade = fade
+        params.sharpenRadius = sharpenRadius
+
+        return params
+    }
+
     // MARK: - Callback
 
     var onSave: (FilterPreset) -> Void
@@ -132,32 +178,43 @@ struct FujiRecipeFormView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 24) {
-                    nameSection
-                    filmSimulationSection
-                    grainSection
-                    colorChromeSection
-                    whiteBalanceSection
-                    dynamicRangeSection
-                    toneSection
-                    detailSection
+            GeometryReader { geometry in
+                let previewHeight = geometry.size.height * 0.5
 
-                    // Loopix app-specific parameters
-                    loopixParametersSection
+                VStack(spacing: 0) {
+                    // Preview grid - 1/2 screen height
+                    RecipePreviewGrid(parameters: currentParameters)
+                        .frame(height: previewHeight)
 
-                    // Read-only notice
-                    if isReadOnly {
-                        Text("Built-in filters are read-only. Use Duplicate to create an editable copy.")
-                            .font(.system(.caption, design: .monospaced))
-                            .foregroundStyle(.white.opacity(0.4))
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, 40)
-                            .padding(.vertical, 20)
+                    // Scrollable form - remaining 1/2
+                    ScrollView {
+                        VStack(spacing: 24) {
+                            nameSection
+                            filmSimulationSection
+                            grainSection
+                            colorChromeSection
+                            whiteBalanceSection
+                            dynamicRangeSection
+                            toneSection
+                            detailSection
+
+                            // Loopix app-specific parameters
+                            loopixParametersSection
+
+                            // Read-only notice
+                            if isReadOnly {
+                                Text("Built-in filters are read-only. Use Duplicate to create an editable copy.")
+                                    .font(.system(.caption, design: .monospaced))
+                                    .foregroundStyle(.white.opacity(0.4))
+                                    .multilineTextAlignment(.center)
+                                    .padding(.horizontal, 40)
+                                    .padding(.vertical, 20)
+                            }
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 16)
                     }
                 }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 16)
             }
             .background(Color.black)
             .navigationBarTitleDisplayMode(.inline)
