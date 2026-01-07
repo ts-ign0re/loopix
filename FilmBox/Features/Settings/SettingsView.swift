@@ -20,6 +20,10 @@ struct SettingsView: View {
     @State private var backupInfo: BackupInfo?
     @State private var isBackingUp = false
     @State private var showRestartAlert = false
+
+    // Test paywalls (DEBUG only)
+    @State private var showPaywall = false
+    @State private var showSharePaywall = false
     var body: some View {
         NavigationStack {
             ScrollView(showsIndicators: false) {
@@ -62,6 +66,14 @@ struct SettingsView: View {
 
                     // About Section
                     aboutSection
+
+                    #if DEBUG
+                    Divider()
+                        .background(Color.white.opacity(0.1))
+
+                    // Test Paywalls Section (DEBUG only)
+                    testPaywallsSection
+                    #endif
                 }
                 .padding(20)
             }
@@ -147,6 +159,16 @@ struct SettingsView: View {
         }
         .fullScreenCover(isPresented: $showSecurityHelp) {
             securityHelpSheet
+        }
+        .fullScreenCover(isPresented: $showPaywall) {
+            if #available(iOS 17.0, *) {
+                PaywallView()
+            }
+        }
+        .fullScreenCover(isPresented: $showSharePaywall) {
+            if #available(iOS 17.0, *) {
+                SharePaywallView()
+            }
         }
     }
 
@@ -877,6 +899,106 @@ struct SettingsView: View {
         let mb = Double(bytes) / 1024 / 1024
         return String(format: "%.0fmb", mb)
     }
+
+    // MARK: - Test Paywalls Section (DEBUG only)
+
+    #if DEBUG
+    private var testPaywallsSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            sectionHeader("test paywalls")
+
+            Text("// debug only - not visible in release")
+                .font(.system(size: 11, design: .monospaced))
+                .foregroundStyle(.red.opacity(0.6))
+
+            VStack(spacing: 12) {
+                // Main paywall button
+                Button {
+                    showPaywall = true
+                } label: {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("show_paywall()")
+                                .font(.system(size: 13, weight: .medium, design: .monospaced))
+                                .foregroundStyle(.white)
+
+                            Text("filters unlock paywall")
+                                .font(.system(size: 11, design: .monospaced))
+                                .foregroundStyle(.white.opacity(0.4))
+                        }
+
+                        Spacer()
+
+                        Image(systemName: "creditcard.fill")
+                            .font(.system(size: 16))
+                            .foregroundStyle(.yellow.opacity(0.8))
+                    }
+                    .padding(12)
+                    .background(Color.yellow.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.yellow.opacity(0.3), lineWidth: 1)
+                    )
+                }
+                .buttonStyle(.plain)
+
+                // Share paywall button
+                Button {
+                    showSharePaywall = true
+                } label: {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("show_share_paywall()")
+                                .font(.system(size: 13, weight: .medium, design: .monospaced))
+                                .foregroundStyle(.white)
+
+                            Text("recipe sharing paywall")
+                                .font(.system(size: 11, design: .monospaced))
+                                .foregroundStyle(.white.opacity(0.4))
+                        }
+
+                        Spacer()
+
+                        Image(systemName: "square.and.arrow.up.fill")
+                            .font(.system(size: 16))
+                            .foregroundStyle(.yellow.opacity(0.8))
+                    }
+                    .padding(12)
+                    .background(Color.yellow.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.yellow.opacity(0.3), lineWidth: 1)
+                    )
+                }
+                .buttonStyle(.plain)
+
+                // Subscription status
+                if #available(iOS 17.0, *) {
+                    HStack {
+                        Text("subscription status:")
+                            .font(.system(size: 12, design: .monospaced))
+                            .foregroundStyle(.white.opacity(0.5))
+
+                        Spacer()
+
+                        Text(SubscriptionManager.shared.isPro ? "PRO" : "FREE")
+                            .font(.system(size: 12, weight: .bold, design: .monospaced))
+                            .foregroundStyle(SubscriptionManager.shared.isPro ? .green : .white.opacity(0.5))
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(
+                                Capsule()
+                                    .fill(SubscriptionManager.shared.isPro ? Color.green.opacity(0.2) : Color.white.opacity(0.1))
+                            )
+                    }
+                    .padding(.top, 8)
+                }
+            }
+        }
+    }
+    #endif
 }
 
 #Preview {

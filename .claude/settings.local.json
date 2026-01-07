@@ -21,7 +21,8 @@
       "Bash(xattr:*)",
       "WebFetch(domain:www.quelsolaar.com)",
       "Bash(git checkout:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   }
 }
