@@ -249,3 +249,19 @@
 "fuji.grain.weak_large" = "Débil / Grande";
 "fuji.grain.strong_small" = "Fuerte / Pequeño";
 "fuji.grain.strong_large" = "Fuerte / Grande";
+
+// MARK: - Paywall
+"paywall.unlock_filters" = "desbloquea todos los filtros";
+"paywall.monthly_price" = "solo $%@ / mes";
+"paywall.get_pro" = "obtener pro — $%@ / año";
+"paywall.restore" = "restaurar compras";
+"paywall.terms" = "términos y política";
+
+// Share Paywall
+"paywall.share.title" = "comparte tus recetas";
+"paywall.share.subtitle" = "ayuda a otros a descubrir looks increíbles.\ncomparte tus recetas personalizadas via código QR.";
+"paywall.share.feature.export" = "exporta recetas como códigos QR";
+"paywall.share.feature.share" = "comparte con amigos y comunidad";
+"paywall.share.feature.import" = "importa recetas de otros";
+"paywall.share.feature.filters" = "desbloquea más de 30 filtros";
+"paywall.share.button" = "desbloquear — $%@ / año";

@@ -18,6 +18,10 @@ struct SharePaywallView: View {
     // MARK: - State
 
     @State private var isPurchasing = false
+    @State private var showTerms = false
+    @State private var sortedFilters: [FilterPreset] = []
+    @State private var centerFilterID: UUID?
+    @State private var filtersReady = false
 
     // MARK: - Constants
 
@@ -51,12 +55,12 @@ struct SharePaywallView: View {
 
                     // Title & subtitle
                     VStack(spacing: 12) {
-                        Text("share your recipes")
+                        Text("paywall.share.title".localized)
                             .font(.system(size: 28, weight: .bold, design: .monospaced))
                             .foregroundStyle(.white)
                             .multilineTextAlignment(.center)
 
-                        Text("help others discover amazing looks.\nshare your custom recipes via QR code.")
+                        Text("paywall.share.subtitle".localized)
                             .font(.system(size: 15, design: .monospaced))
                             .foregroundStyle(.white.opacity(0.6))
                             .multilineTextAlignment(.center)
@@ -65,12 +69,16 @@ struct SharePaywallView: View {
 
                     // Features list
                     VStack(alignment: .leading, spacing: 16) {
-                        featureRow(icon: "arrow.up.circle.fill", text: "export recipes as QR codes")
-                        featureRow(icon: "person.2.fill", text: "share with friends & community")
-                        featureRow(icon: "arrow.down.circle.fill", text: "import recipes from others")
-                        featureRow(icon: "sparkles", text: "unlock all 30+ film filters")
+                        featureRow(icon: "arrow.up.circle.fill", text: "paywall.share.feature.export".localized)
+                        featureRow(icon: "person.2.fill", text: "paywall.share.feature.share".localized)
+                        featureRow(icon: "arrow.down.circle.fill", text: "paywall.share.feature.import".localized)
+                        featureRow(icon: "sparkles", text: "paywall.share.feature.filters".localized)
                     }
                     .padding(.horizontal, 24)
+
+                    // Filter strip
+                    filterStripWithGradients
+                        .padding(.top, 8)
                 }
                 .padding(.horizontal, 24)
 
@@ -82,8 +90,106 @@ struct SharePaywallView: View {
                     .padding(.bottom, 34)
             }
         }
+        .preferredColorScheme(.dark)
         .task {
             Analytics.shared.trackScreen("paywall_share")
+            setupFilters()
+        }
+    }
+
+    // MARK: - Setup
+
+    private func setupFilters() {
+        // Get all FILM and B&W filters
+        let filmFilters = FilmEmulations.all.filter { $0.category == .film }
+        let bwFilters = FilmEmulations.all.filter { $0.category == .bw }
+        let allFilters = filmFilters + bwFilters
+
+        // Group by brand
+        let fujiFilters = allFilters.filter { $0.name.lowercased().contains("fuji") }.sorted { $0.name < $1.name }
+        let kodakFilters = allFilters.filter { $0.name.lowercased().contains("kodak") }.sorted { $0.name < $1.name }
+        let cinestillFilters = allFilters.filter { $0.name.lowercased().contains("cinestill") }.sorted { $0.name < $1.name }
+
+        let otherFilters = allFilters.filter { filter in
+            let name = filter.name.lowercased()
+            return !name.contains("fuji") && !name.contains("kodak") && !name.contains("cinestill")
+        }.sorted { $0.name < $1.name }
+
+        // Arrange: Fuji (left) → Kodak (center) → CineStill → Others
+        sortedFilters = fujiFilters + kodakFilters + cinestillFilters + otherFilters
+
+        // Set center filter to first Kodak filter
+        if let firstKodak = kodakFilters.first {
+            centerFilterID = firstKodak.id
+        }
+
+        // Mark filters as ready for scroll
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            filtersReady = true
+        }
+    }
+
+    // MARK: - Filter Strip with Gradients
+
+    private var filterStripWithGradients: some View {
+        ZStack {
+            ScrollViewReader { proxy in
+                ScrollView(.horizontal, showsIndicators: false) {
+                    LazyHStack(spacing: 12) {
+                        ForEach(sortedFilters) { filter in
+                            filterCell(filter)
+                                .id(filter.id)
+                        }
+                    }
+                    .padding(.horizontal, 40)
+                }
+                .frame(height: 100)
+                .onChange(of: filtersReady) { _, ready in
+                    if ready, let id = centerFilterID {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                            withAnimation(.easeOut(duration: 0.4)) {
+                                proxy.scrollTo(id, anchor: .center)
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Gradient overlays
+            HStack {
+                LinearGradient(
+                    colors: [.black, .black.opacity(0)],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+                .frame(width: 40)
+                .allowsHitTesting(false)
+
+                Spacer()
+
+                LinearGradient(
+                    colors: [.black.opacity(0), .black],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+                .frame(width: 40)
+                .allowsHitTesting(false)
+            }
+            .frame(height: 100)
+        }
+    }
+
+    private func filterCell(_ filter: FilterPreset) -> some View {
+        VStack(spacing: 6) {
+            FilterPreviewThumbnail(filter: filter)
+                .frame(width: 70, height: 70)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+
+            Text(filter.name)
+                .font(.system(size: 10, weight: .medium, design: .monospaced))
+                .foregroundStyle(.white.opacity(0.7))
+                .lineLimit(1)
+                .frame(width: 70)
         }
     }
 
@@ -124,7 +230,7 @@ struct SharePaywallView: View {
     private var purchaseSection: some View {
         VStack(spacing: 16) {
             // Monthly price callout
-            Text("only $\(String(format: "%.2f", monthlyPrice)) / month")
+            Text(String(format: "paywall.monthly_price".localized, String(format: "%.2f", monthlyPrice)))
                 .font(.system(size: 15, weight: .medium, design: .monospaced))
                 .foregroundStyle(.white.opacity(0.7))
 
@@ -140,7 +246,7 @@ struct SharePaywallView: View {
                             .tint(.black)
                             .scaleEffect(0.8)
                     } else {
-                        Text("unlock sharing — $\(String(format: "%.2f", yearlyPrice)) / year")
+                        Text(String(format: "paywall.share.button".localized, String(format: "%.2f", yearlyPrice)))
                             .font(.system(size: 16, weight: .bold, design: .monospaced))
                     }
                 }
@@ -155,17 +261,35 @@ struct SharePaywallView: View {
             .buttonStyle(.plain)
             .disabled(isPurchasing)
 
-            // Restore purchases
-            Button {
-                Task {
-                    await restorePurchases()
+            // Restore purchases & Terms
+            HStack(spacing: 16) {
+                Button {
+                    Task {
+                        await restorePurchases()
+                    }
+                } label: {
+                    Text("paywall.restore".localized)
+                        .font(.system(size: 13, weight: .medium, design: .monospaced))
+                        .foregroundStyle(.white.opacity(0.5))
                 }
-            } label: {
-                Text("restore purchases")
-                    .font(.system(size: 13, weight: .medium, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.5))
+                .buttonStyle(.plain)
+
+                Text("·")
+                    .foregroundStyle(.white.opacity(0.3))
+
+                Button {
+                    showTerms = true
+                } label: {
+                    Text("paywall.terms".localized)
+                        .font(.system(size: 13, weight: .medium, design: .monospaced))
+                        .foregroundStyle(.white.opacity(0.5))
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
+            .frame(maxWidth: .infinity)
+        }
+        .sheet(isPresented: $showTerms) {
+            TermsWebView()
         }
     }
 

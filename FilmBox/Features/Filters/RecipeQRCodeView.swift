@@ -647,6 +647,13 @@ struct RecipeScannerView: View {
             } message: {
                 Text(errorMessage)
             }
+            .overlay(alignment: .bottom) {
+                if showGiftUnlocked {
+                    giftUnlockedToast
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                        .zIndex(100)
+                }
+            }
         }
         .preferredColorScheme(.dark)
         .task {
@@ -869,9 +876,63 @@ struct RecipeScannerView: View {
         }
     }
 
+    @State private var showGiftUnlocked = false
+
+    // MARK: - Gift Unlocked Toast
+
+    private var giftUnlockedToast: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 12) {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 20))
+                    .foregroundStyle(.black)
+
+                Text("Welcome my friend, Loopix Pro Unlocked")
+                    .font(.system(size: 14, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(.black)
+
+                Spacer()
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+            .background(Color.yellow)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+        }
+        .padding(.horizontal, 16)
+        .padding(.bottom, 40)
+        .onTapGesture {
+            withAnimation(.spring(response: 0.3)) {
+                showGiftUnlocked = false
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                dismiss()
+            }
+        }
+        .onAppear {
+            // Auto dismiss after 3 seconds
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                withAnimation(.spring(response: 0.3)) {
+                    showGiftUnlocked = false
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    dismiss()
+                }
+            }
+        }
+    }
+
     // MARK: - Process Scanned Code
 
     private func processScannedCode(_ code: String) {
+        // Gift code check - unlock Pro with special message
+        if SubscriptionManager.shared.applyGiftCode(code) {
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                showGiftUnlocked = true
+            }
+            return
+        }
+
         // Try encrypted format first (new secure format)
         if RecipeCrypto.shared.isEncryptedRecipe(code) {
             guard let recipeData = RecipeCrypto.shared.decrypt(code) else {

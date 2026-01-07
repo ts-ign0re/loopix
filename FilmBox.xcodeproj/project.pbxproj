@@ -96,6 +96,7 @@
 		SUB00000000000000000002 /* SharePaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SUB00000000000000000020 /* SharePaywallView.swift */; };
 		SUB00000000000000000003 /* SubscriptionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = SUB00000000000000000030 /* SubscriptionManager.swift */; };
 		SUB00000000000000000004 /* ProFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = SUB00000000000000000040 /* ProFeature.swift */; };
+		SUB00000000000000000005 /* TermsWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SUB00000000000000000050 /* TermsWebView.swift */; };
 		TEST00000000000000000101 /* FilmBoxTests/Models/FilterParametersTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TEST00000000000000000001 /* FilmBoxTests/Models/FilterParametersTests.swift */; };
 		TEST00000000000000000102 /* FilmBoxTests/Models/FilterPresetTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TEST00000000000000000002 /* FilmBoxTests/Models/FilterPresetTests.swift */; };
 		TEST00000000000000000103 /* FilmBoxTests/Processing/FilterEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TEST00000000000000000003 /* FilmBoxTests/Processing/FilterEngineTests.swift */; };
@@ -217,6 +218,7 @@
 		SUB00000000000000000020 /* SharePaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharePaywallView.swift; sourceTree = "<group>"; };
 		SUB00000000000000000030 /* SubscriptionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionManager.swift; sourceTree = "<group>"; };
 		SUB00000000000000000040 /* ProFeature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProFeature.swift; sourceTree = "<group>"; };
+		SUB00000000000000000050 /* TermsWebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TermsWebView.swift; sourceTree = "<group>"; };
 		TEST00000000000000000001 /* FilmBoxTests/Models/FilterParametersTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmBoxTests/Models/FilterParametersTests.swift; sourceTree = SOURCE_ROOT; };
 		TEST00000000000000000002 /* FilmBoxTests/Models/FilterPresetTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmBoxTests/Models/FilterPresetTests.swift; sourceTree = SOURCE_ROOT; };
 		TEST00000000000000000003 /* FilmBoxTests/Processing/FilterEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmBoxTests/Processing/FilterEngineTests.swift; sourceTree = SOURCE_ROOT; };
@@ -374,6 +376,7 @@
 				SUB00000000000000000020 /* SharePaywallView.swift */,
 				SUB00000000000000000030 /* SubscriptionManager.swift */,
 				SUB00000000000000000040 /* ProFeature.swift */,
+				SUB00000000000000000050 /* TermsWebView.swift */,
 			);
 			path = Subscription;
 			sourceTree = "<group>";
@@ -814,6 +817,7 @@
 				SUB00000000000000000002 /* SharePaywallView.swift in Sources */,
 				SUB00000000000000000003 /* SubscriptionManager.swift in Sources */,
 				SUB00000000000000000004 /* ProFeature.swift in Sources */,
+				SUB00000000000000000005 /* TermsWebView.swift in Sources */,
 				ANALY00000000000000001 /* Analytics.swift in Sources */,
 				A1000001229E000100000010 /* FilterCategory.swift in Sources */,
 				A1000001229E000100000011 /* FilterParameters.swift in Sources */,

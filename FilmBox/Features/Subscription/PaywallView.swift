@@ -48,8 +48,8 @@ struct PaywallView: View {
     /// Current image index in carousel
     @State private var currentImageIndex: Int = 0
 
-    /// Processed preview image
-    @State private var processedImage: CGImage?
+    /// All processed preview images (preloaded)
+    @State private var processedImages: [CGImage?] = Array(repeating: nil, count: paywallTestImageNames.count)
 
     /// Loading state
     @State private var isLoading = true
@@ -57,10 +57,29 @@ struct PaywallView: View {
     /// Purchase in progress
     @State private var isPurchasing = false
 
+    /// Filters loaded flag for scroll
+    @State private var filtersReady = false
+
+    /// Show terms sheet
+    @State private var showTerms = false
+
+    /// Task for cancelling previous image processing
+    @State private var processingTask: Task<Void, Never>?
+
     // MARK: - Constants
 
     private let yearlyPrice: Double = 39.99
-    private var monthlyPrice: Double { (yearlyPrice / 12).rounded(to: 2) }
+
+    /// Shared CIContext to avoid memory leaks
+    private static let sharedContext: CIContext = {
+        CIContext(options: [
+            .workingColorSpace: CGColorSpace(name: CGColorSpace.linearSRGB)!,
+            .outputColorSpace: CGColorSpace(name: CGColorSpace.sRGB)!,
+            .useSoftwareRenderer: false,
+            .cacheIntermediates: false
+        ])
+    }()
+    private var monthlyPrice: Double { (yearlyPrice / 12 * 100).rounded() / 100 }
 
     // MARK: - Body
 
@@ -73,12 +92,16 @@ struct PaywallView: View {
                     // Close button
                     closeButton
 
-                    // Image preview (half screen)
-                    imagePreview(height: geometry.size.height * 0.45)
+                    // Image preview (half screen) - using ScrollView for smooth swipe
+                    imageCarousel(height: geometry.size.height * 0.45)
 
-                    // Filter strip
-                    filterStrip
-                        .padding(.top, 16)
+                    // Page indicator dots
+                    pageIndicator
+                        .padding(.top, 12)
+
+                    // Filter strip with gradients
+                    filterStripWithGradients
+                        .padding(.top, 12)
 
                     Spacer()
 
@@ -89,6 +112,7 @@ struct PaywallView: View {
                 }
             }
         }
+        .preferredColorScheme(.dark)
         .task {
             // Track paywall view
             Analytics.shared.trackScreen(.paywall)
@@ -97,14 +121,16 @@ struct PaywallView: View {
             await loadSourceImages()
         }
         .onChange(of: selectedFilter) { _, newFilter in
-            Task {
-                await processCurrentImage()
+            // Cancel previous processing task
+            processingTask?.cancel()
+            processingTask = Task {
+                await processAllImages()
             }
         }
-        .onChange(of: currentImageIndex) { _, _ in
-            Task {
-                await processCurrentImage()
-            }
+        .onDisappear {
+            // Clean up on dismiss
+            processingTask?.cancel()
+            processingTask = nil
         }
     }
 
@@ -125,62 +151,113 @@ struct PaywallView: View {
         .padding(.trailing, 8)
     }
 
-    // MARK: - Image Preview
+    // MARK: - Page Indicator
 
-    private func imagePreview(height: CGFloat) -> some View {
-        TabView(selection: $currentImageIndex) {
+    private var pageIndicator: some View {
+        HStack(spacing: 6) {
             ForEach(0..<paywallTestImageNames.count, id: \.self) { index in
-                ZStack {
-                    if let cgImage = processedImage, index == currentImageIndex {
-                        Image(decorative: cgImage, scale: 1.0)
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(height: height)
-                            .clipped()
-                            .clipShape(RoundedRectangle(cornerRadius: 16))
-                    } else {
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(Color.white.opacity(0.05))
-                            .overlay {
-                                if isLoading {
-                                    ProgressView()
-                                        .tint(.white.opacity(0.3))
-                                }
-                            }
-                    }
-                }
-                .tag(index)
+                Circle()
+                    .fill(index == currentImageIndex ? Color.white : Color.white.opacity(0.3))
+                    .frame(width: 6, height: 6)
             }
         }
-        .tabViewStyle(.page(indexDisplayMode: .automatic))
-        .frame(height: height)
-        .padding(.horizontal, 16)
     }
 
-    // MARK: - Filter Strip
+    // MARK: - Image Carousel (smooth scrolling)
 
-    private var filterStrip: some View {
-        ScrollViewReader { proxy in
+    private let carouselSpacing: CGFloat = 16
+
+    private func imageCarousel(height: CGFloat) -> some View {
+        GeometryReader { geometry in
+            let cardWidth = geometry.size.width - carouselSpacing * 2
+
             ScrollView(.horizontal, showsIndicators: false) {
-                LazyHStack(spacing: 12) {
-                    ForEach(shuffledFilters) { filter in
-                        filterCell(filter)
-                            .id(filter.id)
+                LazyHStack(spacing: carouselSpacing) {
+                    ForEach(0..<paywallTestImageNames.count, id: \.self) { index in
+                        ZStack {
+                            if let cgImage = processedImages[index] {
+                                Image(decorative: cgImage, scale: 1.0)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(width: cardWidth, height: height)
+                                    .clipped()
+                                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                            } else {
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(Color.white.opacity(0.05))
+                                    .frame(width: cardWidth, height: height)
+                                    .overlay {
+                                        if isLoading {
+                                            ProgressView()
+                                                .tint(.white.opacity(0.3))
+                                        }
+                                    }
+                            }
+                        }
+                        .id(index)
                     }
                 }
-                .padding(.horizontal, 16)
+                .scrollTargetLayout()
+                .padding(.horizontal, carouselSpacing)
             }
-            .frame(height: 100)
-            .onAppear {
-                // Scroll to selected filter (center)
-                if let id = selectedFilterID {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                        withAnimation(.easeOut(duration: 0.3)) {
-                            proxy.scrollTo(id, anchor: .center)
+            .scrollTargetBehavior(.viewAligned)
+            .scrollPosition(id: Binding(
+                get: { currentImageIndex },
+                set: { if let newValue = $0 { currentImageIndex = newValue } }
+            ))
+        }
+        .frame(height: height)
+    }
+
+    // MARK: - Filter Strip with Gradients
+
+    private var filterStripWithGradients: some View {
+        ZStack {
+            // Filter scroll view
+            ScrollViewReader { proxy in
+                ScrollView(.horizontal, showsIndicators: false) {
+                    LazyHStack(spacing: 12) {
+                        ForEach(shuffledFilters) { filter in
+                            filterCell(filter)
+                                .id(filter.id)
+                        }
+                    }
+                    .padding(.horizontal, 40) // Extra padding for gradient overlay
+                }
+                .frame(height: 100)
+                .onChange(of: filtersReady) { _, ready in
+                    if ready, let id = selectedFilterID {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                            withAnimation(.easeOut(duration: 0.4)) {
+                                proxy.scrollTo(id, anchor: .center)
+                            }
                         }
                     }
                 }
             }
+
+            // Left gradient fade
+            HStack {
+                LinearGradient(
+                    colors: [.black, .black.opacity(0)],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+                .frame(width: 40)
+                .allowsHitTesting(false)
+
+                Spacer()
+
+                // Right gradient fade
+                LinearGradient(
+                    colors: [.black.opacity(0), .black],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+                .frame(width: 40)
+                .allowsHitTesting(false)
+            }
+            .frame(height: 100)
         }
     }
 
@@ -219,12 +296,12 @@ struct PaywallView: View {
     private var purchaseSection: some View {
         VStack(spacing: 16) {
             // Title
-            Text("unlock all filters")
+            Text("paywall.unlock_filters".localized)
                 .font(.system(size: 24, weight: .bold, design: .monospaced))
                 .foregroundStyle(.white)
 
             // Monthly price callout
-            Text("only $\(String(format: "%.2f", monthlyPrice)) / month")
+            Text(String(format: "paywall.monthly_price".localized, String(format: "%.2f", monthlyPrice)))
                 .font(.system(size: 15, weight: .medium, design: .monospaced))
                 .foregroundStyle(.white.opacity(0.7))
 
@@ -240,7 +317,7 @@ struct PaywallView: View {
                             .tint(.black)
                             .scaleEffect(0.8)
                     } else {
-                        Text("get pro — $\(String(format: "%.2f", yearlyPrice)) / year")
+                        Text(String(format: "paywall.get_pro".localized, String(format: "%.2f", yearlyPrice)))
                             .font(.system(size: 16, weight: .bold, design: .monospaced))
                     }
                 }
@@ -255,17 +332,34 @@ struct PaywallView: View {
             .buttonStyle(.plain)
             .disabled(isPurchasing)
 
-            // Restore purchases
-            Button {
-                Task {
-                    await restorePurchases()
+            // Restore purchases & Terms
+            HStack(spacing: 16) {
+                Button {
+                    Task {
+                        await restorePurchases()
+                    }
+                } label: {
+                    Text("paywall.restore".localized)
+                        .font(.system(size: 13, weight: .medium, design: .monospaced))
+                        .foregroundStyle(.white.opacity(0.5))
                 }
-            } label: {
-                Text("restore purchases")
-                    .font(.system(size: 13, weight: .medium, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.5))
+                .buttonStyle(.plain)
+
+                Text("·")
+                    .foregroundStyle(.white.opacity(0.3))
+
+                Button {
+                    showTerms = true
+                } label: {
+                    Text("paywall.terms".localized)
+                        .font(.system(size: 13, weight: .medium, design: .monospaced))
+                        .foregroundStyle(.white.opacity(0.5))
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
+        }
+        .sheet(isPresented: $showTerms) {
+            TermsWebView()
         }
     }
 
@@ -289,56 +383,82 @@ struct PaywallView: View {
             selectedFilter = allFilters[selectedIndex]
             selectedFilterID = allFilters[selectedIndex].id
         }
+
+        // Mark filters as ready for scroll
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            filtersReady = true
+        }
     }
 
     private func loadSourceImages() async {
         isLoading = true
 
+        let targetWidth: CGFloat = 800
         var images: [CIImage] = []
 
         for name in paywallTestImageNames {
-            if let url = Bundle.main.url(forResource: name, withExtension: "jpeg"),
-               let ciImage = CIImage(contentsOf: url) {
-                images.append(ciImage)
-            } else if let url = Bundle.main.url(forResource: name, withExtension: "jpg"),
-                      let ciImage = CIImage(contentsOf: url) {
-                images.append(ciImage)
+            var ciImage: CIImage?
+
+            if let url = Bundle.main.url(forResource: name, withExtension: "jpeg") {
+                ciImage = CIImage(contentsOf: url)
+            } else if let url = Bundle.main.url(forResource: name, withExtension: "jpg") {
+                ciImage = CIImage(contentsOf: url)
+            }
+
+            // Pre-scale to target size to reduce memory
+            if let image = ciImage {
+                let scale = targetWidth / image.extent.width
+                let scaled = image.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
+                images.append(scaled)
             }
         }
 
         sourceImages = images
 
-        // Process initial image
-        await processCurrentImage()
+        // Process all images for smooth carousel
+        await processAllImages()
 
         isLoading = false
     }
 
-    private func processCurrentImage() async {
-        guard currentImageIndex < sourceImages.count,
-              let filter = selectedFilter else { return }
+    /// Process all images in parallel for smooth carousel scrolling
+    private func processAllImages() async {
+        guard !sourceImages.isEmpty, let filter = selectedFilter else { return }
 
-        let source = sourceImages[currentImageIndex]
+        // Check for cancellation early
+        guard !Task.isCancelled else { return }
 
-        let context = CIContext(options: [
-            .workingColorSpace: CGColorSpace(name: CGColorSpace.linearSRGB)!,
-            .outputColorSpace: CGColorSpace(name: CGColorSpace.sRGB)!,
-            .useSoftwareRenderer: false
-        ])
+        let context = Self.sharedContext
+        let imagesToProcess = sourceImages
 
-        // Scale for performance
-        let targetWidth: CGFloat = 800
-        let scale = targetWidth / source.extent.width
-        let scaled = source.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
+        await withTaskGroup(of: (Int, CGImage?).self) { group in
+            for (index, source) in imagesToProcess.enumerated() {
+                group.addTask {
+                    // Check cancellation
+                    guard !Task.isCancelled else { return (index, nil) }
 
-        // Apply filter
-        let processed = await FilterEngine.shared.apply(filter, to: scaled)
+                    // Apply filter (source already pre-scaled)
+                    let processed = await FilterEngine.shared.apply(filter, to: source)
 
-        // Render to CGImage
-        let cgImage = context.createCGImage(processed, from: processed.extent)
+                    // Check cancellation before expensive render
+                    guard !Task.isCancelled else { return (index, nil) }
 
-        await MainActor.run {
-            self.processedImage = cgImage
+                    // Render to CGImage
+                    let cgImage = context.createCGImage(processed, from: processed.extent)
+                    return (index, cgImage)
+                }
+            }
+
+            for await (index, cgImage) in group {
+                // Check cancellation
+                guard !Task.isCancelled else { break }
+
+                await MainActor.run {
+                    if index < processedImages.count {
+                        processedImages[index] = cgImage
+                    }
+                }
+            }
         }
     }
 
@@ -347,7 +467,6 @@ struct PaywallView: View {
     private func purchase() async {
         isPurchasing = true
 
-        // TODO: Implement StoreKit 2 purchase
         do {
             try await SubscriptionManager.shared.purchase()
             await MainActor.run {
@@ -363,7 +482,6 @@ struct PaywallView: View {
     private func restorePurchases() async {
         isPurchasing = true
 
-        // TODO: Implement restore
         do {
             try await SubscriptionManager.shared.restore()
             await MainActor.run {
@@ -380,7 +498,7 @@ struct PaywallView: View {
 // MARK: - Filter Preview Thumbnail
 
 @available(iOS 17.0, *)
-private struct FilterPreviewThumbnail: View {
+struct FilterPreviewThumbnail: View {
     let filter: FilterPreset
 
     @StateObject private var previewLoader = FilterPreviewLoader()
@@ -419,15 +537,6 @@ private struct FilterPreviewThumbnail: View {
         default:
             return [Color.gray.opacity(0.4), Color.gray.opacity(0.6)]
         }
-    }
-}
-
-// MARK: - Double Rounding Helper
-
-private extension Double {
-    func rounded(to places: Int) -> Double {
-        let divisor = pow(10.0, Double(places))
-        return (self * divisor).rounded() / divisor
     }
 }
 

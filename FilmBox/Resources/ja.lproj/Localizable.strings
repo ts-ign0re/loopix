@@ -249,3 +249,19 @@
 "fuji.grain.weak_large" = "弱 / 大";
 "fuji.grain.strong_small" = "強 / 小";
 "fuji.grain.strong_large" = "強 / 大";
+
+// MARK: - Paywall
+"paywall.unlock_filters" = "すべてのフィルターをアンロック";
+"paywall.monthly_price" = "月額 $%@ のみ";
+"paywall.get_pro" = "Pro を取得 — 年額 $%@";
+"paywall.restore" = "購入を復元";
+"paywall.terms" = "利用規約";
+
+// Share Paywall
+"paywall.share.title" = "レシピを共有";
+"paywall.share.subtitle" = "素敵なルックを他の人にも。\nQRコードでカスタムレシピを共有。";
+"paywall.share.feature.export" = "レシピをQRコードでエクスポート";
+"paywall.share.feature.share" = "友達やコミュニティと共有";
+"paywall.share.feature.import" = "他の人のレシピをインポート";
+"paywall.share.feature.filters" = "30以上のフィルムフィルターをアンロック";
+"paywall.share.button" = "共有をアンロック — 年額 $%@";

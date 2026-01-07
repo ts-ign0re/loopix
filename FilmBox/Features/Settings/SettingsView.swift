@@ -21,9 +21,15 @@ struct SettingsView: View {
     @State private var isBackingUp = false
     @State private var showRestartAlert = false
 
-    // Test paywalls (DEBUG only)
+    // Admin mode
     @State private var showPaywall = false
     @State private var showSharePaywall = false
+    @State private var lastGeneratedCode: String?
+    @State private var showAdminPasswordPrompt = false
+    @State private var adminPasswordInput = ""
+    @State private var adminPasswordError = false
+    @State private var adminSessionTrigger = false // Force UI refresh
+
     var body: some View {
         NavigationStack {
             ScrollView(showsIndicators: false) {
@@ -67,13 +73,13 @@ struct SettingsView: View {
                     // About Section
                     aboutSection
 
-                    #if DEBUG
-                    Divider()
-                        .background(Color.white.opacity(0.1))
+                    // Admin Section (gift unlock required)
+                    if hasAdminAccess() {
+                        Divider()
+                            .background(Color.white.opacity(0.1))
 
-                    // Test Paywalls Section (DEBUG only)
-                    testPaywallsSection
-                    #endif
+                        adminSection
+                    }
                 }
                 .padding(20)
             }
@@ -898,103 +904,243 @@ struct SettingsView: View {
         return String(format: "%.0fmb", mb)
     }
 
-    // MARK: - Test Paywalls Section (DEBUG only)
+    // MARK: - Admin Section (Gift Unlock)
 
-    #if DEBUG
-    private var testPaywallsSection: some View {
+    private func hasAdminAccess() -> Bool {
+        // adminSessionTrigger forces SwiftUI to re-evaluate
+        _ = adminSessionTrigger
+        guard #available(iOS 17.0, *) else { return false }
+        return SubscriptionManager.shared.hasAdminAccess
+    }
+
+    private func isAdminSessionActive() -> Bool {
+        // adminSessionTrigger forces SwiftUI to re-evaluate this
+        _ = adminSessionTrigger
+        guard #available(iOS 17.0, *) else { return false }
+        return SubscriptionManager.shared.isAdminSessionActive
+    }
+
+    private var adminSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            sectionHeader("test paywalls")
+            sectionHeader("🔐 admin")
 
-            Text("// debug only - not visible in release")
-                .font(.system(size: 11, design: .monospaced))
-                .foregroundStyle(.red.opacity(0.6))
-
-            VStack(spacing: 12) {
-                // Main paywall button
-                Button {
-                    showPaywall = true
-                } label: {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("show_paywall()")
-                                .font(.system(size: 13, weight: .medium, design: .monospaced))
-                                .foregroundStyle(.white)
-
-                            Text("filters unlock paywall")
-                                .font(.system(size: 11, design: .monospaced))
-                                .foregroundStyle(.white.opacity(0.4))
-                        }
-
-                        Spacer()
-
-                        Image(systemName: "creditcard.fill")
-                            .font(.system(size: 16))
-                            .foregroundStyle(.yellow.opacity(0.8))
+            // Use trigger to force re-render
+            let _ = adminSessionTrigger
+            if isAdminSessionActive() {
+                adminControls
+            } else {
+                adminLoginButton
+            }
+        }
+        .alert("enter password", isPresented: $showAdminPasswordPrompt) {
+            SecureField("password", text: $adminPasswordInput)
+            Button("cancel", role: .cancel) {
+                adminPasswordInput = ""
+                adminPasswordError = false
+            }
+            Button("unlock") {
+                if #available(iOS 17.0, *) {
+                    if SubscriptionManager.shared.verifyAdminPassword(adminPasswordInput) {
+                        adminPasswordError = false
+                        adminSessionTrigger.toggle() // Force UI refresh
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                    } else {
+                        adminPasswordError = true
+                        UINotificationFeedbackGenerator().notificationOccurred(.error)
                     }
-                    .padding(12)
-                    .background(Color.yellow.opacity(0.1))
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color.yellow.opacity(0.3), lineWidth: 1)
-                    )
                 }
-                .buttonStyle(.plain)
-
-                // Share paywall button
-                Button {
-                    showSharePaywall = true
-                } label: {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("show_share_paywall()")
-                                .font(.system(size: 13, weight: .medium, design: .monospaced))
-                                .foregroundStyle(.white)
-
-                            Text("recipe sharing paywall")
-                                .font(.system(size: 11, design: .monospaced))
-                                .foregroundStyle(.white.opacity(0.4))
-                        }
-
-                        Spacer()
-
-                        Image(systemName: "square.and.arrow.up.fill")
-                            .font(.system(size: 16))
-                            .foregroundStyle(.yellow.opacity(0.8))
-                    }
-                    .padding(12)
-                    .background(Color.yellow.opacity(0.1))
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color.yellow.opacity(0.3), lineWidth: 1)
-                    )
-                }
-                .buttonStyle(.plain)
-
-                // Subscription status
-                HStack {
-                    Text("subscription status:")
-                        .font(.system(size: 12, design: .monospaced))
-                        .foregroundStyle(.white.opacity(0.5))
-
-                    Spacer()
-
-                    Text(isProSubscription() ? "PRO" : "FREE")
-                        .font(.system(size: 12, weight: .bold, design: .monospaced))
-                        .foregroundStyle(isProSubscription() ? .green : .white.opacity(0.5))
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(
-                            Capsule()
-                                .fill(isProSubscription() ? Color.green.opacity(0.2) : Color.white.opacity(0.1))
-                        )
-                }
-                .padding(.top, 8)
+                adminPasswordInput = ""
+            }
+        } message: {
+            if adminPasswordError {
+                Text("incorrect password")
             }
         }
     }
-    #endif
+
+    private var adminLoginButton: some View {
+        Button {
+            showAdminPasswordPrompt = true
+        } label: {
+            HStack {
+                Image(systemName: "lock.fill")
+                    .font(.system(size: 14))
+                Text("unlock admin controls")
+                    .font(.system(size: 13, weight: .medium, design: .monospaced))
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12))
+                    .foregroundStyle(.white.opacity(0.3))
+            }
+            .foregroundStyle(.white.opacity(0.6))
+            .padding(12)
+            .background(Color.white.opacity(0.05))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var adminControls: some View {
+        VStack(spacing: 12) {
+            // Main paywall button
+            Button {
+                showPaywall = true
+            } label: {
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("show_paywall()")
+                            .font(.system(size: 13, weight: .medium, design: .monospaced))
+                            .foregroundStyle(.white)
+
+                        Text("filters unlock paywall")
+                            .font(.system(size: 11, design: .monospaced))
+                            .foregroundStyle(.white.opacity(0.4))
+                    }
+
+                    Spacer()
+
+                    Image(systemName: "creditcard.fill")
+                        .font(.system(size: 16))
+                        .foregroundStyle(.yellow.opacity(0.8))
+                }
+                .padding(12)
+                .background(Color.yellow.opacity(0.1))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color.yellow.opacity(0.3), lineWidth: 1)
+                )
+            }
+            .buttonStyle(.plain)
+
+            // Share paywall button
+            Button {
+                showSharePaywall = true
+            } label: {
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("show_share_paywall()")
+                            .font(.system(size: 13, weight: .medium, design: .monospaced))
+                            .foregroundStyle(.white)
+
+                        Text("recipe sharing paywall")
+                            .font(.system(size: 11, design: .monospaced))
+                            .foregroundStyle(.white.opacity(0.4))
+                    }
+
+                    Spacer()
+
+                    Image(systemName: "square.and.arrow.up.fill")
+                        .font(.system(size: 16))
+                        .foregroundStyle(.yellow.opacity(0.8))
+                }
+                .padding(12)
+                .background(Color.yellow.opacity(0.1))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color.yellow.opacity(0.3), lineWidth: 1)
+                )
+            }
+            .buttonStyle(.plain)
+
+            // Generate gift code
+            VStack(spacing: 8) {
+                Button {
+                    if #available(iOS 17.0, *) {
+                        if let code = SubscriptionManager.generateGiftCodeIfAuthorized() {
+                            UIPasteboard.general.string = code
+                            lastGeneratedCode = code
+                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        }
+                    }
+                } label: {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("generate_gift_code()")
+                                .font(.system(size: 13, weight: .medium, design: .monospaced))
+                                .foregroundStyle(.white)
+
+                            Text("create new signed QR code")
+                                .font(.system(size: 11, design: .monospaced))
+                                .foregroundStyle(.white.opacity(0.4))
+                        }
+
+                        Spacer()
+
+                        Image(systemName: "qrcode")
+                            .font(.system(size: 16))
+                            .foregroundStyle(.cyan.opacity(0.8))
+                    }
+                    .padding(12)
+                    .background(Color.cyan.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.cyan.opacity(0.3), lineWidth: 1)
+                    )
+                }
+                .buttonStyle(.plain)
+
+                // Show last generated code
+                if let code = lastGeneratedCode {
+                    Text(code)
+                        .font(.system(size: 9, weight: .regular, design: .monospaced))
+                        .foregroundStyle(.cyan.opacity(0.7))
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 4)
+                }
+            }
+
+            // Lock session button
+            HStack(spacing: 12) {
+                Button {
+                    if #available(iOS 17.0, *) {
+                        SubscriptionManager.shared.endAdminSession()
+                        lastGeneratedCode = nil
+                        adminSessionTrigger.toggle()
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "lock.fill")
+                        Text("lock session")
+                    }
+                    .font(.system(size: 11, weight: .medium, design: .monospaced))
+                    .foregroundStyle(.orange)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(Color.orange.opacity(0.15))
+                    .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
+
+                Button {
+                    if #available(iOS 17.0, *) {
+                        SubscriptionManager.shared.removeGiftUnlock()
+                        lastGeneratedCode = nil
+                        adminSessionTrigger.toggle()
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "xmark.circle")
+                        Text("revoke access")
+                    }
+                    .font(.system(size: 11, weight: .medium, design: .monospaced))
+                    .foregroundStyle(.red)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(Color.red.opacity(0.15))
+                    .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.top, 8)
+        }
+    }
 }
 
 #Preview {

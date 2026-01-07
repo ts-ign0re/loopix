@@ -249,3 +249,19 @@
 "fuji.grain.weak_large" = "Weak / Large";
 "fuji.grain.strong_small" = "Strong / Small";
 "fuji.grain.strong_large" = "Strong / Large";
+
+// MARK: - Paywall
+"paywall.unlock_filters" = "unlock all filters";
+"paywall.monthly_price" = "only $%@ / month";
+"paywall.get_pro" = "get pro — $%@ / year";
+"paywall.restore" = "restore purchases";
+"paywall.terms" = "terms & policy";
+
+// Share Paywall
+"paywall.share.title" = "share your recipes";
+"paywall.share.subtitle" = "help others discover amazing looks.\nshare your custom recipes via QR code.";
+"paywall.share.feature.export" = "export recipes as QR codes";
+"paywall.share.feature.share" = "share with friends & community";
+"paywall.share.feature.import" = "import recipes from others";
+"paywall.share.feature.filters" = "unlock all 30+ film filters";
+"paywall.share.button" = "unlock pro & sharing — $%@ / year";

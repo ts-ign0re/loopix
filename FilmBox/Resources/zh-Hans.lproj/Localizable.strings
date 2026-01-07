@@ -249,3 +249,19 @@
 "fuji.grain.weak_large" = "弱 / 大";
 "fuji.grain.strong_small" = "强 / 小";
 "fuji.grain.strong_large" = "强 / 大";
+
+// MARK: - Paywall
+"paywall.unlock_filters" = "解锁所有滤镜";
+"paywall.monthly_price" = "仅 $%@ / 月";
+"paywall.get_pro" = "获取 Pro — $%@ / 年";
+"paywall.restore" = "恢复购买";
+"paywall.terms" = "条款与政策";
+
+// Share Paywall
+"paywall.share.title" = "分享你的配方";
+"paywall.share.subtitle" = "帮助他人发现精彩风格。\n通过二维码分享自定义配方。";
+"paywall.share.feature.export" = "将配方导出为二维码";
+"paywall.share.feature.share" = "与朋友和社区分享";
+"paywall.share.feature.import" = "导入他人的配方";
+"paywall.share.feature.filters" = "解锁 30+ 胶片滤镜";
+"paywall.share.button" = "解锁分享 — $%@ / 年";
