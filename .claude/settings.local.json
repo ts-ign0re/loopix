@@ -19,7 +19,9 @@
       "Bash(python3:*)",
       "Bash(magick:*)",
       "Bash(xattr:*)",
-      "WebFetch(domain:www.quelsolaar.com)"
+      "WebFetch(domain:www.quelsolaar.com)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)"
     ]
   }
 }

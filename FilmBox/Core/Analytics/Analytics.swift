@@ -162,6 +162,7 @@ extension Analytics {
         case app = "app"                // App lifecycle
         case settings = "settings"      // Settings changes
         case error = "error"            // Errors for debugging
+        case subscription = "subscription" // Purchase, restore, paywall
     }
 
     /// Structured event actions
@@ -210,6 +211,11 @@ extension Analytics {
         // Errors
         case crash = "crash"
         case exception = "exception"
+
+        // Subscription
+        case purchase = "purchase"
+        case restore = "restore"
+        case paywall = "paywall"
     }
 }
 
@@ -235,6 +241,7 @@ extension Analytics {
         case export = "export"
         case settings = "settings"
         case fujiRecipeForm = "fuji_recipe_form"
+        case paywall = "paywall"
     }
 
     func trackScreen(_ screen: Screen) {
