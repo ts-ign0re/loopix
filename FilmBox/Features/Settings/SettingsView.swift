@@ -160,16 +160,14 @@ struct SettingsView: View {
         .fullScreenCover(isPresented: $showSecurityHelp) {
             securityHelpSheet
         }
+        #if DEBUG
         .fullScreenCover(isPresented: $showPaywall) {
-            if #available(iOS 17.0, *) {
-                PaywallView()
-            }
+            PaywallViewWrapper()
         }
         .fullScreenCover(isPresented: $showSharePaywall) {
-            if #available(iOS 17.0, *) {
-                SharePaywallView()
-            }
+            SharePaywallViewWrapper()
         }
+        #endif
     }
 
     // MARK: - Security Help Sheet
@@ -975,26 +973,24 @@ struct SettingsView: View {
                 .buttonStyle(.plain)
 
                 // Subscription status
-                if #available(iOS 17.0, *) {
-                    HStack {
-                        Text("subscription status:")
-                            .font(.system(size: 12, design: .monospaced))
-                            .foregroundStyle(.white.opacity(0.5))
+                HStack {
+                    Text("subscription status:")
+                        .font(.system(size: 12, design: .monospaced))
+                        .foregroundStyle(.white.opacity(0.5))
 
-                        Spacer()
+                    Spacer()
 
-                        Text(SubscriptionManager.shared.isPro ? "PRO" : "FREE")
-                            .font(.system(size: 12, weight: .bold, design: .monospaced))
-                            .foregroundStyle(SubscriptionManager.shared.isPro ? .green : .white.opacity(0.5))
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(
-                                Capsule()
-                                    .fill(SubscriptionManager.shared.isPro ? Color.green.opacity(0.2) : Color.white.opacity(0.1))
-                            )
-                    }
-                    .padding(.top, 8)
+                    Text(isProSubscription() ? "PRO" : "FREE")
+                        .font(.system(size: 12, weight: .bold, design: .monospaced))
+                        .foregroundStyle(isProSubscription() ? .green : .white.opacity(0.5))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(
+                            Capsule()
+                                .fill(isProSubscription() ? Color.green.opacity(0.2) : Color.white.opacity(0.1))
+                        )
                 }
+                .padding(.top, 8)
             }
         }
     }
@@ -1004,3 +1000,44 @@ struct SettingsView: View {
 #Preview {
     SettingsView()
 }
+
+// MARK: - Paywall Wrappers (for iOS 17+ availability)
+
+#if DEBUG
+/// Wrapper to handle iOS 17 availability for PaywallView
+private struct PaywallViewWrapper: View {
+    var body: some View {
+        if #available(iOS 17.0, *) {
+            PaywallView()
+        } else {
+            Text("Requires iOS 17+")
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color.black)
+        }
+    }
+}
+
+/// Wrapper to handle iOS 17 availability for SharePaywallView
+private struct SharePaywallViewWrapper: View {
+    var body: some View {
+        if #available(iOS 17.0, *) {
+            SharePaywallView()
+        } else {
+            Text("Requires iOS 17+")
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color.black)
+        }
+    }
+}
+
+/// Wrapper to check subscription status with iOS 17 availability
+@MainActor
+private func isProSubscription() -> Bool {
+    if #available(iOS 17.0, *) {
+        return SubscriptionManager.shared.isPro
+    }
+    return false
+}
+#endif

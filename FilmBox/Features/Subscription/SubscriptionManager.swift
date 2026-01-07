@@ -7,6 +7,7 @@
 
 import Foundation
 import StoreKit
+import SwiftUI
 
 // MARK: - Subscription Product IDs
 
@@ -207,7 +208,7 @@ final class SubscriptionManager: ObservableObject {
         }
     }
 
-    private func checkVerified<T>(_ result: VerificationResult<T>) throws -> T {
+    private nonisolated func checkVerified<T>(_ result: VerificationResult<T>) throws -> T {
         switch result {
         case .unverified:
             throw SubscriptionError.verificationFailed

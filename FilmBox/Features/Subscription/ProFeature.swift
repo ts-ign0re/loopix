@@ -10,6 +10,7 @@ import Foundation
 // MARK: - Pro Feature Check
 
 @available(iOS 17.0, *)
+@MainActor
 enum ProFeature {
 
     // MARK: - Free Filters
@@ -82,6 +83,7 @@ enum ProFeature {
 // MARK: - FilterPreset Extension
 
 @available(iOS 17.0, *)
+@MainActor
 extension FilterPreset {
 
     /// Whether this filter is free to use
