@@ -26,6 +26,10 @@ This documentation covers the business logic, technical foundations, and marketi
 ### Quality Assurance
 14. [Documentation Audit Report](./14-AUDIT-REPORT.md) - Audit findings and resolutions
 
+### Business & Monetization
+15. [Monetization Strategy](./15-MONETIZATION-STRATEGY.md) - Revenue models and pricing
+16. [V1 Release Plan](./16-V1-RELEASE-PLAN.md) - First version scope and checklist
+
 ---
 
 ## Quick Reference
