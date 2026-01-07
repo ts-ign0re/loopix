@@ -404,13 +404,35 @@ actor FilterPreviewCache {
         // - preset.id (UUID is stable)
         // - clutPath (if any)
         // - clutIntensity
-        // - parameters hash (important for Fuji Recipes which use parameters for B&W etc.)
+        // - stable parameters fingerprint (important for Fuji Recipes which use parameters for B&W etc.)
         let clutPart = preset.clutPath ?? "noclut"
         let intensityPart = Int(preset.clutIntensity)
-        let paramsHash = abs(preset.parameters.hashValue) % 1_000_000 // Stable hash suffix
-        return "filter_\(preset.id.uuidString)_\(clutPart)_\(intensityPart)_\(paramsHash)"
+        let paramsFingerprint = stableParametersFingerprint(preset.parameters)
+        return "filter_\(preset.id.uuidString)_\(clutPart)_\(intensityPart)_\(paramsFingerprint)"
             .replacingOccurrences(of: "/", with: "_")
             .replacingOccurrences(of: " ", with: "_")
+    }
+
+    /// Create a stable fingerprint from filter parameters
+    /// Uses key values that affect visual output (stable across app launches)
+    private func stableParametersFingerprint(_ params: FilterParameters) -> String {
+        // Key parameters that significantly affect visual output
+        let values: [Int] = [
+            Int(params.exposure * 100),
+            Int(params.contrast),
+            Int(params.saturation),        // Critical for B&W detection
+            Int(params.vibrance),
+            Int(params.temperature),
+            Int(params.tint),
+            Int(params.highlights),
+            Int(params.shadows),
+            Int(params.grain.amount),
+            Int(params.vignette.amount),
+            Int(params.fade)
+        ]
+        // Create a simple numeric fingerprint
+        let fingerprint = values.reduce(0) { ($0 &* 31) &+ $1 }
+        return String(abs(fingerprint) % 10_000_000)
     }
 
     private func diskURL(for key: String) -> URL {
