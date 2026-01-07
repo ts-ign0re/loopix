@@ -52,7 +52,7 @@ struct FiltersManagementView: View {
     @State private var searchText = ""
 
     /// Selected category for filtering
-    @State private var selectedCategory: FilterCategory = .all
+    @State private var selectedCategory: FilterCategory = .film
 
     /// Favorite filter IDs
     @State private var favoriteIDs: Set<UUID> = []
@@ -147,6 +147,20 @@ struct FiltersManagementView: View {
             case .userCreated, .calibrated, .imported, .haldCLUT:
                 return true
             }
+        }
+    }
+
+    /// Whether selected filter is editable (Fuji Recipe or user-created)
+    private var isSelectedEditable: Bool {
+        guard let filter = singleSelectedFilter else { return false }
+        // Fuji Recipes are always editable (even built-in)
+        if filter.category == .fujiRecipes { return true }
+        // User-created filters are editable
+        switch filter.source {
+        case .builtIn:
+            return false
+        case .userCreated, .calibrated, .imported, .haldCLUT:
+            return true
         }
     }
 
@@ -448,14 +462,13 @@ struct FiltersManagementView: View {
 
             // Main action bar
             HStack(spacing: 0) {
-                // Edit/View button - only for single selection
-                if isSingleSelection {
+                // Edit button - for Fuji Recipes (any) or user-created filters
+                if isSingleSelection && isSelectedEditable {
                     if let filter = singleSelectedFilter {
-                        let isUserCreated = anySelectedIsUserCreated
                         Button {
                             filterToEdit = filter
                         } label: {
-                            Text(isUserCreated ? L10n.Action.edit : "view")
+                            Text(L10n.Action.edit)
                                 .font(.system(size: 14, weight: .semibold, design: .monospaced))
                                 .foregroundStyle(.black)
                                 .padding(.horizontal, 12)
@@ -488,8 +501,8 @@ struct FiltersManagementView: View {
                     }
                 }
 
-                // More menu button - only for single selection (duplicate available)
-                if isSingleSelection {
+                // More menu button - for Fuji Recipes (any) or user-created filters
+                if isSingleSelection && isSelectedEditable {
                     actionTabDivider
 
                     actionButton(icon: "ellipsis", iconColor: .white) {
@@ -671,8 +684,8 @@ struct FiltersManagementView: View {
                             }
                             .transition(.move(edge: .bottom).combined(with: .opacity))
 
-                            // Create Fuji recipe
-                            fabMenuItem(title: "fuji recipe", icon: "camera.aperture") {
+                            // Create recipe
+                            fabMenuItem(title: "add recipe", icon: "camera.aperture") {
                                 isFabExpanded = false
                                 showFujiRecipeForm = true
                             }

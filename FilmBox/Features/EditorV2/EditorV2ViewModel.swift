@@ -26,7 +26,7 @@ final class EditorV2ViewModel {
     var selectedToolCategory: ToolDefinition.ToolCategory = .all
 
     /// Selected filter category
-    var selectedFilterCategory: FilterCategory = .all
+    var selectedFilterCategory: FilterCategory = .film
 
     /// Currently active tool (when in toolDetail mode)
     var activeTool: ToolDefinition?

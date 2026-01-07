@@ -400,13 +400,15 @@ actor FilterPreviewCache {
     }
 
     private func cacheKey(for preset: FilterPreset) -> String {
-        // Use only stable components (hashValue changes between app launches!)
+        // Use stable components for cache key:
         // - preset.id (UUID is stable)
         // - clutPath (if any)
         // - clutIntensity
+        // - parameters hash (important for Fuji Recipes which use parameters for B&W etc.)
         let clutPart = preset.clutPath ?? "noclut"
         let intensityPart = Int(preset.clutIntensity)
-        return "filter_\(preset.id.uuidString)_\(clutPart)_\(intensityPart)"
+        let paramsHash = abs(preset.parameters.hashValue) % 1_000_000 // Stable hash suffix
+        return "filter_\(preset.id.uuidString)_\(clutPart)_\(intensityPart)_\(paramsHash)"
             .replacingOccurrences(of: "/", with: "_")
             .replacingOccurrences(of: " ", with: "_")
     }

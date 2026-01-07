@@ -57,9 +57,9 @@ final class EditorV2ViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.selectedToolCategory, .all)
     }
 
-    /// Test: Initial filter category is all
-    func testInitialFilterCategoryIsAll() {
-        XCTAssertEqual(viewModel.selectedFilterCategory, .all)
+    /// Test: Initial filter category is film
+    func testInitialFilterCategoryIsFilm() {
+        XCTAssertEqual(viewModel.selectedFilterCategory, .film)
     }
 
     /// Test: No active tool initially

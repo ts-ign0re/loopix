@@ -406,7 +406,7 @@ struct EditorView: View {
 
     // MARK: - Filter State
 
-    @State private var selectedFilterCategory: FilterCategory = .all
+    @State private var selectedFilterCategory: FilterCategory = .film
     @State private var availableFilters: [FilterPreset] = []
     // filterIntensity is now managed by viewModel (two-layer architecture)
     @State private var userPresets: [FilterPreset] = []
