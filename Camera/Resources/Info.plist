@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Camera is used to capture RAW photos with live film grain preview.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Photos with applied film filters and grain are saved to your library.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Access your photo library to view and manage captured photos.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Microphone is used when recording video with sound.</string>
+	<key>UILaunchScreen</key>
+	<dict>
+		<key>UIColorName</key>
+		<string>BrandYellow</string>
+	</dict>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+	</array>
+	<key>UIUserInterfaceStyle</key>
+	<string>Dark</string>
+</dict>
+</plist>
