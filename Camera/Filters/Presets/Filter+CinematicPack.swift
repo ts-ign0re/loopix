@@ -6,6 +6,7 @@ extension CameraFilter {
         exposure: -0.02, isMonochrome: false, fade: 2,
         shadowHue: 195, shadowTintStrength: 0.09,
         highlightHue: 28, highlightTintStrength: 0.05,
+        blackFloor: 0.02, whiteCeiling: 0.95,
         curves: RGBACurves(
             r: ToneCurve(shadows: 0.01, darks: 0.22, midtones: 0.50, lights: 0.82, highlights: 0.98),
             g: ToneCurve(shadows: 0.00, darks: 0.20, midtones: 0.47, lights: 0.79, highlights: 0.97),
@@ -20,6 +21,7 @@ extension CameraFilter {
         exposure: -0.18, isMonochrome: false, fade: 0,
         shadowHue: 220, shadowTintStrength: 0.02,
         highlightHue: 30, highlightTintStrength: 0.01,
+        blackFloor: 0.02, whiteCeiling: 0.94,
         curves: RGBACurves(
             r: ToneCurve(shadows: 0.00, darks: 0.14, midtones: 0.40, lights: 0.78, highlights: 0.97),
             g: ToneCurve(shadows: 0.00, darks: 0.12, midtones: 0.37, lights: 0.74, highlights: 0.95),
@@ -34,6 +36,7 @@ extension CameraFilter {
         exposure: 0.12, isMonochrome: false, fade: 18,
         shadowHue: 300, shadowTintStrength: 0.03,
         highlightHue: 40, highlightTintStrength: 0.09,
+        blackFloor: 0.06, whiteCeiling: 0.94,
         curves: RGBACurves(
             r: ToneCurve(shadows: 0.06, darks: 0.30, midtones: 0.58, lights: 0.84, highlights: 0.99),
             g: ToneCurve(shadows: 0.05, darks: 0.28, midtones: 0.55, lights: 0.82, highlights: 0.98),
@@ -48,6 +51,7 @@ extension CameraFilter {
         exposure: 0.03, isMonochrome: false, fade: 2,
         shadowHue: 205, shadowTintStrength: 0.08,
         highlightHue: 42, highlightTintStrength: 0.02,
+        blackFloor: 0.02, whiteCeiling: 0.97,
         curves: RGBACurves(
             r: ToneCurve(shadows: 0.01, darks: 0.20, midtones: 0.49, lights: 0.81, highlights: 0.98),
             g: ToneCurve(shadows: 0.01, darks: 0.22, midtones: 0.50, lights: 0.82, highlights: 0.99),
@@ -62,6 +66,7 @@ extension CameraFilter {
         exposure: -0.08, isMonochrome: false, fade: 4,
         shadowHue: 18, shadowTintStrength: 0.09,
         highlightHue: 35, highlightTintStrength: 0.10,
+        blackFloor: 0.04, whiteCeiling: 0.95,
         curves: RGBACurves(
             r: ToneCurve(shadows: 0.02, darks: 0.25, midtones: 0.55, lights: 0.86, highlights: 0.99),
             g: ToneCurve(shadows: 0.01, darks: 0.20, midtones: 0.47, lights: 0.77, highlights: 0.96),
@@ -76,6 +81,7 @@ extension CameraFilter {
         exposure: 0.0, isMonochrome: false, fade: 0,
         shadowHue: 190, shadowTintStrength: 0.13,
         highlightHue: 30, highlightTintStrength: 0.11,
+        blackFloor: 0.02, whiteCeiling: 0.96,
         curves: RGBACurves(
             r: ToneCurve(shadows: 0.00, darks: 0.21, midtones: 0.52, lights: 0.84, highlights: 0.99),
             g: ToneCurve(shadows: 0.01, darks: 0.24, midtones: 0.50, lights: 0.78, highlights: 0.96),
@@ -90,6 +96,7 @@ extension CameraFilter {
         exposure: -0.15, isMonochrome: false, fade: 6,
         shadowHue: 210, shadowTintStrength: 0.05,
         highlightHue: 30, highlightTintStrength: 0.02,
+        blackFloor: 0.03, whiteCeiling: 0.94,
         curves: RGBACurves(
             r: ToneCurve(shadows: 0.01, darks: 0.17, midtones: 0.43, lights: 0.76, highlights: 0.96),
             g: ToneCurve(shadows: 0.01, darks: 0.16, midtones: 0.40, lights: 0.72, highlights: 0.94),

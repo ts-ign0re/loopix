@@ -29,10 +29,19 @@ final class CameraState: @unchecked Sendable {
     var grainData: GrainData = .defaultCamera
     var grainEnabled: Bool = true
 
-    // Filter — restored from last session, defaults to Neutral
+    // Filter — restored from last session by stable id, defaults to Neutral.
+    // Storing the id (not the array index) keeps the selection correct even if the
+    // filter list is reordered or extended in a future release.
     var selectedFilterIndex: Int = {
-        let saved = UserDefaults.standard.object(forKey: "selectedFilterIndex") as? Int
-        if let saved, saved >= 0, saved < BuiltInFilters.all.count { return saved }
+        if let savedID = UserDefaults.standard.string(forKey: "selectedFilterID"),
+           let index = BuiltInFilters.all.firstIndex(where: { $0.id == savedID }) {
+            return index
+        }
+        // Migrate the legacy index-based key, if present.
+        if let legacy = UserDefaults.standard.object(forKey: "selectedFilterIndex") as? Int,
+           legacy >= 0, legacy < BuiltInFilters.all.count {
+            return legacy
+        }
         return BuiltInFilters.neutralIndex
     }()
 

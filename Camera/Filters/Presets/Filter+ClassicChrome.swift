@@ -7,6 +7,7 @@ extension CameraFilter {
         exposure: 0, isMonochrome: false, fade: 0,
         shadowHue: 210, shadowTintStrength: 0.05,
         highlightHue: 35, highlightTintStrength: 0.03,
+        blackFloor: 0.02, whiteCeiling: 0.96,
         curves: RGBACurves(
             r: ToneCurve(shadows: 0.02, darks: 0.22, midtones: 0.52, lights: 0.78, highlights: 0.97),
             g: ToneCurve(shadows: 0.02, darks: 0.22, midtones: 0.50, lights: 0.77, highlights: 0.97),

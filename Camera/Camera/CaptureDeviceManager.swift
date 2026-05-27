@@ -84,13 +84,23 @@ final class CaptureDeviceManager {
         }
     }
 
-    /// Sets ISO on the device
-    static func setISO(_ iso: Float, on device: AVCaptureDevice) throws {
+    /// Sets ISO on the device, returns the actual clamped value set
+    @discardableResult
+    static func setISO(_ iso: Float, on device: AVCaptureDevice) throws -> Float {
         try device.lockForConfiguration()
         defer { device.unlockForConfiguration() }
 
         let clampedISO = max(device.activeFormat.minISO, min(iso, device.activeFormat.maxISO))
         device.setExposureModeCustom(duration: AVCaptureDevice.currentExposureDuration, iso: clampedISO)
+        return clampedISO
+    }
+
+    /// Returns to auto exposure
+    static func setAutoExposure(on device: AVCaptureDevice) throws {
+        try device.lockForConfiguration()
+        defer { device.unlockForConfiguration() }
+
+        device.exposureMode = .continuousAutoExposure
     }
 
     /// Sets EV compensation on the device

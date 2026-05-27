@@ -16,7 +16,7 @@ struct SplashView: View {
                 .rotationEffect(.degrees(rotation))
         }
         .onAppear {
-            withAnimation(.linear(duration: 1)) {
+            withAnimation(.linear(duration: 0.5)) {
                 rotation = 360
             }
         }

@@ -3,6 +3,12 @@ import CoreImage
 import Photos
 import UIKit
 
+enum PhotoCaptureError: Error {
+    case invalidImageData
+    case encodingFailed
+    case saveFailed
+}
+
 /// Handles processed photo capture — applies filter + grain on ISP-rendered image, saves HEIC
 final class PhotoCaptureProcessor: NSObject, AVCapturePhotoCaptureDelegate, @unchecked Sendable {
 
@@ -10,7 +16,7 @@ final class PhotoCaptureProcessor: NSObject, AVCapturePhotoCaptureDelegate, @unc
     private let filterIntensity: Float
     private let grainData: GrainData
     private let grainSeed: Float
-    private let completion: @Sendable (Data?) -> Void
+    private let completion: @Sendable (Data?, Error?) -> Void
     private let ciContext = CIContext(options: [.cacheIntermediates: false])
 
     init(
@@ -18,7 +24,7 @@ final class PhotoCaptureProcessor: NSObject, AVCapturePhotoCaptureDelegate, @unc
         filterIntensity: Float = 1.0,
         grainData: GrainData,
         grainSeed: Float,
-        completion: @escaping @Sendable (Data?) -> Void
+        completion: @escaping @Sendable (Data?, Error?) -> Void
     ) {
         self.filter = filter
         self.filterIntensity = filterIntensity
@@ -28,15 +34,18 @@ final class PhotoCaptureProcessor: NSObject, AVCapturePhotoCaptureDelegate, @unc
     }
 
     func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
-        guard error == nil else {
-            print("PhotoCapture error: \(error!.localizedDescription)")
-            completion(nil)
+        if let error {
+            print("PhotoCapture error: \(error.localizedDescription)")
+            completion(nil, error)
             return
         }
 
+        // `applyOrientationProperty` bakes the capture orientation (carried in the photo's
+        // EXIF metadata) into the pixels, so the re-encoded HEIC is upright regardless of
+        // how the Photos app interprets orientation tags.
         guard let data = photo.fileDataRepresentation(),
-              let ciImage = CIImage(data: data) else {
-            completion(nil)
+              let ciImage = CIImage(data: data, options: [.applyOrientationProperty: true]) else {
+            completion(nil, PhotoCaptureError.invalidImageData)
             return
         }
 
@@ -70,15 +79,23 @@ final class PhotoCaptureProcessor: NSObject, AVCapturePhotoCaptureDelegate, @unc
             format: .RGBA8,
             colorSpace: colorSpace,
             options: [kCGImageDestinationLossyCompressionQuality as CIImageRepresentationOption: 0.9]
-        ) else { return }
+        ) else {
+            completion(nil, PhotoCaptureError.encodingFailed)
+            return
+        }
 
-        // Thumbnail for UI
         let thumbnail = generateThumbnail(from: image)
-        completion(thumbnail)
 
         PHPhotoLibrary.shared().performChanges {
             let request = PHAssetCreationRequest.forAsset()
             request.addResource(with: .photo, data: heicData, options: nil)
+        } completionHandler: { [completion] success, error in
+            // Only report success once the photo is actually in the library.
+            if success {
+                completion(thumbnail, nil)
+            } else {
+                completion(nil, error ?? PhotoCaptureError.saveFailed)
+            }
         }
     }
 

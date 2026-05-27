@@ -31,6 +31,10 @@ final class CameraManager: NSObject, @unchecked Sendable {
     private(set) var currentDevice: AVCaptureDevice?
     private weak var boundState: CameraState?
 
+    /// Tracks the physical orientation so captured photos match how the phone is held,
+    /// even though the UI itself is locked to portrait. (iOS 17+)
+    private var rotationCoordinator: AVCaptureDevice.RotationCoordinator?
+
     private var discoveredLenses: [CaptureDeviceManager.DiscoveredLens] = []
     private var activeCaptureProcessor: PhotoCaptureProcessor?
     private let referenceTime: Double = CACurrentMediaTime()
@@ -146,6 +150,7 @@ final class CameraManager: NSObject, @unchecked Sendable {
         // Disable HDR / computational photography so the base matches the live preview
         if let device = currentDevice {
             try? CaptureDeviceManager.configureDevice(device)
+            updateRotationCoordinator(for: device)
         }
 
         session.commitConfiguration()
@@ -202,6 +207,14 @@ final class CameraManager: NSObject, @unchecked Sendable {
         motionManager.stopAccelerometerUpdates()
     }
 
+    // MARK: - Orientation
+
+    /// Rebuilds the rotation coordinator for the active device. Must be called whenever
+    /// the physical camera device changes (lens swap, front/back switch).
+    private func updateRotationCoordinator(for device: AVCaptureDevice) {
+        rotationCoordinator = AVCaptureDevice.RotationCoordinator(device: device, previewLayer: nil)
+    }
+
     // MARK: - Lens Switching
 
     func switchLens(to index: Int, state: CameraState) {
@@ -233,6 +246,7 @@ final class CameraManager: NSObject, @unchecked Sendable {
                         self.currentDevice = lens.device
 
                         try? CaptureDeviceManager.configureDevice(lens.device)
+                        self.updateRotationCoordinator(for: lens.device)
                     }
                 } catch {
                     print("Failed to switch lens: \(error)")
@@ -288,6 +302,7 @@ final class CameraManager: NSObject, @unchecked Sendable {
                     self.session.addInput(input)
                     self.currentDeviceInput = input
                     self.currentDevice = frontDevice
+                    self.updateRotationCoordinator(for: frontDevice)
                 }
             } catch {
                 print("Failed to switch to front camera: \(error)")
@@ -327,6 +342,7 @@ final class CameraManager: NSObject, @unchecked Sendable {
                     self.currentDeviceInput = input
                     self.currentDevice = targetLens.device
                     try? CaptureDeviceManager.configureDevice(targetLens.device)
+                    self.updateRotationCoordinator(for: targetLens.device)
                 }
             } catch {
                 print("Failed to switch to back camera: \(error)")
@@ -354,6 +370,14 @@ final class CameraManager: NSObject, @unchecked Sendable {
                 state.isCapturing = true
             }
 
+            // Match the photo connection to the physical orientation so a landscape-held
+            // shot is saved as landscape (the UI itself stays locked to portrait).
+            if let connection = self.photoOutput.connection(with: .video),
+               let angle = self.rotationCoordinator?.videoRotationAngleForHorizonLevelCapture,
+               connection.isVideoRotationAngleSupported(angle) {
+                connection.videoRotationAngle = angle
+            }
+
             // Processed capture — ISP-rendered HEVC, same tone curve as the live preview.
             // Filter + grain are applied on top in PhotoCaptureProcessor.
             let settings = AVCapturePhotoSettings(format: [AVVideoCodecKey: AVVideoCodecType.hevc])
@@ -365,10 +389,15 @@ final class CameraManager: NSObject, @unchecked Sendable {
                 filterIntensity: state.filterIntensity,
                 grainData: state.grainEnabled ? state.grainData : .none,
                 grainSeed: grainSeed
-            ) { [weak self] thumbnailData in
+            ) { [weak self] thumbnailData, captureError in
                 DispatchQueue.main.async {
-                    state.lastCapturedImageData = thumbnailData
                     state.isCapturing = false
+                    if let captureError {
+                        self?.error = "Couldn't save photo"
+                        print("Photo save failed: \(captureError.localizedDescription)")
+                    } else {
+                        state.lastCapturedImageData = thumbnailData
+                    }
                 }
                 self?.activeCaptureProcessor = nil
             }
@@ -582,8 +611,25 @@ final class CameraManager: NSObject, @unchecked Sendable {
 
     func setISO(_ iso: Float) {
         guard let device = currentDevice else { return }
-        sessionQueue.async {
-            try? CaptureDeviceManager.setISO(iso, on: device)
+        sessionQueue.async { [weak self] in
+            guard let self else { return }
+            if let actualISO = try? CaptureDeviceManager.setISO(iso, on: device) {
+                DispatchQueue.main.async {
+                    self.boundState?.currentISO = actualISO
+                }
+            }
+        }
+    }
+
+    func setAutoExposure() {
+        guard let device = currentDevice else { return }
+        sessionQueue.async { [weak self] in
+            guard let self else { return }
+            try? CaptureDeviceManager.setAutoExposure(on: device)
+            let iso = device.iso
+            DispatchQueue.main.async {
+                self.boundState?.currentISO = iso
+            }
         }
     }
 

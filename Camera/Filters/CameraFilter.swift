@@ -21,6 +21,10 @@ struct CameraFilter: Identifiable, Hashable {
     let highlightHue: Float     // 0...360
     let highlightTintStrength: Float // 0...1 (how much color to add to highlights)
 
+    // Per-stock film clamp (global-safe defaults)
+    var blackFloor: Float = 0.04
+    var whiteCeiling: Float = 0.955
+
     // Per-channel RGBA tone curves
     var curves: RGBACurves = .identity
 
@@ -30,7 +34,8 @@ struct CameraFilter: Identifiable, Hashable {
         temperature: 0, tint: 0, saturation: 0, contrast: 0,
         exposure: 0, isMonochrome: false, fade: 0,
         shadowHue: 0, shadowTintStrength: 0,
-        highlightHue: 0, highlightTintStrength: 0
+        highlightHue: 0, highlightTintStrength: 0,
+        blackFloor: 0.04, whiteCeiling: 0.955
     )
 
     /// Whether split tone is active

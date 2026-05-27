@@ -39,7 +39,6 @@ final class MetalFilterLoader: @unchecked Sendable {
 
     struct KernelName {
         static let grain = "grainKernel"
-        static let toneCurve = "toneCurveKernel"
     }
 
     // MARK: - Initialization
@@ -174,7 +173,6 @@ final class MetalFilterLoader: @unchecked Sendable {
     func preloadKernels() {
         DispatchQueue.global(qos: .utility).async {
             _ = try? self.loadKernel(named: KernelName.grain)
-            _ = try? self.loadKernel(named: KernelName.toneCurve)
         }
     }
 }

@@ -55,7 +55,7 @@ final class SubscriptionManager {
         updateListenerTask = Task.detached {
             for await result in Transaction.updates {
                 if let transaction = try? verifyResult(result) {
-                    await SubscriptionManager.shared.updateSubscriptionStatus()
+                    await SubscriptionManager.shared.handle(transaction)
                     await transaction.finish()
                 }
             }
@@ -95,8 +95,7 @@ final class SubscriptionManager {
         case .success(let verification):
             let transaction = try verifyResult(verification)
             if productIDs.contains(transaction.productID) {
-                isPro = true
-                UserDefaults.standard.set(true, forKey: "subscription.isPro")
+                setPro(true)
             }
             await transaction.finish()
 
@@ -119,24 +118,40 @@ final class SubscriptionManager {
         }
     }
 
+    /// Launch / refresh check. Deliberately *optimistic*: it only ever upgrades to Pro.
+    /// Empty or unavailable entitlements on a cold launch (e.g. no network, StoreKit not
+    /// ready) must NOT lock a paying user out — so we never flip Pro off here. Genuine
+    /// loss of access (refund, revocation, expiry) is handled by `handle(_:)` on the
+    /// `Transaction.updates` stream, which is the only place that downgrades.
     func updateSubscriptionStatus() async {
-        var hasActiveSubscription = false
-
         for await result in Transaction.currentEntitlements {
-            if let transaction = try? verifyResult(result),
-               productIDs.contains(transaction.productID) {
-                hasActiveSubscription = true
-                break
-            }
-        }
+            guard let transaction = try? verifyResult(result),
+                  productIDs.contains(transaction.productID) else { continue }
+            // Ignore entitlements that aren't actually valid right now.
+            if transaction.revocationDate != nil { continue }
+            if let expiry = transaction.expirationDate, expiry < Date() { continue }
 
-        if hasActiveSubscription {
-            isPro = true
-            UserDefaults.standard.set(true, forKey: "subscription.isPro")
+            setPro(true)
+            return
         }
-        // Don't reset isPro to false here — trust the local cache.
-        // Empty entitlements on cold launch doesn't mean the sub expired;
-        // StoreKit may simply not be ready yet. Actual expiry is handled
-        // by the Transaction.updates listener.
+    }
+
+    /// Reacts to a single transaction update. This is where access is granted *or*
+    /// revoked, because a transaction carries an authoritative signal (revocation/expiry).
+    private func handle(_ transaction: Transaction) async {
+        guard productIDs.contains(transaction.productID) else { return }
+
+        if transaction.revocationDate != nil {
+            setPro(false)
+        } else if let expiry = transaction.expirationDate, expiry < Date() {
+            setPro(false)
+        } else {
+            setPro(true)
+        }
+    }
+
+    private func setPro(_ value: Bool) {
+        isPro = value
+        UserDefaults.standard.set(value, forKey: "subscription.isPro")
     }
 }

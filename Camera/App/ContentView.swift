@@ -32,8 +32,8 @@ struct ContentView: View {
             }
         }
         .task {
-            // Dismiss splash after 1 second
-            try? await Task.sleep(for: .seconds(1))
+            // Dismiss splash after 0.5 second
+            try? await Task.sleep(for: .seconds(0.5))
             withAnimation(.easeOut(duration: 0.3)) {
                 showSplash = false
             }

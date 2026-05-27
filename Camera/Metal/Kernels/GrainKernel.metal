@@ -166,8 +166,8 @@ extern "C" float4 grainKernel(coreimage::sampler src,
     float posSeed = hash(grainCoord * 0.037);
 
     // ── Density-domain exposure response ──
-    // Real grain: RMS granularity ∝ sqrt(density), where density = -log10(luminance)
-    // Peak in midtones, sparse in shadows, overlapping in highlights
+    // RMS granularity ∝ sqrt(density). Strongest in shadows,
+    // suppressed in highlights where grains overlap.
     float luminance = dot(color.rgb, float3(0.2126, 0.7152, 0.0722));
     float density = -log10(max(luminance, 0.001));
     float densityNorm = clamp(density / 2.2, 0.0, 1.0);
@@ -215,7 +215,9 @@ extern "C" float4 grainKernel(coreimage::sampler src,
         grainIntensity *= mix(1.0, clusterMask, clump);
     }
 
-    // ── Color film: independent dye layers with different grain sizes ──
+    // ── Color film: correlated dye clouds with per-layer coarseness ──
+    // In real color film, dye clouds form around shared silver halide crystals.
+    // Per-layer deviation via cheap simplex — shared base avoids independent heavy noise.
     // Blue-sensitive layer (yellow dye) = coarsest grain (~1.4x)
     // Green-sensitive layer (magenta dye) = finest grain
     // Red-sensitive layer (cyan dye) = medium grain (~1.15x)
@@ -223,18 +225,26 @@ extern "C" float4 grainKernel(coreimage::sampler src,
     if (monochromatic > 0.5) {
         grainColor = float3(grain);
     } else {
-        // Red/cyan layer — slightly coarser than green
-        float rGrain = bandLimitedGrain(
-            grainCoord * 0.88, structCoord * 0.82 + float2(50.0, 0.0), posSeed + 3.1);
+        // Shared crystal structure from domain-warped coordinates (cheap — 2 simplex calls)
+        float2 warped = domainWarp(structCoord);
+        float crystalBase = simplex2D(warped * 0.95 + float2(7.3, 19.1));
 
-        // Green/magenta layer — finest grain (reference)
-        // Already computed as 'grain'
+        // Layer deviations: low-cost simplex + gaussian mix per layer.
+        // Red/cyan — medium grain, moderate coupling
+        float rDev = simplex2D(warped * 1.2 + float2(50.0, 0.0))
+                     + gaussianNoise(grainCoord * 0.9, posSeed + 3.1) * 0.2;
+        // Green/magenta — finest grain, strongest coupling to base
+        float gDev = simplex2D(warped * 0.95 + float2(0.0, 17.0))
+                     + gaussianNoise(grainCoord * 0.7, posSeed + 6.7) * 0.15;
+        // Blue/yellow — coarsest grain, weakest coupling
+        float bDev = simplex2D(warped * 1.5 + float2(0.0, 50.0))
+                     + gaussianNoise(grainCoord * 0.55, posSeed + 9.3) * 0.3;
 
-        // Blue/yellow layer — coarsest grain
-        float bGrain = bandLimitedGrain(
-            grainCoord * 0.62, structCoord * 0.58 + float2(0.0, 50.0), posSeed + 9.3);
+        float rGrain = grain * (1.0 - 0.35) + crystalBase * 0.15 + rDev * 0.20;
+        float gGrain = grain * (1.0 - 0.28) + crystalBase * 0.18 + gDev * 0.10;
+        float bGrain = grain * (1.0 - 0.22) + crystalBase * 0.12 + bDev * 0.16;
 
-        grainColor = float3(rGrain, grain, bGrain);
+        grainColor = float3(rGrain, gGrain, bGrain);
     }
 
     // ── Density-domain blend ──

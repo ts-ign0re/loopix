@@ -73,7 +73,7 @@ struct PaywallView: View {
                             .padding(.horizontal, 24)
 
                         // Subtitle
-                        Text("23 film presets, no watermark, full resolution export")
+                        Text("28 film presets, no watermark, full resolution export")
                             .font(.system(size: 15, weight: .regular, design: .rounded))
                             .foregroundStyle(.white.opacity(0.5))
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -281,7 +281,7 @@ struct PaywallView: View {
                         plan: .monthlyPro,
                         title: "Monthly",
                         price: monthlyProduct?.displayPrice ?? "$3.99",
-                        detail: "23 + all future presets",
+                        detail: "28 + all future presets",
                         badge: nil
                     )
                     planCard(

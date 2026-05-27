@@ -1,0 +1,28 @@
+# Xcode
+*.xcuserstate
+*.xcuserdata
+*.xcworkspace/xcuserdata/
+xcuserdata/
+DerivedData/
+*.moved-aside
+*.xcscmblueprint
+*.xccheckout
+IDEWorkspaceChecks.plist
+
+# Build
+build/
+*.o
+*.LinkFileList
+*.hmap
+
+# CocoaPods
+Pods/
+
+# SwiftPM
+.build/
+.swiftpm/
+
+# Misc
+.DS_Store
+*.orig
+.claude/

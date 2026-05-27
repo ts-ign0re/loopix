@@ -44,8 +44,8 @@ enum LiveFilterPipeline {
                 result = applyFade(lift: lift, to: result)
             }
 
-            // 7. Film clamp — analog film never reaches pure black or pure white
-            result = applyFilmClamp(to: result)
+            // 7. Film clamp — per-stock tonal range compression
+            result = applyFilmClamp(to: result, blackFloor: filter.blackFloor, whiteCeiling: filter.whiteCeiling)
 
             // 8. Blend filtered with original based on intensity
             if intensity < 1.0 {
@@ -130,11 +130,11 @@ enum LiveFilterPipeline {
         return filter.outputImage ?? image
     }
 
-    /// Film clamp — compresses tonal range so blacks ≈ 10/255, whites ≈ 244/255
-    private static func applyFilmClamp(to image: CIImage) -> CIImage {
-        let blackFloor = 0.04
-        let whiteCeiling = 0.955
-        let scale = whiteCeiling - blackFloor
+    /// Film clamp — per-stock tonal range compression
+    private static func applyFilmClamp(to image: CIImage, blackFloor: Float, whiteCeiling: Float) -> CIImage {
+        let floor = CGFloat(blackFloor)
+        let ceil = CGFloat(whiteCeiling)
+        let scale = ceil - floor
 
         let filter = CIFilter(name: "CIColorMatrix")!
         filter.setValue(image, forKey: kCIInputImageKey)
@@ -142,7 +142,7 @@ enum LiveFilterPipeline {
         filter.setValue(CIVector(x: 0, y: scale, z: 0, w: 0), forKey: "inputGVector")
         filter.setValue(CIVector(x: 0, y: 0, z: scale, w: 0), forKey: "inputBVector")
         filter.setValue(CIVector(x: 0, y: 0, z: 0, w: 1), forKey: "inputAVector")
-        filter.setValue(CIVector(x: blackFloor, y: blackFloor, z: blackFloor, w: 0), forKey: "inputBiasVector")
+        filter.setValue(CIVector(x: floor, y: floor, z: floor, w: 0), forKey: "inputBiasVector")
         return filter.outputImage ?? image
     }
 

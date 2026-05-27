@@ -1,4 +1,5 @@
 import SwiftUI
+import Photos
 
 // swiftlint:disable type_body_length
 struct CameraView: View {
@@ -9,6 +10,9 @@ struct CameraView: View {
     @State private var shutterAnimating = false
     @State private var showEVWheel = false
     @State private var showPaywall = false
+    @State private var showPhotoPermissionAlert = false
+
+    @State private var isoJustLongPressed = false
 
     private var subscription: SubscriptionManager { SubscriptionManager.shared }
 
@@ -133,8 +137,20 @@ struct CameraView: View {
         .fullScreenCover(isPresented: $showPaywall) {
             PaywallView()
         }
+        .alert("Allow Photo Access", isPresented: $showPhotoPermissionAlert) {
+            Button("Not Now", role: .cancel) {}
+            Button("Open Settings") {
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            }
+        } message: {
+            Text("Loopix needs permission to save your photos. Turn on Photos access in Settings to start shooting.")
+        }
         .onChange(of: state.selectedFilterIndex) { _, newValue in
-            UserDefaults.standard.set(newValue, forKey: "selectedFilterIndex")
+            if newValue >= 0, newValue < BuiltInFilters.all.count {
+                UserDefaults.standard.set(BuiltInFilters.all[newValue].id, forKey: "selectedFilterID")
+            }
             if state.captureMode == .video, state.isRecording {
                 cameraManager.updateVideoRecordingFilter(state: state, filter: currentFilter)
             }
@@ -194,10 +210,6 @@ struct CameraView: View {
             VStack(spacing: 4) {
                 captureModeSwitch
 
-                Text(currentFilter.name)
-                    .font(.system(size: 11, weight: .medium, design: .rounded))
-                    .foregroundColor(CameraTheme.textSecondary)
-
                 if state.isRecording {
                     HStack(spacing: 4) {
                         Circle()
@@ -212,24 +224,47 @@ struct CameraView: View {
 
             Spacer()
 
-            // AE/AF Lock — fixed frame prevents title shifting
+            // ISO Selector
             Button {
-                let newLock = !(state.isFocusLocked && state.isExposureLocked)
-                state.isFocusLocked = newLock
-                state.isExposureLocked = newLock
-                cameraManager.setFocusLock(newLock)
+                guard !isoJustLongPressed else { return }
+                let isoStops = isoStopValues()
+                if state.isAutoISO {
+                    state.isAutoISO = false
+                    let nextISO = isoStops.first ?? state.currentISO
+                    cameraManager.setISO(nextISO)
+                } else {
+                    let current = state.currentISO
+                    if let idx = isoStops.firstIndex(where: { abs($0 - current) < 1 }),
+                       idx + 1 < isoStops.count {
+                        cameraManager.setISO(isoStops[idx + 1])
+                    } else {
+                        state.isAutoISO = true
+                        cameraManager.setAutoExposure()
+                    }
+                }
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
             } label: {
                 HStack(spacing: 4) {
-                    Image(systemName: state.isFocusLocked ? "lock.fill" : "lock.open")
+                    Image(systemName: "camera.aperture")
                         .font(.system(size: 14))
-                    Text("AE/AF")
+                    Text(isoLabel)
                         .font(.system(size: 11, weight: .medium, design: .rounded))
                 }
-                .foregroundColor(state.isFocusLocked ? CameraTheme.controlActive : CameraTheme.textSecondary)
+                .foregroundColor(state.isAutoISO ? CameraTheme.textSecondary : CameraTheme.controlActive)
                 .frame(width: 60, alignment: .trailing)
             }
             .padding(.trailing, CameraTheme.paddingLarge)
+            .simultaneousGesture(
+                LongPressGesture(minimumDuration: 0.5).onEnded { _ in
+                    isoJustLongPressed = true
+                    state.isAutoISO = true
+                    cameraManager.setAutoExposure()
+                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        isoJustLongPressed = false
+                    }
+                }
+            )
         }
         .background(CameraTheme.background)
     }
@@ -325,11 +360,7 @@ struct CameraView: View {
             }
 
             if state.captureMode == .photo {
-                shutterAnimating = true
-                cameraManager.capturePhoto(state: state, filter: currentFilter)
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                    shutterAnimating = false
-                }
+                attemptPhotoCapture()
             } else {
                 if state.isRecording {
                     cameraManager.stopVideoRecording(state: state)
@@ -356,6 +387,54 @@ struct CameraView: View {
                 showFocusIndicator = false
             }
         }
+    }
+
+    // MARK: - Photo Capture Gating
+
+    /// A photo is only useful if we can save it. Gate the shutter on Photos "add" access:
+    /// ask the first time, and send the user to Settings if they've denied it.
+    private func attemptPhotoCapture() {
+        switch PHPhotoLibrary.authorizationStatus(for: .addOnly) {
+        case .authorized, .limited:
+            performPhotoCapture()
+        case .notDetermined:
+            PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
+                DispatchQueue.main.async {
+                    if status == .authorized || status == .limited {
+                        performPhotoCapture()
+                    } else {
+                        showPhotoPermissionAlert = true
+                    }
+                }
+            }
+        default:
+            showPhotoPermissionAlert = true
+        }
+    }
+
+    private func performPhotoCapture() {
+        shutterAnimating = true
+        cameraManager.capturePhoto(state: state, filter: currentFilter)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            shutterAnimating = false
+        }
+    }
+
+    // MARK: - ISO Selector
+
+    private func isoStopValues() -> [Float] {
+        let minISO = max(state.minISO, 25)
+        let maxISO = state.maxISO
+        var stops = [minISO]
+        for iso: Float in [50, 100, 200, 400, 800, 1600, 3200, 6400] {
+            if iso > minISO && iso < maxISO { stops.append(iso) }
+        }
+        stops.append(maxISO)
+        return stops
+    }
+
+    private var isoLabel: String {
+        state.isAutoISO ? "Auto" : "\(Int(state.currentISO))"
     }
 }
 // swiftlint:enable type_body_length
