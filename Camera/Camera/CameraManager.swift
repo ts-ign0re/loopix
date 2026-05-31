@@ -62,12 +62,9 @@ final class CameraManager: NSObject, @unchecked Sendable {
 
     // swiftlint:disable cyclomatic_complexity function_body_length
     private func setupSession(state: CameraState) {
-        session.beginConfiguration()
+        configureCaptureAudioSession()
 
-        // Don't let the capture session grab the audio session just for previewing —
-        // that would interrupt music. We configure audio ourselves only when video
-        // recording starts (see startVideoRecording → configureCaptureAudioSession).
-        session.automaticallyConfiguresApplicationAudioSession = false
+        session.beginConfiguration()
         let initialPreset = state.captureMode == .video ? preferredVideoPreset() : .photo
         if session.canSetSessionPreset(initialPreset) {
             session.sessionPreset = initialPreset
