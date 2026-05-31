@@ -4,7 +4,21 @@
 
   ],
   "products" : [
-
+    {
+      "displayPrice" : "9.99",
+      "familyShareable" : true,
+      "internalID" : "6775155302",
+      "localizations" : [
+        {
+          "description" : "All film presets forever. One-time purchase.",
+          "displayName" : "Loopix Lifetime",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "loopix_once",
+      "referenceName" : "Loopix Lifetime",
+      "type" : "NonConsumable"
+    }
   ],
   "settings" : {
     "_failTransactionsEnabled" : false,

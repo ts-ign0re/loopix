@@ -9,7 +9,21 @@ struct ContentView: View {
     @State private var showSplash = true
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
 
+    #if DEBUG
+    @State private var showDebugMenu = false
+    @State private var showDebugPaywall = false
+    #endif
+
     var body: some View {
+        content
+        #if DEBUG
+            .overlay(alignment: .topTrailing) { debugLauncher }
+            .overlay { if showDebugMenu { debugMenu } }
+            .fullScreenCover(isPresented: $showDebugPaywall) { PaywallView() }
+        #endif
+    }
+
+    private var content: some View {
         Group {
             if showSplash {
                 SplashView()
@@ -98,4 +112,79 @@ struct ContentView: View {
             photoLibraryAuthorized = false
         }
     }
+
+    #if DEBUG
+    private var subscription: SubscriptionManager { SubscriptionManager.shared }
+
+    private var debugLauncher: some View {
+        Button {
+            withAnimation(.easeInOut(duration: 0.15)) { showDebugMenu.toggle() }
+        } label: {
+            Image(systemName: "wrench.and.screwdriver.fill")
+                .font(.system(size: 13, weight: .bold))
+                .foregroundStyle(.white)
+                .frame(width: 34, height: 34)
+                .background(Color.purple.opacity(0.85), in: Circle())
+        }
+        .padding(.top, 4)
+        .padding(.trailing, 8)
+    }
+
+    private var debugMenu: some View {
+        ZStack {
+            Color.black.opacity(0.55).ignoresSafeArea()
+                .onTapGesture { showDebugMenu = false }
+
+            VStack(alignment: .leading, spacing: 14) {
+                HStack {
+                    Text("DEV MENU")
+                        .font(.system(size: 15, weight: .heavy, design: .monospaced))
+                        .foregroundStyle(.white)
+                    Spacer()
+                    Button { showDebugMenu = false } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundStyle(.white.opacity(0.7))
+                    }
+                }
+
+                Toggle("Premium (Pro)", isOn: Binding(
+                    get: { subscription.isPro },
+                    set: { subscription.debugSetPro($0) }
+                ))
+                Toggle("Onboarding completed", isOn: $hasCompletedOnboarding)
+
+                Divider().overlay(Color.white.opacity(0.15))
+
+                debugButton("Reset purchase (clear latch)") { subscription.debugReset() }
+                debugButton("Force-refresh entitlements") {
+                    Task { await subscription.refreshEntitlements() }
+                }
+                debugButton("Open paywall") {
+                    showDebugMenu = false
+                    showDebugPaywall = true
+                }
+            }
+            .tint(.purple)
+            .font(.system(size: 14, weight: .medium, design: .rounded))
+            .foregroundStyle(.white)
+            .padding(20)
+            .frame(width: 300)
+            .background(RoundedRectangle(cornerRadius: 18).fill(Color(white: 0.13)))
+            .overlay(RoundedRectangle(cornerRadius: 18).stroke(Color.purple.opacity(0.5), lineWidth: 1))
+        }
+    }
+
+    private func debugButton(_ title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, 10)
+                .padding(.horizontal, 12)
+                .background(Color.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(.white)
+    }
+    #endif
 }

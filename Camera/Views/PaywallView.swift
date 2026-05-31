@@ -1,17 +1,18 @@
 import SwiftUI
 import StoreKit
 import CoreImage
+import Combine
 
 private let paywallImageNames = [
-    "IMG_1247", "IMG_1248", "IMG_1249", "IMG_1250",
-    "IMG_1251", "IMG_1252", "IMG_1253", "IMG_1254", "IMG_1263"
+    "IMG_1251", "IMG_1253", "IMG_1250", "IMG_1254", "IMG_1263", "IMG_1252"
 ]
 
-/// Filter indices into BuiltInFilters.all — one per carousel image
-private let paywallFilterIndices = [1, 2, 6, 14, 18, 17, 20, 16, 23]
-// Tri-X, BwXX, HP5, Copper, Velvia, Frost, Chrome, Flare, Ultra
+/// Filter indices into BuiltInFilters.all — one per carousel image.
+/// Colour presets only; B&W samples need their own dedicated photos.
+private let paywallFilterIndices = [18, 20, 14, 16, 23, 17]
+// Velvia, Chrome, Copper, Flare, Ultra, Frost
 
-// swiftlint:disable type_body_length file_length function_body_length
+// swiftlint:disable type_body_length function_body_length file_length
 struct PaywallView: View {
 
     @Environment(\.dismiss) private var dismiss
@@ -19,36 +20,15 @@ struct PaywallView: View {
     // MARK: - State
 
     @State private var currentImageIndex: Int = 0
-    @State private var selectedPlan: SubscriptionProduct = .yearlyPro
     @State private var isPurchasing = false
     @State private var errorMessage: String?
     @State private var filteredImages: [Int: UIImage] = [:]
 
+    private let autoAdvance = Timer.publish(every: 3, on: .main, in: .common).autoconnect()
+
     private var subscription: SubscriptionManager { SubscriptionManager.shared }
 
-    private var yearlyProduct: Product? {
-        subscription.products.first { $0.id == SubscriptionProduct.yearlyPro.rawValue }
-    }
-
-    private var monthlyProduct: Product? {
-        subscription.products.first { $0.id == SubscriptionProduct.monthlyPro.rawValue }
-    }
-
-    private var yearlyMonthlyPriceString: String {
-        if let product = yearlyProduct {
-            let monthly = product.price / 12
-            return product.priceFormatStyle.format(monthly)
-        }
-        return ""
-    }
-
-    /// Savings % of yearly vs monthly
-    private var savingsPercent: Int {
-        guard let monthly = monthlyProduct, let yearly = yearlyProduct else { return 0 }
-        let yearlyEquiv = monthly.price * 12
-        let savings = (yearlyEquiv - yearly.price) / yearlyEquiv * 100
-        return NSDecimalNumber(decimal: savings).intValue
-    }
+    private var lifetimeProduct: Product? { subscription.lifetimeProduct }
 
     // MARK: - Body
 
@@ -64,7 +44,7 @@ struct PaywallView: View {
                     // Content
                     VStack(spacing: 0) {
                         // Title
-                        Text("unlock all film\npresets")
+                        Text("shoot.\nthat's the edit.")
                             .font(.system(size: 28, weight: .bold, design: .rounded))
                             .foregroundStyle(.white)
                             .multilineTextAlignment(.leading)
@@ -73,11 +53,18 @@ struct PaywallView: View {
                             .padding(.horizontal, 24)
 
                         // Subtitle
-                        Text("28 film presets, no watermark, full resolution export")
+                        Text("Film never gave you a second take. You pressed the shutter and "
+                             + "that was the photo. Loopix is the same: pick a look, press the "
+                             + "button, the picture is done.")
                             .font(.system(size: 15, weight: .regular, design: .rounded))
                             .foregroundStyle(.white.opacity(0.5))
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.top, 8)
+                            .padding(.horizontal, 24)
+
+                        // Feature list
+                        featureList
+                            .padding(.top, 18)
                             .padding(.horizontal, 24)
 
                         Spacer()
@@ -92,8 +79,6 @@ struct PaywallView: View {
                             .padding(.bottom, 20)
                     }
                 }
-
-                // (close button is inside carousel)
             }
         }
         .preferredColorScheme(.dark)
@@ -108,9 +93,10 @@ struct PaywallView: View {
                 ForEach(0..<paywallImageNames.count, id: \.self) { index in
                     ZStack {
                         if let img = filteredImages[index] {
+                            // Already rendered at the exact frame size — no per-frame
+                            // resampling, so paging stays smooth.
                             Image(uiImage: img)
                                 .resizable()
-                                .aspectRatio(contentMode: .fill)
                                 .frame(width: UIScreen.main.bounds.width, height: height)
                                 .clipped()
                         } else {
@@ -177,7 +163,12 @@ struct PaywallView: View {
         }
         .frame(height: height)
         .clipShape(UnevenRoundedRectangle(topLeadingRadius: 20, topTrailingRadius: 20))
-        .task { await renderFilteredImages() }
+        .task { await renderFilteredImages(height: height) }
+        .onReceive(autoAdvance) { _ in
+            withAnimation(.easeInOut(duration: 0.6)) {
+                currentImageIndex = (currentImageIndex + 1) % paywallImageNames.count
+            }
+        }
     }
 
     // MARK: - Filter Badge (matches FilterCardView style)
@@ -239,10 +230,10 @@ struct PaywallView: View {
 
     // MARK: - Filter Rendering
 
-    private func renderFilteredImages() async {
-        let screenWidth = UIScreen.main.bounds.width
+    private func renderFilteredImages(height: CGFloat) async {
         let scale = UIScreen.main.scale
-        let targetWidth = screenWidth * scale
+        let targetWidth = UIScreen.main.bounds.width * scale
+        let targetHeight = height * scale
         let filters = BuiltInFilters.all
 
         let results: [Int: UIImage] = await Task.detached(priority: .userInitiated) {
@@ -254,14 +245,20 @@ struct PaywallView: View {
                 guard let uiImage = UIImage(named: paywallImageNames[index]),
                       let ciInput = CIImage(image: uiImage) else { continue }
 
-                let ratio = min(targetWidth / ciInput.extent.width, 1.0)
-                let scaled = ratio < 1.0
-                    ? ciInput.transformed(by: .init(scaleX: ratio, y: ratio))
-                    : ciInput
-
+                // Aspect-fill the carousel frame, then centre-crop, so the stored
+                // image matches the on-screen size 1:1 and paging doesn't resample.
+                let fillScale = max(targetWidth / ciInput.extent.width,
+                                    targetHeight / ciInput.extent.height)
+                let scaled = ciInput.transformed(by: .init(scaleX: fillScale, y: fillScale))
                 let filtered = LiveFilterPipeline.apply(filter, to: scaled)
-                guard let cgImage = context.createCGImage(filtered, from: filtered.extent) else { continue }
-                images[index] = UIImage(cgImage: cgImage)
+
+                let cropRect = CGRect(
+                    x: filtered.extent.midX - targetWidth / 2,
+                    y: filtered.extent.midY - targetHeight / 2,
+                    width: targetWidth, height: targetHeight
+                )
+                guard let cgImage = context.createCGImage(filtered, from: cropRect) else { continue }
+                images[index] = UIImage(cgImage: cgImage, scale: scale, orientation: .up)
             }
 
             return images
@@ -270,28 +267,37 @@ struct PaywallView: View {
         filteredImages = results
     }
 
+    // MARK: - Feature List
+
+    private var featureList: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            featureRow(icon: Image(systemName: "film.stack").foregroundStyle(Color("BrandYellow")),
+                       "30 film looks: Kodak, Fuji, old cinema stocks")
+            featureRow(icon: Image(systemName: "infinity").foregroundStyle(Color("BrandYellow")),
+                       "Pay once for all future updates and add-ons")
+            featureRow(icon: Text("❤️"),
+                       "Your memories, kept in the colors you love")
+        }
+    }
+
+    private func featureRow(icon: some View, _ text: String) -> some View {
+        HStack(spacing: 12) {
+            icon
+                .font(.system(size: 16, weight: .bold))
+                .frame(width: 22)
+            Text(text)
+                .font(.system(size: 14, weight: .medium, design: .rounded))
+                .foregroundStyle(.white.opacity(0.85))
+            Spacer(minLength: 0)
+        }
+    }
+
     // MARK: - Purchase Section
 
     private var purchaseSection: some View {
         VStack(spacing: 14) {
-            if monthlyProduct != nil || yearlyProduct != nil || !subscription.isLoading {
-                // Plan cards
-                HStack(spacing: 10) {
-                    planCard(
-                        plan: .monthlyPro,
-                        title: "Monthly",
-                        price: monthlyProduct?.displayPrice ?? "$3.99",
-                        detail: "28 + all future presets",
-                        badge: nil
-                    )
-                    planCard(
-                        plan: .yearlyPro,
-                        title: "Yearly",
-                        price: yearlyProduct?.displayPrice ?? "$29.99",
-                        detail: yearlyMonthlyPriceString.isEmpty ? "$2.49 / mo" : yearlyMonthlyPriceString + " / mo",
-                        badge: savingsPercent > 0 ? "-\(savingsPercent)%" : "-38%"
-                    )
-                }
+            if let product = lifetimeProduct {
+                lifetimeCard(product: product)
 
                 // CTA
                 Button {
@@ -303,7 +309,7 @@ struct PaywallView: View {
                                 .tint(.black)
                                 .scaleEffect(0.8)
                         } else {
-                            Text(ctaText)
+                            Text("Unlock Lifetime — \(product.displayPrice)")
                                 .font(.system(size: 16, weight: .bold, design: .rounded))
                         }
                     }
@@ -331,76 +337,40 @@ struct PaywallView: View {
         }
     }
 
-    private var ctaText: String {
-        if selectedPlan == .yearlyPro {
-            let price = yearlyProduct?.displayPrice ?? "$29.99"
-            return "Get Pro — \(price) / year"
-        } else {
-            let price = monthlyProduct?.displayPrice ?? "$3.99"
-            return "Get Pro — \(price) / month"
-        }
-    }
-
-    private func planCard(
-        plan: SubscriptionProduct,
-        title: String,
-        price: String,
-        detail: String,
-        badge: String?
-    ) -> some View {
-        let isSelected = selectedPlan == plan
-
-        return Button {
-            withAnimation(.easeInOut(duration: 0.15)) {
-                selectedPlan = plan
-            }
-        } label: {
-            VStack(alignment: .leading, spacing: 0) {
-                // Badge
-                if let badge {
-                    Text(badge)
-                        .font(.system(size: 11, weight: .bold, design: .rounded))
-                        .foregroundStyle(.black)
-                        .padding(.horizontal, 7)
-                        .padding(.vertical, 3)
-                        .background(Color("BrandYellow"))
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
-                        .padding(.bottom, 8)
-                } else {
-                    Spacer().frame(height: 24)
-                }
-
-                Text(title)
-                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+    private func lifetimeCard(product: Product) -> some View {
+        HStack(alignment: .center, spacing: 14) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Lifetime")
+                    .font(.system(size: 17, weight: .semibold, design: .rounded))
                     .foregroundStyle(.white)
-
-                Text(detail)
+                Text("One payment. Yours for life.")
                     .font(.system(size: 12, weight: .medium, design: .rounded))
-                    .foregroundStyle(plan == .yearlyPro ? Color("BrandYellow") : Color(white: 0.5))
-                    .padding(.top, 2)
-
-                Spacer()
-
-                Text(price)
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Color("BrandYellow"))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
-            .padding(14)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .frame(height: 120)
-            .background(
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(Color.white.opacity(0.06))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 14)
-                    .stroke(
-                        isSelected ? Color("BrandYellow").opacity(0.7) : Color.white.opacity(0.1),
-                        lineWidth: isSelected ? 1.5 : 0.5
-                    )
-            )
+
+            Spacer()
+
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(product.displayPrice)
+                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+                Text("one-time")
+                    .font(.system(size: 11, weight: .medium, design: .rounded))
+                    .foregroundStyle(Color(white: 0.5))
+            }
         }
-        .buttonStyle(.plain)
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color.white.opacity(0.06))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color("BrandYellow").opacity(0.7), lineWidth: 1.5)
+        )
     }
 
     // MARK: - Footer
@@ -425,11 +395,8 @@ struct PaywallView: View {
         errorMessage = nil
 
         do {
-            if subscription.products.isEmpty {
-                await subscription.loadProducts()
-            }
-            try await subscription.purchase(selectedPlan.rawValue)
-            dismiss()
+            try await subscription.purchase()
+            if subscription.isPro { dismiss() }
         } catch SubscriptionError.userCancelled {
             // ignore
         } catch {
@@ -447,10 +414,10 @@ struct PaywallView: View {
             try await subscription.restore()
             dismiss()
         } catch {
-            errorMessage = "No active subscription found."
+            errorMessage = "No previous purchase found."
         }
 
         isPurchasing = false
     }
 }
-// swiftlint:enable type_body_length file_length function_body_length
+// swiftlint:enable type_body_length function_body_length file_length
