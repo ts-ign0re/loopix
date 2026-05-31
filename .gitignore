@@ -23,6 +23,15 @@ Pods/
 .build/
 .swiftpm/
 
+# Secrets (never commit)
+*.p8
+*.p12
+*.cer
+*.mobileprovision
+*.env
+*.pem
+*.key
+
 # Misc
 .DS_Store
 *.orig
