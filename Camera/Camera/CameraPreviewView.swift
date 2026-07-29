@@ -15,6 +15,10 @@ struct CameraPreviewView: UIViewRepresentable {
         if let renderer = MetalPreviewRenderer(mtkView: mtkView) {
             context.coordinator.renderer = renderer
             mtkView.delegate = renderer
+            cameraManager.previewFrameHandler = { [weak renderer, weak mtkView] image in
+                renderer?.currentCIImage = image
+                mtkView?.setNeedsDisplay()
+            }
         }
 
         // Tap gesture for focus
@@ -29,12 +33,8 @@ struct CameraPreviewView: UIViewRepresentable {
 
     func updateUIView(_ uiView: MTKView, context: Context) {
         guard let renderer = context.coordinator.renderer else { return }
-        renderer.currentCIImage = cameraManager.currentCIImage
         renderer.currentFilter = filter
         renderer.filterIntensity = state.filterIntensity
-        renderer.grainData = state.grainData
-        renderer.grainEnabled = state.grainEnabled
-        renderer.isDeviceStationary = state.isDeviceStationary
     }
 
     func makeCoordinator() -> Coordinator {

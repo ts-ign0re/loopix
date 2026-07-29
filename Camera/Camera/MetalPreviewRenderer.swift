@@ -1,13 +1,39 @@
 import MetalKit
 import CoreImage
 
-/// MTKViewDelegate that renders CIImage frames with live filter + grain overlay
+/// Temporary freeze instrumentation: counts every preview pipeline stage and
+/// prints a summary to stderr once per second (driven by the capture callback).
+/// Remove once the freeze investigation closes.
+enum PreviewDiag {
+    nonisolated(unsafe) static var captured = 0
+    nonisolated(unsafe) static var deliveryDropped = 0
+    nonisolated(unsafe) static var delivered = 0
+    nonisolated(unsafe) static var drawCalls = 0
+    nonisolated(unsafe) static var gateDropped = 0
+    nonisolated(unsafe) static var earlyExit = 0
+    nonisolated(unsafe) static var submitted = 0
+    nonisolated(unsafe) static var completed = 0
+    nonisolated(unsafe) private static var lastReport: Double = 0
+
+    static func reportIfDue() {
+        let now = CACurrentMediaTime()
+        guard now - lastReport >= 1.0 else { return }
+        lastReport = now
+        let line = "PreviewDiag cap=\(captured) delDrop=\(deliveryDropped) del=\(delivered) " +
+            "draw=\(drawCalls) gateDrop=\(gateDropped) early=\(earlyExit) " +
+            "sub=\(submitted) done=\(completed)\n"
+        FileHandle.standardError.write(Data(line.utf8))
+    }
+}
+
+/// MTKViewDelegate that renders CIImage frames with the live filter applied
 final class MetalPreviewRenderer: NSObject, MTKViewDelegate, @unchecked Sendable {
 
     private let device: MTLDevice
     private let commandQueue: MTLCommandQueue
     private let ciContext: CIContext
     private let colorSpace = CGColorSpaceCreateDeviceRGB()
+    private let inFlightGate = DispatchSemaphore(value: 2)
 
     /// Current source frame from camera
     var currentCIImage: CIImage?
@@ -17,16 +43,6 @@ final class MetalPreviewRenderer: NSObject, MTKViewDelegate, @unchecked Sendable
 
     /// Filter intensity (0.0 = original, 1.0 = full filter)
     var filterIntensity: Float = 1.0
-
-    /// Grain settings
-    var grainData: GrainData = .defaultCamera
-    var grainEnabled: Bool = true
-    var isDeviceStationary: Bool = false
-
-    /// Reference time for grain animation — keeps Float precision high
-    /// by using seconds-since-start instead of seconds-since-boot
-    private let referenceTime: Double = CACurrentMediaTime()
-    private var frameCount: UInt32 = 0
 
     init?(mtkView: MTKView) {
         guard let device = MTLCreateSystemDefaultDevice(),
@@ -43,9 +59,10 @@ final class MetalPreviewRenderer: NSObject, MTKViewDelegate, @unchecked Sendable
 
         mtkView.device = device
         mtkView.framebufferOnly = false
-        mtkView.enableSetNeedsDisplay = false
-        mtkView.isPaused = false
-        mtkView.preferredFramesPerSecond = 30
+        // ponytail: event-driven — one camera frame triggers one redraw, so the view
+        // never re-renders a stale frame and GPU work can't outpace the capture rate.
+        mtkView.enableSetNeedsDisplay = true
+        mtkView.isPaused = true
         mtkView.colorPixelFormat = .bgra8Unorm
 
         super.init()
@@ -55,38 +72,36 @@ final class MetalPreviewRenderer: NSObject, MTKViewDelegate, @unchecked Sendable
 
     func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {}
 
-    // swiftlint:disable:next function_body_length
     func draw(in view: MTKView) {
+        autoreleasepool {
+            drawFrame(in: view)
+        }
+    }
+
+    private func drawFrame(in view: MTKView) {
+        PreviewDiag.drawCalls += 1
+        let gate = inFlightGate
+        guard gate.wait(timeout: .now()) == .success else {
+            PreviewDiag.gateDropped += 1
+            return
+        }
+        var submitted = false
+        defer {
+            if !submitted {
+                gate.signal()
+            }
+        }
+
         guard let image = currentCIImage,
               let drawable = view.currentDrawable,
               let commandBuffer = commandQueue.makeCommandBuffer() else {
+            PreviewDiag.earlyExit += 1
             return
         }
 
-        // Apply filter
-        var processed = LiveFilterPipeline.apply(currentFilter, to: image, intensity: filterIntensity)
-        let profiledGrain = currentFilter.profiledGrainData(from: grainData)
-
-        // Apply animated grain
-        if grainEnabled && profiledGrain.isActive {
-            frameCount &+= 1
-            let elapsed = CACurrentMediaTime() - referenceTime
-            let time: Float
-            if isDeviceStationary {
-                // When camera is still, slow grain refresh so texture is readable.
-                time = Float(floor(elapsed * 2.0) / 2.0)
-            } else {
-                time = Float(elapsed)
-            }
-            if let grained = try? MetalFilterLoader.shared.applyGrain(
-                to: processed,
-                grainData: profiledGrain,
-                time: time,
-                clumpStrength: currentFilter.grainClumpBoost
-            ) {
-                processed = grained
-            }
-        }
+        // Apply filter. Grain is photo-only: the Metal grain path renders black
+        // frames in the live preview on current iOS, so preview skips it.
+        let processed = LiveFilterPipeline.apply(currentFilter, to: image, intensity: filterIntensity)
 
         // Scale to fill the drawable (crops edges, no black bars)
         let drawableSize = view.drawableSize
@@ -117,9 +132,16 @@ final class MetalPreviewRenderer: NSObject, MTKViewDelegate, @unchecked Sendable
             try self.ciContext.startTask(toRender: scaledImage, to: destination)
         } catch {
             print("MetalPreviewRenderer: render error: \(error)")
+            return
         }
 
+        commandBuffer.addCompletedHandler { _ in
+            PreviewDiag.completed += 1
+            gate.signal()
+        }
         commandBuffer.present(drawable)
         commandBuffer.commit()
+        submitted = true
+        PreviewDiag.submitted += 1
     }
 }

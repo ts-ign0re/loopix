@@ -34,6 +34,7 @@ final class MetalFilterLoader: @unchecked Sendable {
 
     private let device: MTLDevice?
     private let ciContext: CIContext
+    private let grainNoiseTile: CIImage?
     private var kernelCache: [String: CIKernel] = [:]
     private let cacheQueue = DispatchQueue(label: "com.camera.metalfilterloader.cache", attributes: .concurrent)
 
@@ -45,16 +46,21 @@ final class MetalFilterLoader: @unchecked Sendable {
 
     private init() {
         self.device = MTLCreateSystemDefaultDevice()
+        let context: CIContext
         if let device = device {
-            self.ciContext = CIContext(mtlDevice: device, options: [
+            context = CIContext(mtlDevice: device, options: [
                 .cacheIntermediates: true,
                 .priorityRequestLow: false
             ])
         } else {
-            self.ciContext = CIContext(options: [
+            context = CIContext(options: [
                 .useSoftwareRenderer: true
             ])
         }
+        self.ciContext = context
+        self.grainNoiseTile = CIFilter(name: "CIRandomGenerator")?
+            .outputImage?
+            .cropped(to: CGRect(x: 0, y: 0, width: 512, height: 512))
     }
 
     // MARK: - Kernel Loading
@@ -131,12 +137,38 @@ final class MetalFilterLoader: @unchecked Sendable {
                     monochromatic: Bool = true,
                     time: Float = 0.0,
                     clumpStrength: Float = 0.0) throws -> CIImage {
-        let imageSize = Float(min(image.extent.width, image.extent.height))
-        return try applyKernel(
-            named: KernelName.grain,
-            to: image,
-            parameters: [amount, size, roughness, monochromatic ? 1.0 : 0.0, time, imageSize, clumpStrength]
+        // ponytail: built-in CI noise is stable across iOS GPU drivers.
+        guard var noise = grainNoiseTile else {
+            return image
+        }
+
+        let scale = CGFloat(max(0.55, min(size * 0.42, 1.6)))
+        let phase = CGFloat(floor(time * 12))
+        var transform = CGAffineTransform(scaleX: scale, y: scale)
+        transform = transform.translatedBy(
+            x: phase.truncatingRemainder(dividingBy: 37) * 13,
+            y: phase.truncatingRemainder(dividingBy: 53) * 17
         )
+        noise = noise
+            .applyingFilter("CIAffineTile", parameters: [
+                kCIInputTransformKey: NSValue(cgAffineTransform: transform)
+            ])
+            .cropped(to: image.extent)
+            .applyingFilter("CIColorControls", parameters: [
+                kCIInputSaturationKey: monochromatic ? 0 : 0.55,
+                kCIInputContrastKey: 1.05 + roughness * 0.8 + clumpStrength * 0.2
+            ])
+
+        let opacity = CGFloat(min(0.24, amount * (0.20 + roughness * 0.10 + clumpStrength * 0.04)))
+        noise = noise.applyingFilter("CIColorMatrix", parameters: [
+            "inputAVector": CIVector(x: 0, y: 0, z: 0, w: opacity)
+        ])
+
+        return noise
+            .applyingFilter("CISoftLightBlendMode", parameters: [
+                kCIInputBackgroundImageKey: image
+            ])
+            .cropped(to: image.extent)
     }
 
     /// Apply grain using GrainData with proper UI→Metal parameter mapping

@@ -75,6 +75,12 @@ final class CaptureDeviceManager {
         }
         device.isVideoHDREnabled = false
 
+        // Force SDR sRGB delivery; wide/HDR color spaces wash out the sRGB render
+        // pipeline. Requires automaticallyConfiguresCaptureDeviceForWideColor = false.
+        if device.activeFormat.supportedColorSpaces.contains(.sRGB) {
+            device.activeColorSpace = .sRGB
+        }
+
         // Set continuous auto-exposure and auto-focus as defaults
         if device.isExposureModeSupported(.continuousAutoExposure) {
             device.exposureMode = .continuousAutoExposure

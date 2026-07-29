@@ -15,13 +15,14 @@ final class CameraManager: NSObject, @unchecked Sendable {
     // MARK: - Public State
 
     var isSessionRunning = false
-    var currentCIImage: CIImage?
+    @ObservationIgnored var previewFrameHandler: ((CIImage) -> Void)?
     var error: String?
 
     // MARK: - Private
 
     let session = AVCaptureSession()
     private let sessionQueue = DispatchQueue(label: "com.camera.session")
+    @ObservationIgnored private let previewDeliveryGate = DispatchSemaphore(value: 1)
 
     private var videoDataOutput = AVCaptureVideoDataOutput()
     private var audioDataOutput = AVCaptureAudioDataOutput()
@@ -62,9 +63,12 @@ final class CameraManager: NSObject, @unchecked Sendable {
 
     // swiftlint:disable cyclomatic_complexity function_body_length
     private func setupSession(state: CameraState) {
-        configureCaptureAudioSession()
-
         session.beginConfiguration()
+        // ponytail: preview does not need an active audio route; recording configures it on demand.
+        session.automaticallyConfiguresApplicationAudioSession = false
+        // ponytail: keep the device in sRGB — on current iOS the session otherwise
+        // selects a wide/HDR color space and the sRGB Metal pipeline shows it washed out.
+        session.automaticallyConfiguresCaptureDeviceForWideColor = false
         let initialPreset = state.captureMode == .video ? preferredVideoPreset() : .photo
         if session.canSetSessionPreset(initialPreset) {
             session.sessionPreset = initialPreset
@@ -122,23 +126,9 @@ final class CameraManager: NSObject, @unchecked Sendable {
             configureVideoConnection(isFront: false)
         }
 
-        // Add microphone input/output for video recording with sound.
-        if let mic = AVCaptureDevice.default(for: .audio) {
-            do {
-                let input = try AVCaptureDeviceInput(device: mic)
-                if session.canAddInput(input) {
-                    session.addInput(input)
-                    audioDeviceInput = input
-                }
-            } catch {
-                print("Failed to create audio input: \(error.localizedDescription)")
-            }
-        }
-
-        audioDataOutput.setSampleBufferDelegate(self, queue: sessionQueue)
-        if session.canAddOutput(audioDataOutput) {
-            session.addOutput(audioDataOutput)
-        }
+        // ponytail: no audio IO here — a session that carries a mic input while the
+        // app audio session is inactive stalls video delivery on current iOS.
+        // Mic input and audio output attach on first recording (attachAudioIOIfNeeded).
 
         // Add photo output
         if session.canAddOutput(photoOutput) {
@@ -154,6 +144,17 @@ final class CameraManager: NSObject, @unchecked Sendable {
         }
 
         session.commitConfiguration()
+
+        // Temporary freeze diagnostics: surface capture session stalls to stderr.
+        // Remove together with PreviewDiag.
+        for name in [AVCaptureSession.runtimeErrorNotification,
+                     AVCaptureSession.wasInterruptedNotification,
+                     AVCaptureSession.interruptionEndedNotification] {
+            NotificationCenter.default.addObserver(forName: name, object: session, queue: nil) { note in
+                let detail = note.userInfo.map(String.init(describing:)) ?? "no userInfo"
+                FileHandle.standardError.write(Data("CaptureSession \(note.name.rawValue): \(detail)\n".utf8))
+            }
+        }
 
         // Update state on main thread
         DispatchQueue.main.async {
@@ -415,6 +416,7 @@ final class CameraManager: NSObject, @unchecked Sendable {
             guard !self.isVideoRecordingRequested else { return }
 
             self.configureCaptureAudioSession()
+            self.attachAudioIOIfNeeded()
             self.isVideoRecordingRequested = true
             self.recordingFilter = filter
             self.recordingFilterIntensity = state.filterIntensity
@@ -494,7 +496,8 @@ final class CameraManager: NSObject, @unchecked Sendable {
     }
 
     private func configureRecordingGrain(for filter: CameraFilter, state: CameraState) {
-        let base = state.grainEnabled ? state.grainData : .none
+        // Grain is photo-only for now; video records without it.
+        let base = GrainData.none
         let profiled = filter.profiledGrainData(from: base)
         recordingGrainData = videoOptimizedGrain(profiled)
         recordingClumpStrength = videoOptimizedClump(from: filter.grainClumpBoost)
@@ -566,6 +569,30 @@ final class CameraManager: NSObject, @unchecked Sendable {
                 try? FileManager.default.removeItem(at: url)
             })
         }
+    }
+
+    /// Attaches mic input and audio output on first video recording. Audio stays out
+    /// of the session until then so the preview-only session never depends on an
+    /// active audio route. Runs on sessionQueue.
+    private func attachAudioIOIfNeeded() {
+        guard audioDeviceInput == nil else { return }
+        session.beginConfiguration()
+        if let mic = AVCaptureDevice.default(for: .audio) {
+            do {
+                let input = try AVCaptureDeviceInput(device: mic)
+                if session.canAddInput(input) {
+                    session.addInput(input)
+                    audioDeviceInput = input
+                }
+            } catch {
+                print("Failed to create audio input: \(error.localizedDescription)")
+            }
+        }
+        audioDataOutput.setSampleBufferDelegate(self, queue: sessionQueue)
+        if session.canAddOutput(audioDataOutput) {
+            session.addOutput(audioDataOutput)
+        }
+        session.commitConfiguration()
     }
 
     private func configureCaptureAudioSession() {
@@ -869,8 +896,17 @@ extension CameraManager: AVCaptureVideoDataOutputSampleBufferDelegate, AVCapture
     private func handleVideoSampleBuffer(_ sampleBuffer: CMSampleBuffer) {
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
         let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
-        DispatchQueue.main.async {
-            self.currentCIImage = ciImage
+        PreviewDiag.captured += 1
+        PreviewDiag.reportIfDue()
+        let deliveryGate = previewDeliveryGate
+        if deliveryGate.wait(timeout: .now()) == .success {
+            DispatchQueue.main.async { [weak self] in
+                defer { deliveryGate.signal() }
+                PreviewDiag.delivered += 1
+                self?.previewFrameHandler?(ciImage)
+            }
+        } else {
+            PreviewDiag.deliveryDropped += 1
         }
 
         guard isVideoRecordingRequested else { return }

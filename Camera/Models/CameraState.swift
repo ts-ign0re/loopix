@@ -27,6 +27,8 @@ final class CameraState: @unchecked Sendable {
 
     // Grain
     var grainData: GrainData = .defaultCamera
+    // ponytail: grain is applied to captured photos only; live preview and video
+    // skip it until the Metal grain path is stable on current iOS.
     var grainEnabled: Bool = true
 
     // Filter — restored from last session by stable id, defaults to Neutral.
