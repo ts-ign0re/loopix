@@ -15,7 +15,7 @@ final class CameraManager: NSObject, @unchecked Sendable {
     // MARK: - Public State
 
     var isSessionRunning = false
-    @ObservationIgnored var previewFrameHandler: ((CIImage) -> Void)?
+    var currentCIImage: CIImage?
     var error: String?
 
     // MARK: - Private
@@ -870,7 +870,7 @@ extension CameraManager: AVCaptureVideoDataOutputSampleBufferDelegate, AVCapture
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
         let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
         DispatchQueue.main.async {
-            self.previewFrameHandler?(ciImage)
+            self.currentCIImage = ciImage
         }
 
         guard isVideoRecordingRequested else { return }
