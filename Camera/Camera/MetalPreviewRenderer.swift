@@ -1,31 +1,6 @@
 import MetalKit
 import CoreImage
 
-/// Temporary freeze instrumentation: counts every preview pipeline stage and
-/// prints a summary to stderr once per second (driven by the capture callback).
-/// Remove once the freeze investigation closes.
-enum PreviewDiag {
-    nonisolated(unsafe) static var captured = 0
-    nonisolated(unsafe) static var deliveryDropped = 0
-    nonisolated(unsafe) static var delivered = 0
-    nonisolated(unsafe) static var drawCalls = 0
-    nonisolated(unsafe) static var gateDropped = 0
-    nonisolated(unsafe) static var earlyExit = 0
-    nonisolated(unsafe) static var submitted = 0
-    nonisolated(unsafe) static var completed = 0
-    nonisolated(unsafe) private static var lastReport: Double = 0
-
-    static func reportIfDue() {
-        let now = CACurrentMediaTime()
-        guard now - lastReport >= 1.0 else { return }
-        lastReport = now
-        let line = "PreviewDiag cap=\(captured) delDrop=\(deliveryDropped) del=\(delivered) " +
-            "draw=\(drawCalls) gateDrop=\(gateDropped) early=\(earlyExit) " +
-            "sub=\(submitted) done=\(completed)\n"
-        FileHandle.standardError.write(Data(line.utf8))
-    }
-}
-
 /// MTKViewDelegate that renders CIImage frames with the live filter applied
 final class MetalPreviewRenderer: NSObject, MTKViewDelegate, @unchecked Sendable {
 
@@ -79,12 +54,8 @@ final class MetalPreviewRenderer: NSObject, MTKViewDelegate, @unchecked Sendable
     }
 
     private func drawFrame(in view: MTKView) {
-        PreviewDiag.drawCalls += 1
         let gate = inFlightGate
-        guard gate.wait(timeout: .now()) == .success else {
-            PreviewDiag.gateDropped += 1
-            return
-        }
+        guard gate.wait(timeout: .now()) == .success else { return }
         var submitted = false
         defer {
             if !submitted {
@@ -95,7 +66,6 @@ final class MetalPreviewRenderer: NSObject, MTKViewDelegate, @unchecked Sendable
         guard let image = currentCIImage,
               let drawable = view.currentDrawable,
               let commandBuffer = commandQueue.makeCommandBuffer() else {
-            PreviewDiag.earlyExit += 1
             return
         }
 
@@ -135,13 +105,9 @@ final class MetalPreviewRenderer: NSObject, MTKViewDelegate, @unchecked Sendable
             return
         }
 
-        commandBuffer.addCompletedHandler { _ in
-            PreviewDiag.completed += 1
-            gate.signal()
-        }
+        commandBuffer.addCompletedHandler { _ in gate.signal() }
         commandBuffer.present(drawable)
         commandBuffer.commit()
         submitted = true
-        PreviewDiag.submitted += 1
     }
 }

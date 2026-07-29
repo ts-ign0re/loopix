@@ -145,17 +145,6 @@ final class CameraManager: NSObject, @unchecked Sendable {
 
         session.commitConfiguration()
 
-        // Temporary freeze diagnostics: surface capture session stalls to stderr.
-        // Remove together with PreviewDiag.
-        for name in [AVCaptureSession.runtimeErrorNotification,
-                     AVCaptureSession.wasInterruptedNotification,
-                     AVCaptureSession.interruptionEndedNotification] {
-            NotificationCenter.default.addObserver(forName: name, object: session, queue: nil) { note in
-                let detail = note.userInfo.map(String.init(describing:)) ?? "no userInfo"
-                FileHandle.standardError.write(Data("CaptureSession \(note.name.rawValue): \(detail)\n".utf8))
-            }
-        }
-
         // Update state on main thread
         DispatchQueue.main.async {
             state.availableLenses = lensInfos
@@ -896,17 +885,12 @@ extension CameraManager: AVCaptureVideoDataOutputSampleBufferDelegate, AVCapture
     private func handleVideoSampleBuffer(_ sampleBuffer: CMSampleBuffer) {
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
         let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
-        PreviewDiag.captured += 1
-        PreviewDiag.reportIfDue()
         let deliveryGate = previewDeliveryGate
         if deliveryGate.wait(timeout: .now()) == .success {
             DispatchQueue.main.async { [weak self] in
                 defer { deliveryGate.signal() }
-                PreviewDiag.delivered += 1
                 self?.previewFrameHandler?(ciImage)
             }
-        } else {
-            PreviewDiag.deliveryDropped += 1
         }
 
         guard isVideoRecordingRequested else { return }
