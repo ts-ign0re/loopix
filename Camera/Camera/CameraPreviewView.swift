@@ -15,6 +15,10 @@ struct CameraPreviewView: UIViewRepresentable {
         if let renderer = MetalPreviewRenderer(mtkView: mtkView) {
             context.coordinator.renderer = renderer
             mtkView.delegate = renderer
+            // ponytail: SwiftUI updates are not a frame clock; feed Metal directly.
+            cameraManager.previewFrameHandler = { [weak renderer] image in
+                renderer?.currentCIImage = image
+            }
         }
 
         // Tap gesture for focus
@@ -29,7 +33,6 @@ struct CameraPreviewView: UIViewRepresentable {
 
     func updateUIView(_ uiView: MTKView, context: Context) {
         guard let renderer = context.coordinator.renderer else { return }
-        renderer.currentCIImage = cameraManager.currentCIImage
         renderer.currentFilter = filter
         renderer.filterIntensity = state.filterIntensity
         renderer.grainData = state.grainData
