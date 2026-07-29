@@ -39,7 +39,7 @@
 		A10001010000000000000051 /* SplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10002010000000000000051 /* SplashView.swift */; };
 		A10001010000000000000052 /* SubscriptionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10002010000000000000052 /* SubscriptionManager.swift */; };
 		A10001010000000000000053 /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10002010000000000000053 /* PaywallView.swift */; };
-		A10001010000000000000054 /* Products.storekit in Resources */ = {isa = PBXBuildFile; fileRef = A10002010000000000000054 /* Products.storekit */; };
+		A10001010000000000000054 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A10002010000000000000141 /* PrivacyInfo.xcprivacy */; };
 		A10001010000000000000055 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A10002010000000000000055 /* StoreKit.framework */; };
 		A10001010000000000000101 /* Filter+Retro.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10002010000000000000101 /* Filter+Retro.swift */; };
 		A10001010000000000000102 /* Filter+PanF.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10002010000000000000102 /* Filter+PanF.swift */; };
@@ -134,6 +134,7 @@
 		A10002010000000000000132 /* Filter+CinematicPack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Filter+CinematicPack.swift"; sourceTree = "<group>"; };
 		A10002010000000000000133 /* IntensityWheelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntensityWheelView.swift; sourceTree = "<group>"; };
 		A10002010000000000000140 /* Version.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Version.xcconfig; sourceTree = "<group>"; };
+		A10002010000000000000141 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -267,6 +268,7 @@
 			children = (
 				A10002010000000000000025 /* Assets.xcassets */,
 				A10002010000000000000026 /* Info.plist */,
+				A10002010000000000000141 /* PrivacyInfo.xcprivacy */,
 				A10002010000000000000054 /* Products.storekit */,
 			);
 			path = Resources;
@@ -387,7 +389,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A10001010000000000000025 /* Assets.xcassets in Resources */,
-				A10001010000000000000054 /* Products.storekit in Resources */,
+				A10001010000000000000054 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -607,7 +609,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = 3R9CAB5MFA;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -640,7 +642,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = 3R9CAB5MFA;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;

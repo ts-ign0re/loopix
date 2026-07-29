@@ -3,11 +3,11 @@
 <plist version="1.0">
 <dict>
 	<key>NSCameraUsageDescription</key>
-	<string>Camera is used to capture RAW photos with live film grain preview.</string>
+	<string>Camera is used to capture photos and video with a live film grain preview.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>Motion helps keep the live film grain preview stable while your iPhone is still.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Photos with applied film filters and grain are saved to your library.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Access your photo library to view and manage captured photos.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Microphone is used when recording video with sound.</string>
 	<key>UILaunchScreen</key>
