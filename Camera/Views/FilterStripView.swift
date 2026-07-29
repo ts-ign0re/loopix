@@ -11,7 +11,7 @@ struct FilterStripView: View {
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 10) {
+                LazyHStack(spacing: 10) {
                     ForEach(Array(filters.enumerated()), id: \.element.id) { index, filter in
                         let locked = !subscription.isPro && !SubscriptionManager.freeFilterIDs.contains(filter.id)
                         FilterCardView(

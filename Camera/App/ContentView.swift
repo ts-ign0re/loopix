@@ -1,12 +1,9 @@
 import SwiftUI
 import AVFoundation
-import Photos
 
 struct ContentView: View {
     @State private var cameraAuthorized = false
-    @State private var photoLibraryAuthorized = false
     @State private var checkingPermissions = true
-    @State private var showSplash = true
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
 
     #if DEBUG
@@ -25,9 +22,7 @@ struct ContentView: View {
 
     private var content: some View {
         Group {
-            if showSplash {
-                SplashView()
-            } else if checkingPermissions {
+            if checkingPermissions {
                 ProgressView()
                     .tint(.white)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -46,11 +41,6 @@ struct ContentView: View {
             }
         }
         .task {
-            // Dismiss splash after 0.5 second
-            try? await Task.sleep(for: .seconds(0.5))
-            withAnimation(.easeOut(duration: 0.3)) {
-                showSplash = false
-            }
             await checkPermissions()
         }
     }
@@ -97,20 +87,7 @@ struct ContentView: View {
             cameraAuthorized = false
         }
 
-        // Show camera immediately, don't wait for photo library
         checkingPermissions = false
-
-        // Photo library — only needed when saving, request in background
-        let photoStatus = PHPhotoLibrary.authorizationStatus(for: .addOnly)
-        switch photoStatus {
-        case .authorized, .limited:
-            photoLibraryAuthorized = true
-        case .notDetermined:
-            let status = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
-            photoLibraryAuthorized = status == .authorized || status == .limited
-        default:
-            photoLibraryAuthorized = false
-        }
     }
 
     #if DEBUG

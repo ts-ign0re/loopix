@@ -67,7 +67,36 @@
 		A10001010000000000000130 /* ToneCurve.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10002010000000000000130 /* ToneCurve.swift */; };
 		A10001010000000000000132 /* Filter+CinematicPack.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10002010000000000000132 /* Filter+CinematicPack.swift */; };
 		A10001010000000000000133 /* IntensityWheelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10002010000000000000133 /* IntensityWheelView.swift */; };
+		C10001010000000000000001 /* OpenCameraIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10002010000000000000001 /* OpenCameraIntent.swift */; };
+		C10001010000000000000002 /* OpenCameraIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10002010000000000000001 /* OpenCameraIntent.swift */; };
+		C10001010000000000000003 /* CameraControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10002010000000000000002 /* CameraControl.swift */; };
+		C10001010000000000000004 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A10002010000000000000025 /* Assets.xcassets */; };
+		C10001010000000000000005 /* LoopixControls.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C10002010000000000000004 /* LoopixControls.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		C1000B010000000000000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A10007010000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C10005010000000000000001;
+			remoteInfo = LoopixControls;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		C10006010000000000000003 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				C10001010000000000000005 /* LoopixControls.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		A10002010000000000000001 /* CameraApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraApp.swift; sourceTree = "<group>"; };
@@ -135,6 +164,10 @@
 		A10002010000000000000133 /* IntensityWheelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntensityWheelView.swift; sourceTree = "<group>"; };
 		A10002010000000000000140 /* Version.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Version.xcconfig; sourceTree = "<group>"; };
 		A10002010000000000000141 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		C10002010000000000000001 /* OpenCameraIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenCameraIntent.swift; sourceTree = "<group>"; };
+		C10002010000000000000002 /* CameraControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraControl.swift; sourceTree = "<group>"; };
+		C10002010000000000000003 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		C10002010000000000000004 /* LoopixControls.appex */ = {isa = PBXFileReference; explicitFileType = wrapper.app-extension; includeInIndex = 0; path = LoopixControls.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -142,6 +175,7 @@
 			isa = PBXGroup;
 			children = (
 				A10004010000000000000002 /* Camera */,
+				C10004010000000000000001 /* CameraControl */,
 				A10004010000000000000010 /* Frameworks */,
 				A10004010000000000000011 /* Products */,
 			);
@@ -169,6 +203,7 @@
 			children = (
 				A10002010000000000000001 /* CameraApp.swift */,
 				A10002010000000000000002 /* ContentView.swift */,
+				C10002010000000000000001 /* OpenCameraIntent.swift */,
 				A10002010000000000000051 /* SplashView.swift */,
 			);
 			path = App;
@@ -259,6 +294,7 @@
 			isa = PBXGroup;
 			children = (
 				A10002010000000000000040 /* Loopix.app */,
+				C10002010000000000000004 /* LoopixControls.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -329,6 +365,15 @@
 			path = Config;
 			sourceTree = "<group>";
 		};
+		C10004010000000000000001 /* CameraControl */ = {
+			isa = PBXGroup;
+			children = (
+				C10002010000000000000002 /* CameraControl.swift */,
+				C10002010000000000000003 /* Info.plist */,
+			);
+			path = CameraControl;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -340,15 +385,33 @@
 				A10003010000000000000001 /* Frameworks */,
 				A10006010000000000000002 /* Resources */,
 				A10006010000000000000003 /* Compile CIKernel Metal Shader */,
+				C10006010000000000000003 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				C1000A010000000000000001 /* PBXTargetDependency */,
 			);
 			name = Camera;
 			productName = Camera;
 			productReference = A10002010000000000000040 /* Loopix.app */;
 			productType = "com.apple.product-type.application";
+		};
+		C10005010000000000000001 /* LoopixControls */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C10008010000000000000001 /* Build configuration list for PBXNativeTarget "LoopixControls" */;
+			buildPhases = (
+				C10006010000000000000001 /* Sources */,
+				C10006010000000000000002 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = LoopixControls;
+			productName = LoopixControls;
+			productReference = C10002010000000000000004 /* LoopixControls.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -362,6 +425,9 @@
 				TargetAttributes = {
 					A10005010000000000000001 = {
 						CreatedOnToolsVersion = 16.0;
+					};
+					C10005010000000000000001 = {
+						CreatedOnToolsVersion = 27.0;
 					};
 				};
 			};
@@ -379,6 +445,7 @@
 			projectRoot = "";
 			targets = (
 				A10005010000000000000001 /* Camera */,
+				C10005010000000000000001 /* LoopixControls */,
 			);
 		};
 /* End PBXProject section */
@@ -390,6 +457,14 @@
 			files = (
 				A10001010000000000000025 /* Assets.xcassets in Resources */,
 				A10001010000000000000054 /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C10006010000000000000002 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C10001010000000000000004 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -414,7 +489,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "xcrun metal -c -fcikernel \"${SRCROOT}/Camera/Metal/Kernels/GrainKernel.metal\" -o \"${DERIVED_FILE_DIR}/GrainKernel.air\"\nxcrun metal -fcikernel \"${DERIVED_FILE_DIR}/GrainKernel.air\" -o \"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/CIKernels.metallib\"\n";
+			shellScript = "set -e\nxcrun metal -c -fcikernel \"${SRCROOT}/Camera/Metal/Kernels/GrainKernel.metal\" -o \"${DERIVED_FILE_DIR}/GrainKernel.air\"\nxcrun metallib -cikernel \"${DERIVED_FILE_DIR}/GrainKernel.air\" -o \"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/CIKernels.metallib\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -425,6 +500,7 @@
 			files = (
 				A10001010000000000000001 /* CameraApp.swift in Sources */,
 				A10001010000000000000002 /* ContentView.swift in Sources */,
+				C10001010000000000000001 /* OpenCameraIntent.swift in Sources */,
 				A10001010000000000000003 /* CameraManager.swift in Sources */,
 				A10001010000000000000004 /* CaptureDeviceManager.swift in Sources */,
 				A10001010000000000000005 /* PhotoCaptureProcessor.swift in Sources */,
@@ -478,7 +554,24 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C10006010000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C10001010000000000000002 /* OpenCameraIntent.swift in Sources */,
+				C10001010000000000000003 /* CameraControl.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		C1000A010000000000000001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C10005010000000000000001 /* LoopixControls */;
+			targetProxy = C1000B010000000000000001 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		A10009010000000000000001 /* Debug */ = {
@@ -668,6 +761,60 @@
 			};
 			name = Release;
 		};
+		C10009010000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = A10002010000000000000140 /* Version.xcconfig */;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 5;
+				DEVELOPMENT_TEAM = 3R9CAB5MFA;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = CameraControl/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = loopix.truebloom.ltd.controls;
+				PRODUCT_NAME = LoopixControls;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		C10009010000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = A10002010000000000000140 /* Version.xcconfig */;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 5;
+				DEVELOPMENT_TEAM = 3R9CAB5MFA;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = CameraControl/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = loopix.truebloom.ltd.controls;
+				PRODUCT_NAME = LoopixControls;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -685,6 +832,15 @@
 			buildConfigurations = (
 				A10009010000000000000001 /* Debug */,
 				A10009010000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C10008010000000000000001 /* Build configuration list for PBXNativeTarget "LoopixControls" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C10009010000000000000001 /* Debug */,
+				C10009010000000000000002 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
